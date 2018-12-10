@@ -1,0 +1,5 @@
+fib := (x):
+	x <= 1 => x,
+	=> self(x-1) + self(x-2);
+	
+Print(fib(0));
