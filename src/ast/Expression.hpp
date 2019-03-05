@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2019 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,27 +16,65 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 #include <Std++.hpp>
 using namespace StdXX;
+//Local
+#include "../ir/Block.hpp"
+#include "../ir/Symbol.hpp"
+#include "../ir/Type.hpp"
+#include "Token.hpp"
 
 //Forward declarations
 class Expression;
+class Program;
+class StatementBlock;
 
 struct FuncMap
 {
+	Expression* pattern;
 	Expression* condition;
 	Expression* expr;
+	UniquePointer<StatementBlock> statements;
+
+	FuncMap& operator=(FuncMap&&) = default;
+};
+
+struct FuncParamDef
+{
+	String name;
+};
+
+struct ExpressionCompileFlags
+{
+	/**
+	 * Set if expression is on left side of assignment statement.
+	 */
+	bool isLeftValue;
+	/**
+	 * Set if expression is behind a let/mut and may declare locals.
+	 */
+	bool declare;
+	/**
+	 * Set if expression is behind a mut and thus declare mutable variables.
+	 */
+	bool mutableFlag;
+	/**
+	 * Set if expression is a member access (i.e. can not access a global/local/special variable).
+	 */
+	bool isMember;
 };
 
 class Expression
 {
 public:
-	//Constructor
-	inline Expression(const String& identifier) : identifier(identifier)
+	//Destructor
+	virtual ~Expression()
 	{
 	}
 
-private:
-	//Members
-	String identifier;
+	//Abstract
+	virtual IR::Symbol Compile(IR::Block& block, const ExpressionCompileFlags& flags = {}) const = 0;
+	virtual void CompileAsUnpack(Program& p, bool localAssign = false) const = 0;
+	virtual IR::Type GetType() const = 0;
 };

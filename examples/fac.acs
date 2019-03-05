@@ -1,0 +1,5 @@
+fac := func
+	0 => 1,
+	n => n * self(n-1);
+
+Print(fac(10));

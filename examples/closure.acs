@@ -1,0 +1,9 @@
+mut x := 0;
+
+let y := func
+=> {
+	x := 1;
+};
+
+wait y();
+this.print(x);

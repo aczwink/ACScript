@@ -1,5 +1,5 @@
-fib := (x):
-	x <= 1 => x,
-	=> self(x-1) + self(x-2);
+fib := func
+	n | n <= 1 => n,
+	n => self(n-1) + self(n-2);
 	
-Print(fib(0));
+Print(fib(35));

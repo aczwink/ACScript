@@ -1,0 +1,5 @@
+let array := [1, 2, 3];
+/*let set := {1, 2, 3};
+let tuple := (1, 2, 3);*/
+
+this.print(array);

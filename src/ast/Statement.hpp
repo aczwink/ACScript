@@ -16,6 +16,15 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
+#include <Std++.hpp>
+using namespace StdXX;
+//Local
+#include "../ir/Block.hpp"
+
 class Statement
 {
+public:
+	//Abstract
+	virtual void Compile(IR::Block& block) const = 0;
 };

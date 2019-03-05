@@ -1,0 +1,38 @@
+set(SOURCE_FILES
+	${SOURCE_FILES}
+
+	${CMAKE_CURRENT_SOURCE_DIR}/AccessExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/AccessExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ArrayExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ArrayExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/AssignmentStatement.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/AssignmentStatement.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/BinaryExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/BinaryExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CallExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CallExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/DeclarationStatement.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/DeclarationStatement.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Expression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ExpressionStatement.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ExpressionStatement.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/FunctionExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/FunctionExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/IdentifierExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/IdentifierExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/IntLiteralExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/IntLiteralExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Lexer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Lexer.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Parser.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Parser.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/SetExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/SetExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/StatementBlock.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Statement.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/TupleExpression.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/TupleExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/WaitStatement.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/WaitStatement.hpp
+
+	PARENT_SCOPE)

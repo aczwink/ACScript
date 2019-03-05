@@ -10,5 +10,6 @@ XPC_SetCompileDefinitions()
 
 find_package(StdPlusPlus REQUIRED)
 
-add_executable(ACScript src/ast/Statement.hpp src/Lexer.cpp src/Lexer.hpp src/main.cpp src/Parser.cpp src/Parser.hpp)
+add_subdirectory(src)
+add_executable(ACScript ${SOURCE_FILES})
 target_link_libraries(ACScript Std++ Std++Static)

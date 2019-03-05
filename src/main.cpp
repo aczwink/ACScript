@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2019 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -17,15 +17,81 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 //Local
-#include "Parser.hpp"
+#include "acsb/Compiler.hpp"
+#include "acsb/VM.hpp"
+#include "ast/Parser.hpp"
 
-int32 Main(const String &programName, const FixedArray<String> &args)
+static String FormatTime(uint64 time)
 {
-	Path inputFilePath = "C:/Users/acz/Desktop/fib.acs";
+	if(time < 1000)
+		return String::Number(time) + u8" ns";
+
+	if(time < 1000000)
+		return String::Number(time / 1000) + u8" µs";
+
+	if (time < 1000000000)
+		return String::Number(time / 1000000) + u8" ms";
+
+	return String::Number(time / 1e9, 3) + u8" s";
+}
+
+int32 Main(const String& programName, const FixedArray<String>& args)
+{
+	//Read
+	Path inputFilePath = "C:/Users/aczwink/source/ACScript-master/examples/containers.acs";
 	FileInputStream inputFile(inputFilePath);
-	Parser p(inputFile);
+
+	Clock c;
+
+	//Parse
+	c.Start();
+	Parser parser(inputFile);
+	UniquePointer<StatementBlock> parsedModule = parser.Parse();
+	stdOut << u8"Parsing time: " << FormatTime(c.GetElapsedNanoseconds()) << endl;
+
+	//compile to IR
+	c.Start();
+	IR::Program program;
+	parsedModule->Compile(program.GetMainProcedure().GetBlock());
+	stdOut << u8"Compile to IR time: " << FormatTime(c.GetElapsedNanoseconds()) << endl;
+	stdOut << u8"IR code: " << endl
+		<< program.ToString() << endl;
+
+	//Verify IR
+	c.Start();
+	try
+	{
+		program.Verify();
+	}
+	catch (const String& string)
+	{
+		stdErr << string << endl;
+		return EXIT_FAILURE;
+	}
+	stdOut << u8"IR verifying time: " << FormatTime(c.GetElapsedNanoseconds()) << endl;
+
+	/*
+	//Optimize
+	//TODO
+	*/
+
+	//Compile to acs bytecode
+	c.Start();
+	ACSB::Compiler compiler(program);
+	program.Compile(compiler);
+	ACSB::Module mod = compiler.GetCompiledModule();
+	stdOut << u8"Compile to acs bytecode time: " << FormatTime(c.GetElapsedNanoseconds()) << endl;
+
+	//execute bytecode
+	ACSB::VM vm;
+	c.Start();
+	vm.AddModule(u8"main", mod);
+	vm.RunModule(u8"main");
+	vm.WaitForTaskCompletion();
+	uint64 t_exec = c.GetElapsedNanoseconds();
 	
-	LinkedList<Statement*> statements = p.Parse();
+	stdOut << u8"Script execution ended." << endl;
+		//<< u8"Execution time: " << FormatTime(t_exec) << endl;
 	
 	return EXIT_SUCCESS;
 }
