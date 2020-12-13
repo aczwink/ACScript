@@ -22,13 +22,6 @@
 #include "../ir/Program.hpp"
 
 //Public methods
-IR::Symbol IntLiteralExpression::Compile(IR::Block& block, const ExpressionCompileFlags& flags) const
-{
-	if (this->value < 0)
-		return block.GetProgram().AddConstant(this->value);
-	return block.GetProgram().AddConstant(uint64(this->value));
-}
-
 void IntLiteralExpression::CompileAsUnpack(Program & p, bool localAssign) const
 {
 	/*

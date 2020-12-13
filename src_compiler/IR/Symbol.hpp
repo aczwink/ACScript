@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2019 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -17,32 +17,25 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "Value.hpp"
 
-enum class Token
+namespace IR
 {
-	Assign,
-	Colon,
-	Comma,
-	Dot,
-	Equals,
-	Identifier,
-	IntegerLiteral,
-	Keyword_Func,
-	Keyword_Let,
-	Keyword_Mut,
-	Keyword_Wait,
-	LeftBrace,
-	LeftParenthesis,
-	LeftSquaredBracket,
-	Less,
-	LessOrEqual,
-	Map,
-	Minus,
-	Multiply,
-	Pipe,
-	Plus,
-	RightBrace,
-	RightParenthesis,
-	RightSquaredBracket,
-	Semicolon,
-};
+	class Symbol : public Value
+	{
+	public:
+		//Members
+		String name;
+
+		//Methods
+		String ToReferenceString() const override
+		{
+			return this->name;
+		}
+
+		String ToString() const override
+		{
+			return this->name + u8": " + this->type->ToString();
+		}
+	};
+}

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -22,7 +22,7 @@
 using namespace IR;
 
 //Methods
-String Type::ToString() const
+String IR::Type::ToString() const
 {
 	String tmp;
 

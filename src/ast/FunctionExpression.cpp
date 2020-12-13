@@ -21,7 +21,7 @@
 //Local
 #include "../ir/Program.hpp"
 #include "ReturnExpression.hpp"
-#include "StatementBlock.hpp"
+#include "../../src_compiler/AST/statements/StatementBlock.hpp"
 
 //Public methods
 IR::Symbol FunctionExpression::Compile(IR::Block& block, const ExpressionCompileFlags& flags) const

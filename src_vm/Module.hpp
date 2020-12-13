@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,20 +16,37 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-//Class header
-#include "VM.hpp"
-//Namespaces
-using namespace ACSB;
+#pragma once
+#include "ExternalsManager.hpp"
 
-static RuntimeObject Print(const RuntimeObject& arg)
+class Module
 {
-	stdOut << arg.ToString() << endl;
-	return RuntimeObject();
-}
+public:
+	//Constructor
+	Module(SeekableInputStream& inputStream, ExternalsManager& externalsManager);
 
-//Private methods
-void VM::InitModule(RuntimeModule& module)
-{
-	module.state = RuntimeObject::Object();
-	module.state[u8"Print"] = Print;
-}
+	//Destructor
+	~Module();
+
+	//Properties
+	inline const void* Code() const
+	{
+		return this->code;
+	}
+
+	inline float64 GetConstant(uint16 constantIndex) const
+	{
+		return this->constants[constantIndex];
+	}
+
+	inline External GetExternal(uint16 externalIndex) const
+	{
+		return this->moduleExternals[externalIndex];
+	}
+
+private:
+	//Members
+	void* code;
+	DynamicArray<float64> constants;
+	DynamicArray<External> moduleExternals;
+};

@@ -18,7 +18,7 @@
 */
 //Local
 #include "Expression.hpp"
-#include "Statement.hpp"
+#include "../../src_compiler/AST/statements/Statement.hpp"
 
 class WaitStatement : public Statement
 {

@@ -100,11 +100,6 @@ void ACSB::Compiler::CompileSymbol(const IR::Symbol & symbol)
 {
 	switch (symbol.GetSymbolType())
 	{
-	case IR::SymbolType::Constant:
-	{
-		this->AddInstruction(Opcode::LoadConstant, symbol.GetNumber());
-	}
-	break;
 	case IR::SymbolType::GlobalVariable:
 	{
 		this->AddInstruction(Opcode::PushGlobal, this->GetGlobalIndex(symbol.GetIdentifier()));

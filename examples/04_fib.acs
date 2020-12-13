@@ -1,0 +1,6 @@
+fib := {
+	n | n <= 1 -> n,
+	n -> self(n-1) + self(n-2)
+};
+	
+Print(fib(35));

@@ -18,20 +18,11 @@
 */
 //Local
 #include "Expression.hpp"
-#include "Statement.hpp"
+#include "../../src_compiler/AST/statements/Statement.hpp"
 
 class ExpressionStatement : public Statement
 {
 public:
-	//Constructor
-	inline ExpressionStatement(Expression* expr) : expr(expr)
-	{
-	}
-
 	//Methods
 	void Compile(IR::Block& block) const override;
-
-private:
-	//Members
-	UniquePointer<Expression> expr;
 };

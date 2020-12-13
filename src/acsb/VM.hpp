@@ -48,7 +48,6 @@ namespace ACSB
 		RuntimeObject thisObj;
 		RuntimeObject arg;
 		FixedArray<RuntimeObject> locals;
-		DynamicArray<RuntimeObject> executionStack;
 		RuntimeObject ref;
 		AtomicFlag running;
 

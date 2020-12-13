@@ -29,8 +29,6 @@ String Program::ToString() const
 	//constants
 	for (const auto& kv : this->i64Constants)
 		tmp += Symbol::Constant(kv.value, LeafType::I64).ToString() + u8" := " + String::Number(kv.key) + u8"\r\n";
-	for (const auto& kv : this->ui64Constants)
-		tmp += Symbol::Constant(kv.value, LeafType::U64).ToString() + u8" := " + String::Number(kv.key) + u8"\r\n";
 	for (const auto& kv : this->stringConstants)
 		tmp += Symbol::Constant(kv.value, LeafType::String).ToString() + u8" := \"" + kv.key + u8"\"\r\n";
 	tmp += u8"\r\n";

@@ -22,14 +22,8 @@ set(SOURCE_FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/IdentifierExpression.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/IntLiteralExpression.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/IntLiteralExpression.hpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Lexer.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Lexer.hpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Parser.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Parser.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SetExpression.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SetExpression.hpp
-	${CMAKE_CURRENT_SOURCE_DIR}/StatementBlock.hpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Statement.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/TupleExpression.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/TupleExpression.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/WaitStatement.cpp

@@ -84,25 +84,6 @@ namespace ACSB
 			this->opcodes.Push(buffer[1]);
 		}
 
-		inline void AddInstruction(Opcode op, uint32 arg0)
-		{
-			byte buffer[4];
-			BufferOutputStream outputStream(buffer, sizeof(buffer));
-#ifdef XPC_ENDIANNESS_LITTLE
-			bool bigEndian = false;
-#else
-			bool bigEndian = true;
-#endif
-			DataWriter dataWriter(bigEndian, outputStream);
-			dataWriter.WriteUInt32(arg0);
-
-			this->opcodes.Push(op);
-			this->opcodes.Push(buffer[0]);
-			this->opcodes.Push(buffer[1]);
-			this->opcodes.Push(buffer[2]);
-			this->opcodes.Push(buffer[3]);
-		}
-
 		inline uint16 GetGlobalIndex(const String& global)
 		{
 			if (!this->globalMap.Contains(global))

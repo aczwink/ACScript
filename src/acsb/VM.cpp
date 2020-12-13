@@ -97,13 +97,6 @@ void VM::ExecuteTask(RuntimeCall* task)
 			executionStack.Push(RuntimeObject::Array());
 		}
 		break;
-		case Opcode::LoadConstant:
-		{
-			uint32 constantIndex = *(uint32*)pc;
-			pc += sizeof(constantIndex);
-			executionStack.Push(task->module->module->GetConstant(constantIndex));
-		}
-		break;
 		case Opcode::Push:
 		{
 			uint32 stackIndex = *(uint32*)pc;
@@ -174,8 +167,6 @@ void VM::ExecuteTask(RuntimeCall* task)
 			}
 		}
 		break;
-		default:
-			NOT_IMPLEMENTED_ERROR; //TODO: implement me
 		}
 	}
 }

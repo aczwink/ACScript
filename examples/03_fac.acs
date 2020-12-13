@@ -1,0 +1,6 @@
+let fac := {
+	0 -> 1,
+	n -> n * self(n-1)
+};
+
+print(fac(10));

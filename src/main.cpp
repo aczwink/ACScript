@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2019 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -27,7 +27,7 @@ static String FormatTime(uint64 time)
 		return String::Number(time) + u8" ns";
 
 	if(time < 1000000)
-		return String::Number(time / 1000) + u8" µs";
+		return String::Number(time / 1000) + u8" Âµs";
 
 	if (time < 1000000000)
 		return String::Number(time / 1000000) + u8" ms";
@@ -38,7 +38,7 @@ static String FormatTime(uint64 time)
 int32 Main(const String& programName, const FixedArray<String>& args)
 {
 	//Read
-	Path inputFilePath = "C:/Users/aczwink/source/ACScript-master/examples/containers.acs";
+	FileSystem::Path inputFilePath = String(u8"../examples/containers.acs");
 	FileInputStream inputFile(inputFilePath);
 
 	Clock c;
@@ -83,10 +83,7 @@ int32 Main(const String& programName, const FixedArray<String>& args)
 	stdOut << u8"Compile to acs bytecode time: " << FormatTime(c.GetElapsedNanoseconds()) << endl;
 
 	//execute bytecode
-	ACSB::VM vm;
 	c.Start();
-	vm.AddModule(u8"main", mod);
-	vm.RunModule(u8"main");
 	vm.WaitForTaskCompletion();
 	uint64 t_exec = c.GetElapsedNanoseconds();
 	

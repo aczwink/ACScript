@@ -22,24 +22,8 @@
 class CallExpression : public Expression
 {
 public:
-	//Constructor
-	inline CallExpression(Expression* expr) : expr(expr)
-	{
-	}
-
 	//Methods
 	IR::Symbol Compile(IR::Block& block, const ExpressionCompileFlags& flags) const override;
 	void CompileAsUnpack(Program & p, bool localAssign) const override;
 	IR::Type GetType() const override;
-
-	//Inline
-	inline void SetArg(Expression* expr)
-	{
-		this->arg = expr;
-	}
-
-private:
-	//Members
-	UniquePointer<Expression> expr;
-	UniquePointer<Expression> arg;
 };

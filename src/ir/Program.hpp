@@ -42,13 +42,6 @@ namespace IR
 			return Symbol::Constant(this->i64Constants[value], LeafType::I64);
 		}
 
-		inline Symbol AddConstant(uint64 value)
-		{
-			if (!this->ui64Constants.Contains(value))
-				this->ui64Constants[value] = this->NextConstantIndex();
-			return Symbol::Constant(this->ui64Constants[value], LeafType::U64);
-		}
-
 		inline Symbol AddConstant(const String& value)
 		{
 			if (!this->stringConstants.Contains(value))

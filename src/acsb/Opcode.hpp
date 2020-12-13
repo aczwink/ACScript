@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,7 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <Std++.hpp>
+#include <StdXX.hpp>
 
 enum Opcode : byte
 {
@@ -25,14 +25,12 @@ enum Opcode : byte
 	AssignLocal,
 	Call,
 	CreateArray,
-	LoadConstant,
 	Push,
 	PushGlobal,
 	PushLocal,
 	PushNull,
 	PushProc,
 	PushThis,
-	Return,
 	Wait,
 	/*
 	Add,
