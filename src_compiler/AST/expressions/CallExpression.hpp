@@ -16,38 +16,41 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
-#include "TupleExpression.hpp"
+#include "Expression.hpp"
 
-class CallExpression : public Expression
+namespace AST
 {
-public:
-	//Constructor
-	inline CallExpression(const String& functionName, UniquePointer<TupleExpression>&& argument)
-		: functionName(functionName), arg(Move(argument))
+	class CallExpression : public Expression
 	{
-	}
+	public:
+		//Constructor
+		inline CallExpression(const String &functionName, UniquePointer<Expression> &&argument)
+				: functionName(functionName), arg(Move(argument))
+		{
+		}
 
-	//Properties
-	inline const TupleExpression& Argument() const
-	{
-		return *this->arg;
-	}
+		//Properties
+		inline const Expression &Argument() const
+		{
+			return *this->arg;
+		}
 
-	inline const String& FunctionName() const
-	{
-		return this->functionName;
-	}
+		inline const String &FunctionName() const
+		{
+			return this->functionName;
+		}
 
-	//Methods
-	void Visit(ASTVisitor& visitor) const
-	{
-		this->arg->Visit(visitor);
-		visitor.OnVisitedCall(*this);
-	}
+		//Methods
+		void Visit(ExpressionVisitor &visitor) const
+		{
+			visitor.OnVisitedCall(*this);
+		}
 
-private:
-	//Members
-	String functionName;
-	UniquePointer<TupleExpression> arg;
-};
+	private:
+		//Members
+		String functionName;
+		UniquePointer<Expression> arg;
+	};
+}

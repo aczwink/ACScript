@@ -19,13 +19,14 @@
 #pragma once
 #include <StdXX.hpp>
 //Local
-#include "../AST/ASTVisitor.hpp"
+#include "../AST/visitors/StatementVisitor.hpp"
+#include "../AST/AllNodes.hpp"
 //Libs
 #undef new
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 
-class llvmCompiler : public ASTVisitor
+class llvmCompiler : public AST::StatementVisitor, public AST::ExpressionVisitor, public AST::TypeSpecVisitor
 {
 public:
 	//Constructor
@@ -44,10 +45,16 @@ public:
 	}
 
 	//Methods
-	void OnVisitedBlock(const StatementBlock &statementBlock) override;
-	void OnVisitedCall(const CallExpression &callExpression) override;
-	void OnVisitedTupleExpression(const TupleExpression &tupleExpression) override;
-	void OnVisitingNaturalLiteral(const NaturalLiteralExpression& naturalLiteralExpression) override;
+	void OnVisitedBlock(const AST::StatementBlock &statementBlock);
+	void OnVisitedCall(const AST::CallExpression &callExpression) override;
+	void OnVisitedFunctionTypeSpec(const AST::FunctionTypeSpec &functionTypeSpec) override;
+	void OnVisitedIdentifierTypeSpec(const AST::IdentifierTypeSpec &identifierTypeSpec) override;
+	void OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression) override;
+	void OnVisitedTupleTypeSpec(const AST::TupleTypeSpec &tupleTypeSpec) override;
+
+	void OnVisitingFunctionExpression(const AST::FunctionExpression &functionExpression) override;
+	void OnVisitingIdentifier(const AST::IdentifierExpression &identifierExpression) override;
+	void OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression& naturalLiteralExpression) override;
 
 private:
 	//Members
@@ -57,6 +64,11 @@ private:
 	StdXX::DynamicArray<llvm::Value*> valueStack;
 
 	//Methods
-	void CompilePrintCall(const CallExpression &callExpression);
+	void CompilePrintCall(const AST::CallExpression &callExpression);
 	void Initialize();
+
+	//Event handlers
+	void OnVisitingExternalDeclaration(const AST::ExternalDeclarationStatement &externalDeclaration) override;
+
+	void OnVisitingExpressionStatement(const AST::ExpressionStatement &expressionStatement) override;
 };

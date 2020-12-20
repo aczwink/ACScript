@@ -16,24 +16,34 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
 #include "Statement.hpp"
 
-class ExpressionStatement : public Statement
+namespace AST
 {
-public:
-	//Constructor
-	inline ExpressionStatement(UniquePointer<Expression>&& expr) : expr(Move(expr))
+	class ExpressionStatement : public Statement
 	{
-	}
+	public:
+		//Constructor
+		inline ExpressionStatement(UniquePointer<Expression> &&expr) : expr(Move(expr))
+		{
+		}
 
-	//Inline
-	inline void Visit(ASTVisitor& visitor) const
-	{
-		this->expr->Visit(visitor);
-	}
+		//Properties
+		inline const Expression& EmbeddedExpression() const
+		{
+			return *this->expr;
+		}
 
-private:
-	//Members
-	UniquePointer<Expression> expr;
-};
+		//Inline
+		inline void Visit(StatementVisitor &visitor) const
+		{
+			visitor.OnVisitingExpressionStatement(*this);
+		}
+
+	private:
+		//Members
+		UniquePointer<Expression> expr;
+	};
+}

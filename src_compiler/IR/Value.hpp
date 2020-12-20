@@ -17,8 +17,10 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "visitors/Visitor.hpp"
+#include <StdXX.hpp>
+using namespace StdXX;
 #include "../types/Type.hpp"
+#include "visitors/ValueVisitor.hpp"
 
 namespace IR
 {
@@ -28,12 +30,17 @@ namespace IR
 		//Members
 		const ::Type* type;
 
+		//Constructor
+		inline Value() : type(nullptr)
+		{
+		}
+
 		//Destructor
 		virtual ~Value(){}
 
 		//Abstract
 		virtual String ToString() const = 0;
-		virtual void Visit(Visitor& visitor) const = 0;
+		virtual void Visit(ValueVisitor& visitor) const = 0;
 
 		//Overrideable
 		virtual String ToReferenceString() const

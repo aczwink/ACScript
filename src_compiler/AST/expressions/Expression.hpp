@@ -17,13 +17,20 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "../ASTNode.hpp"
+#include "../Node.hpp"
+#include "../visitors/ExpressionVisitor.hpp"
 
-class Expression : public ASTNode
+namespace AST
 {
-public:
-	//Destructor
-	virtual ~Expression()
+	class Expression : public Node
 	{
-	}
-};
+	public:
+		//Destructor
+		virtual ~Expression()
+		{
+		}
+
+		//Abstract
+		virtual void Visit(ExpressionVisitor &visitor) const = 0;
+	};
+}

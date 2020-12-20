@@ -18,36 +18,30 @@
 */
 //Local
 #include "AST/statements/StatementBlock.hpp"
-#include "AST2IRTranslator.hpp"
+#include "translation/AST2IRTranslator.hpp"
 #include "IR/visitors/Printer.hpp"
 #include "acsb/Compiler.hpp"
 #include "acsb/Disassembler.hpp"
+#include "AST/ParserState.hpp"
+#include "optimization/PassManager.hpp"
+#include "optimization/typeInference/ProcedureTypeInferer.hpp"
 
-void add_externals(IR::Builder& builder, TypeCatalog& typeCatalog)
-{
-	DynamicArray<const ::Type*> argTypes;
-	argTypes.Push( typeCatalog.GetLeafType(LeafTypeEnum::Any) );
-	IR::External* external = builder.CreateExternal(u8"print", typeCatalog.GetLeafType(LeafTypeEnum::Null),
-												 typeCatalog.GetTupleType(Move(argTypes), true));
-	builder.Module().AddExternal(external);
-}
-
-void compile(const StatementBlock& statementBlock)
+void compile(const AST::ParserState& parserState)
 {
 	IR::Module module;
 	TypeCatalog typeCatalog;
 	IR::Builder builder(module, typeCatalog);
 
-	add_externals(builder, typeCatalog);
+	AST2IRTranslator translator(builder, typeCatalog);
+	translator.Translate(parserState.ModuleStatements());
 
-	AST2IRTranslator translator(builder);
-	statementBlock.Visit(translator);
-
-	IR::Printer printer(stdOut);
-	module.Visit(printer);
+	Optimization::PassManager passManager(module, typeCatalog);
+	passManager.PrintState();
+	passManager.AddProcedurePass<Optimization::ProcedureTypeInferer>(u8"procedure_type_inferer");
+	//passManager.AddProcedurePass<Optimization::ProcedureTypeInferer>(u8"procedure_type_inferer_round2"); //must be applied twice because of "self" keyword
 
 	ACSB::Compiler compiler;
-	module.Visit(compiler);
+	compiler.Compile(module);
 
 	FIFOBuffer compiledModule;
 	compiler.Write(compiledModule);

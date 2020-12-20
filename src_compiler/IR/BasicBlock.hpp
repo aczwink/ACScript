@@ -16,19 +16,39 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
-#include "visitors/Visitor.hpp"
 #include "Instruction.hpp"
+#include "visitors/BasicBlockVisitor.hpp"
 
 namespace IR
 {
 	class BasicBlock
 	{
 	public:
-		//Methods
-		void Visit(Visitor& visitor) const
+		//Constructor
+		inline BasicBlock(const String& name) : name(name)
 		{
-			for(const Instruction*const& instruction : this->instructions)
+		}
+
+		//Members
+		Map<String, IR::Value*> namedValues;
+
+		//Properties
+		inline const DynamicArray<Instruction*>& Instructions() const
+		{
+			return this->instructions;
+		}
+
+		inline const String& Name() const
+		{
+			return this->name;
+		}
+
+		//Methods
+		void Visit(BasicBlockVisitor& visitor)
+		{
+			for(Instruction*const& instruction : this->instructions)
 				instruction->Visit(visitor);
 		}
 
@@ -40,6 +60,7 @@ namespace IR
 
 	private:
 		//Members
+		String name;
 		DynamicArray<Instruction*> instructions;
 	};
 }

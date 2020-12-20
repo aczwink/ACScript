@@ -50,38 +50,72 @@ void Disassembler::Disassemble(InputStream &inputStream) const
 
 	this->textWriter << endl;
 	this->textWriter << u8".code" << endl;
+	dataReader.ReadUInt16(); //entry point
 
+	uint16 offset = 0;
 	while(!inputStream.IsAtEnd())
 	{
 		this->textWriter.WriteTabs(1);
-		this->DisassembleInstruction(dataReader);
+		this->textWriter << String::HexNumber(offset, 4);
+
+		this->textWriter.WriteTabs(1);
+		this->DisassembleInstruction(dataReader, offset);
+
 		this->textWriter << endl;
 	}
 }
 
 //Private methods
-void Disassembler::DisassembleInstruction(DataReader &dataReader) const
+void Disassembler::DisassembleInstruction(DataReader &dataReader, uint16& offset) const
 {
 	Opcode op = static_cast<Opcode>(dataReader.ReadByte());
+	offset++;
 
 	switch (op)
 	{
+		case Opcode::Call:
+		{
+			uint16 callOffset = dataReader.ReadUInt16();
+			offset += 2;
+
+			this->OutputMnemonicWithOneArgument(u8"call", callOffset);
+		}
+		break;
 		case Opcode::CallExtern:
 		{
 			uint16 externalIndex = dataReader.ReadUInt16();
+			offset += 2;
+
 			this->OutputMnemonicWithOneArgument(u8"callext", u8"i" + String::Number(externalIndex));
+		}
+		break;
+		case Opcode::JumpOnFalse:
+		{
+			uint16 jumpOffset = dataReader.ReadUInt16();
+			offset += 2;
+
+			this->OutputMnemonicWithOneArgument(u8"jmpf", jumpOffset);
 		}
 		break;
 		case Opcode::LoadConstant:
 		{
 			uint16 constantIndex = dataReader.ReadUInt16();
+			offset += 2;
+
 			this->OutputMnemonicWithOneArgument(u8"ldc", u8"c" + String::Number(constantIndex));
 		}
 		break;
 		case Opcode::NewTuple:
 		{
 			uint16 count = dataReader.ReadUInt16();
+			offset += 2;
+
 			this->OutputMnemonicWithOneArgument(u8"ntp", count);
+		}
+		break;
+		case Opcode::PushParameter:
+		{
+			this->OutputMnemonic(u8"pusharg");
 		}
 		break;
 		case Opcode::Return:
@@ -90,6 +124,6 @@ void Disassembler::DisassembleInstruction(DataReader &dataReader) const
 		}
 		break;
 		default:
-			this->textWriter << u8"??? Unknown instruction ???: " << String::HexNumber(static_cast<uint64>(op)) << endl;
+			this->textWriter << u8"??? Unknown instruction ???: " << String::HexNumber(static_cast<uint64>(op));
 	}
 }

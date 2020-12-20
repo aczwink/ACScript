@@ -37,18 +37,20 @@ namespace ACSB
 		TextWriter &textWriter;
 
 		//Methods
-		void DisassembleInstruction(DataReader& dataReader) const;
+		void DisassembleInstruction(DataReader& dataReader, uint16& offset) const;
 
 		//Inline
 		inline void OutputMnemonic(const String& mnemonic) const
 		{
 			this->textWriter << mnemonic;
 			this->textWriter.WriteTabs(1);
+			if(mnemonic.GetLength() < 4)
+				this->textWriter.WriteTabs(1);
 		}
 
 		inline void OutputMnemonicWithOneArgument(const String& mnemonic, uint16 arg) const
 		{
-			this->OutputMnemonicWithOneArgument(mnemonic, String::HexNumber(arg));
+			this->OutputMnemonicWithOneArgument(mnemonic, String::HexNumber(arg, 4));
 		}
 
 		inline void OutputMnemonicWithOneArgument(const String& mnemonic, const String& arg) const

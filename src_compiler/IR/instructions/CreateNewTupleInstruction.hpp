@@ -40,17 +40,14 @@ namespace IR
 		{
 			DynamicArray<String> strings;
 			for(const Value*const& value : this->values)
-				strings.Push(value->ToString());
+				strings.Push(value->ToReferenceString());
 
 			return Symbol::ToString() + u8" <-- new_tuple " + String::Join(strings, u8", ");
 		}
 
-		void Visit(Visitor &visitor) const override
+		void Visit(BasicBlockVisitor &visitor) override
 		{
 			visitor.OnVisitingNewTupleInstruction(*this);
-			for(const Value*const& value : this->values)
-				value->Visit(visitor);
-			visitor.OnVisitedNewTupleInstruction(*this);
 		}
 
 	private:

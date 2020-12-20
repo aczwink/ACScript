@@ -21,15 +21,46 @@
 class GarbageCollector
 {
 public:
+	~GarbageCollector()
+	{
+		BinaryTreeSet<DynamicArray<RuntimeValue>*> toDelete = this->allocatedArrays;
+		for (DynamicArray<RuntimeValue>*const& toDeleteElement : toDelete)
+			this->Release(toDeleteElement);
+	}
+
 	//Inline
+	inline void CleanUp(const DynamicArray<RuntimeValue>& referencedValues)
+	{
+		if(this->allocatedArrays.GetNumberOfElements() < 5000000)
+			return;
+
+		BinaryTreeSet<DynamicArray<RuntimeValue>*> toDelete = this->allocatedArrays;
+
+		for (const RuntimeValue& referenced : referencedValues)
+		{
+			if(referenced.Type() == RuntimeValueType::Tuple)
+				toDelete.Remove((DynamicArray<RuntimeValue>*)&referenced.ValuesArray());
+		}
+
+		for (DynamicArray<RuntimeValue>*const& toDeleteElement : toDelete)
+			this->Release(toDeleteElement);
+	}
+
 	inline DynamicArray<RuntimeValue>* NewArray()
 	{
 		DynamicArray<RuntimeValue>* ptr = new DynamicArray<RuntimeValue>;
-		this->allocatedArrays.Push(ptr);
+		this->allocatedArrays.Insert(ptr);
 		return ptr;
 	}
 
 private:
 	//Members
-	DynamicArray<UniquePointer<DynamicArray<RuntimeValue>>> allocatedArrays;
+	BinaryTreeSet<DynamicArray<RuntimeValue>*> allocatedArrays;
+
+	//Inline
+	inline void Release(DynamicArray<RuntimeValue>* ptr)
+	{
+		this->allocatedArrays.Remove(ptr);
+		delete ptr;
+	}
 };

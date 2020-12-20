@@ -17,19 +17,20 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <StdXX.hpp>
-using namespace StdXX;
 
-#include "ASTVisitor.hpp"
-
-class ASTNode
+namespace AST
 {
-public:
-	//Destructor
-	virtual ~ASTNode()
-	{
-	}
+	//Forward declarations
+	class FunctionTypeSpec;
+	class IdentifierTypeSpec;
+	class TupleTypeSpec;
 
-	//Methods
-	virtual void Visit(ASTVisitor& visitor) const = 0;
-};
+	class TypeSpecVisitor
+	{
+	public:
+		//Abstract
+		virtual void OnVisitedFunctionTypeSpec(const FunctionTypeSpec& functionTypeSpec) = 0;
+		virtual void OnVisitedIdentifierTypeSpec(const IdentifierTypeSpec& identifierTypeSpec) = 0;
+		virtual void OnVisitedTupleTypeSpec(const TupleTypeSpec& tupleTypeSpec) = 0;
+	};
+}

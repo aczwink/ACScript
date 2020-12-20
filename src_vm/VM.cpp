@@ -24,20 +24,40 @@
 //Public methods
 void VM::Run()
 {
-	const uint8* pc = static_cast<const uint8 *>(this->module.Code());
+	const uint8* pc = static_cast<const uint8 *>(this->module.EntryPoint());
 	DynamicArray<RuntimeValue> executionStack;
+	DynamicArray<const uint8*> callStack;
+	DynamicArray<RuntimeValue> argumentStack;
 
 	while(true)
 	{
 		Opcode op = static_cast<Opcode>(*pc++);
 		switch (op)
 		{
+			case Opcode::Call:
+			{
+				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
+
+				callStack.Push(pc);
+				pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
+
+				argumentStack.Push(executionStack.Pop());
+			}
+			break;
 			case Opcode::CallExtern:
 			{
 				uint16 externIndex = this->ExtractUInt16FromProgramCounter(pc);
 				const auto& arg = executionStack.Pop();
 				auto result = this->module.GetExternal(externIndex)(arg);
 				executionStack.Push(result);
+			}
+			break;
+			case Opcode::JumpOnFalse:
+			{
+				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
+
+				if(!executionStack.Pop().ValueBool())
+					pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
 			}
 			break;
 			case Opcode::LoadConstant:
@@ -50,6 +70,8 @@ void VM::Run()
 			{
 				uint16 nEntries = this->ExtractUInt16FromProgramCounter(pc);
 
+				this->garbageCollector.CleanUp(argumentStack);
+
 				DynamicArray<RuntimeValue>* values = this->garbageCollector.NewArray();
 				for(uint16 i = 0; i < nEntries; i++)
 					values->Push(executionStack.Pop());
@@ -57,9 +79,20 @@ void VM::Run()
 				executionStack.Push(RuntimeValue::CreateTuple(values));
 			}
 			break;
+			case Opcode::PushParameter:
+			{
+				executionStack.Push(argumentStack.Last());
+			}
+			break;
 			case Opcode::Return:
 			{
-				return;
+				if(callStack.IsEmpty())
+					return;
+				else
+				{
+					pc = callStack.Pop();
+					argumentStack.Pop();
+				}
 			}
 			break;
 			default:

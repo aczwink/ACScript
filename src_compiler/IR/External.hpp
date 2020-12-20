@@ -35,14 +35,14 @@ namespace IR
 			this->name = name;
 		}
 
-		void Visit(Visitor &visitor) const override
-		{
-			visitor.OnVisitingExternal(*this);
-		}
-
 		String ToString() const override
 		{
 			return u8"extern " + Symbol::ToString();
+		}
+
+		void Visit(ValueVisitor &visitor) const override
+		{
+			visitor.OnVisitingExternal(*this);
 		}
 	};
 }

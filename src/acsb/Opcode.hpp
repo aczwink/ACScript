@@ -23,7 +23,6 @@ enum Opcode : byte
 	Access,
 	AssignGlobal,
 	AssignLocal,
-	Call,
 	CreateArray,
 	Push,
 	PushGlobal,
@@ -35,7 +34,6 @@ enum Opcode : byte
 	/*
 	Add,
 	Equals,
-	JumpOnFalse,
 	JumpRelative,
 	LessOrEqual,
 	Minus,

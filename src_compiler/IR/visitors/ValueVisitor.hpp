@@ -23,25 +23,16 @@ using namespace StdXX;
 namespace IR
 {
 	//Forward declarations
-	class BasicBlock;
 	class ConstantFloat;
-	class CreateNewTupleInstruction;
 	class External;
-	class ExternalCallInstruction;
-	class Procedure;
-	class ReturnInstruction;
+	class Parameter;
 
-	class Visitor
+	class ValueVisitor
 	{
 	public:
-		//Methods
-		virtual void OnVisitedNewTupleInstruction(const CreateNewTupleInstruction& createNewTupleInstruction) = 0;
-
-		virtual void OnVisitingConstant(const ConstantFloat& constantFloat) = 0;
+		//Abstract
+		virtual void OnVisitingConstantFloat(const ConstantFloat& constantFloat) = 0;
 		virtual void OnVisitingExternal(const External& external) = 0;
-		virtual void OnVisitingExternalCallInstruction(const ExternalCallInstruction& externalCallInstruction) = 0;
-		virtual void OnVisitingNewTupleInstruction(const CreateNewTupleInstruction& createNewTupleInstruction) = 0;
-		virtual void OnVisitingProcedure(const Procedure& procedure) = 0;
-		virtual void OnVisitingReturnInstruction(const ReturnInstruction& returnInstruction) = 0;
+		virtual void OnVisitingParameter(const Parameter& parameter) = 0;
 	};
 }

@@ -24,31 +24,49 @@
 using namespace AST;
 ParserState* g_parserState = nullptr;
 
-extern FILE * yyin;
+extern const char* yytext;
+extern int yylineno;
 extern int yylex();
 extern int yyparse(ParserState* parserState);
 
+typedef struct yy_buffer_state * YY_BUFFER_STATE;
+extern YY_BUFFER_STATE yy_scan_buffer ( char *base, size_t size  );
+extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
+
 void yyerror(ParserState* parserState, const char* s)
 {
-	stdOut << u8"ERROR: " << s << endl;
+	stdOut << u8"ERROR: " << s << u8" token: " << yytext << u8" in line: " << yylineno << endl;
 }
 
 //Public methods
-bool Parser::Parse(const FileSystem::Path& inputPath)
+bool Parser::Finish()
 {
-	yyin = fopen(reinterpret_cast<const char *>(inputPath.String().ToUTF8().GetRawZeroTerminatedData()), u8"rb");
+	DataWriter dataWriter(true, this->buffer);
+	dataWriter.WriteByte(0);
+	dataWriter.WriteByte(0);
 
 	g_parserState = &this->parserState;
 
+	FixedSizeBuffer buffer(this->buffer.GetRemainingBytes());
+	this->buffer.ReadBytes(buffer.Data(), buffer.Size());
+
+	YY_BUFFER_STATE state = yy_scan_buffer(reinterpret_cast<char *>(buffer.Data()), buffer.Size());
+	int result = yyparse(g_parserState);
 	/*int result = 1;
 	while(result)
 	{
 		result = yylex();
 		stdOut << result << endl;
 	}*/
-
-	int result = yyparse(g_parserState);
-	fclose(yyin);
+	yy_delete_buffer(state);
 
 	return result == 0;
+}
+
+bool Parser::Parse(const FileSystem::Path& inputPath)
+{
+	FileInputStream fileInputStream(inputPath);
+	fileInputStream.FlushTo(this->buffer);
+
+	return true;
 }

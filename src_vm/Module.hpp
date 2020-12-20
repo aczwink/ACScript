@@ -29,9 +29,14 @@ public:
 	~Module();
 
 	//Properties
-	inline const void* Code() const
+	inline const void* EntryPoint() const
 	{
-		return this->code;
+		return this->GetCodeAtOffset(this->entryPoint);
+	}
+
+	inline const void* GetCodeAtOffset(uint16 offset) const
+	{
+		return reinterpret_cast<const void *>( &((const uint8 *) this->code)[offset] );
 	}
 
 	inline float64 GetConstant(uint16 constantIndex) const
@@ -46,6 +51,7 @@ public:
 
 private:
 	//Members
+	uint16 entryPoint;
 	void* code;
 	DynamicArray<float64> constants;
 	DynamicArray<External> moduleExternals;

@@ -16,21 +16,30 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
 #include "LeafType.hpp"
 #include "TupleType.hpp"
 #include "FunctionType.hpp"
+#include "GenericType.hpp"
 
 class TypeCatalog
 {
 public:
 	//Inline
+	inline GenericType* CreateGenericType()
+	{
+		GenericType* genericType = new GenericType(this->genericTypes.GetNumberOfElements());
+		this->genericTypes.Push(genericType);
+		return genericType;
+	}
+
 	inline const ::TupleType* GetEmptyTupleType()
 	{
 		return dynamic_cast<const TupleType *>(this->FindOrInsert(new TupleType()));
 	}
 
-	const ::Type* GetFunctionType(const ::Type* returnType, const ::TupleType* argumentType)
+	const ::Type* GetFunctionType(const ::Type* returnType, const ::Type* argumentType)
 	{
 		return this->FindOrInsert(new FunctionType(returnType, argumentType));
 	}
@@ -52,6 +61,7 @@ public:
 private:
 	//Members
 	HashMap<String, UniquePointer<::Type>> types;
+	DynamicArray<UniquePointer<GenericType>> genericTypes;
 
 	//Inline
 	inline const ::Type* FindOrInsert(UniquePointer<::Type>&& type)

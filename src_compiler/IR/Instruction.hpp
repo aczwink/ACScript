@@ -19,10 +19,19 @@
 #pragma once
 //Local
 #include "Symbol.hpp"
+#include "visitors/BasicBlockVisitor.hpp"
 
 namespace IR
 {
 	class Instruction : public Symbol
 	{
+	public:
+		//Abstract
+		virtual void Visit(BasicBlockVisitor& visitor) = 0;
+
+		void Visit(ValueVisitor &visitor) const override
+		{
+
+		}
 	};
 }

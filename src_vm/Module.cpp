@@ -41,6 +41,8 @@ Module::Module(SeekableInputStream &inputStream, ExternalsManager& externalsMana
 		this->constants[i] = dataReader.ReadFloat64();
 	}
 
+	this->entryPoint = dataReader.ReadUInt16();
+
 	uint64 codeSize = inputStream.QueryRemainingBytes();
 	this->code = MemAlloc(codeSize);
 	inputStream.ReadBytes(this->code, codeSize);

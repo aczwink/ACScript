@@ -36,7 +36,7 @@ namespace IR
 		}
 
 		//Methods
-		void Visit(Visitor &visitor) const override
+		void Visit(BasicBlockVisitor &visitor) override
 		{
 			visitor.OnVisitingExternalCallInstruction(*this);
 		}

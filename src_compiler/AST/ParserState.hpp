@@ -18,7 +18,7 @@
 */
 //Local
 #include "statements/StatementBlock.hpp"
-#include "External.hpp"
+#include "statements/ExternalDeclarationStatement.hpp"
 
 namespace AST
 {
@@ -31,12 +31,12 @@ namespace AST
 			return this->moduleStatements;
 		}
 
-		//Inline
-		inline void AddExternal(External* external)
+		inline const StatementBlock &ModuleStatements() const
 		{
-			this->externals.Push(external);
+			return this->moduleStatements;
 		}
 
+		//Inline
 		inline String *CreateString(const char *string)
 		{
 			this->strings.Push(new String(String::CopyRawString(string)));
@@ -45,7 +45,6 @@ namespace AST
 
 	private:
 		//Members
-		DynamicArray<UniquePointer<External>> externals;
 		StatementBlock moduleStatements;
 		DynamicArray<UniquePointer<String>> strings;
 	};

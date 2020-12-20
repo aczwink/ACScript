@@ -37,14 +37,14 @@ namespace IR
 		}
 
 		//Methods
-		void Visit(Visitor &visitor) const override
-		{
-			visitor.OnVisitingConstant(*this);
-		}
-
 		String ToString() const override
 		{
 			return String::Number(this->value);
+		}
+
+		void Visit(ValueVisitor &visitor) const override
+		{
+			visitor.OnVisitingConstantFloat(*this);
 		}
 
 	private:

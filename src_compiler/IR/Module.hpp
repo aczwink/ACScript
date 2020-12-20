@@ -16,9 +16,9 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
 #include "ConstantFloat.hpp"
-#include "visitors/Visitor.hpp"
 #include "External.hpp"
 #include "Procedure.hpp"
 
@@ -27,15 +27,31 @@ namespace IR
 	class Module
 	{
 	public:
+		//Properties
+		inline const Map<String, External*>& Externals() const
+		{
+			return this->externals;
+		}
+
+		inline LinkedList<Procedure*>& Procedures()
+		{
+			return this->procedures;
+		}
+
+		inline const LinkedList<Procedure*>& Procedures() const
+		{
+			return this->procedures;
+		}
+
 		//Inline
 		inline void AddExternal(External* external)
 		{
 			this->externals.Insert(external->name, external);
 		}
 
-		inline void AddProcedure(Procedure* procedure)
+		inline void AddProcedure(Procedure* procedure, Procedure* before)
 		{
-			this->procedures.Push(procedure);
+			this->procedures.InsertBefore(this->procedures.Find(before), Move(procedure));
 		}
 
 		inline const External* FindExternal(const String& externalName) const
@@ -46,18 +62,9 @@ namespace IR
 			return (*it).value;
 		}
 
-		inline void Visit(Visitor& visitor) const
-		{
-			for(const auto& kv : this->externals)
-				kv.value->Visit(visitor);
-
-			for(const Procedure*const& procedure : this->procedures)
-				procedure->Visit(visitor);
-		}
-
 	private:
 		//Members
 		Map<String, External*> externals;
-		DynamicArray<Procedure*> procedures;
+		LinkedList<Procedure*> procedures;
 	};
 }

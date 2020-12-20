@@ -23,6 +23,8 @@ static String ToString(const RuntimeValue& value)
 {
 	switch(value.Type())
 	{
+		case RuntimeValueType::Bool:
+			return value.ValueBool() ? u8"true" : u8"false";
 		case RuntimeValueType::Float64:
 			return String::Number(value.ValueF64());
 		case RuntimeValueType::Null:
@@ -35,6 +37,7 @@ static String ToString(const RuntimeValue& value)
 			return u8"(" + String::Join(strings, u8", ") + u8")";
 		}
 	}
+	return String();
 }
 
 RuntimeValue Print(const RuntimeValue& arg)

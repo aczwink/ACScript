@@ -32,10 +32,12 @@ namespace AST
 		}
 
 		//Methods
+		bool Finish();
 		bool Parse(const FileSystem::Path &inputPath);
 
 	private:
 		//Members
 		ParserState &parserState;
+		FIFOBuffer buffer;
 	};
 }

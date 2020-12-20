@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,25 +16,16 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-//Class header
-#include "IntLiteralExpression.hpp"
-//Local
-#include "../ir/Program.hpp"
 
-//Public methods
-void IntLiteralExpression::CompileAsUnpack(Program & p, bool localAssign) const
-{
-	/*
-	p.AddInstruction(Opcode::Push, 0); //push func-arg to stack, i.e.: copy it
-	this->Compile(p);
-	p.AddInstruction(Opcode::Equals);
-	*/
-	NOT_IMPLEMENTED_ERROR; //TODO: implement me
-}
+//Forward declarations
+class GenericType;
+class LeafType;
+class TupleType;
 
-IR::Type IntLiteralExpression::GetType() const
+class TypeVisitor
 {
-	if (value >= 0)
-		return IR::Type(IR::LeafType::Any);
-	return IR::Type(IR::LeafType::Any);
-}
+public:
+	virtual void OnVisitingGenericType(const GenericType& genericType) = 0;
+	virtual void OnVisitingLeafType(const LeafType& leafType) = 0;
+	virtual void OnVisitingTupleType(const TupleType& tupleType) = 0;
+};

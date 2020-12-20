@@ -22,6 +22,33 @@
 //Private methods
 void ExternalsManager::RegisterAllExternals()
 {
+	//arithmetical
+	extern RuntimeValue Add(const RuntimeValue&);
+	this->RegisterExternal(u8"+", Add);
+
+	extern RuntimeValue Multiply(const RuntimeValue&);
+	this->RegisterExternal(u8"*", Multiply);
+
+	extern RuntimeValue Subtract(const RuntimeValue&);
+	this->RegisterExternal(u8"-", Subtract);
+
+	//logical
+	extern RuntimeValue And(const RuntimeValue&);
+	this->RegisterExternal(u8"and", And);
+
+	extern RuntimeValue LessThan(const RuntimeValue&);
+	this->RegisterExternal(u8"<", LessThan);
+
+	extern RuntimeValue LessThanOrEqual(const RuntimeValue&);
+	this->RegisterExternal(u8"<=", LessThanOrEqual);
+
+	extern RuntimeValue Not(const RuntimeValue&);
+	this->RegisterExternal(u8"not", Not);
+
+	extern RuntimeValue Or(const RuntimeValue&);
+	this->RegisterExternal(u8"or", Or);
+
+	//other
 	extern RuntimeValue Print(const RuntimeValue&);
 	this->RegisterExternal(u8"print", Print);
 }

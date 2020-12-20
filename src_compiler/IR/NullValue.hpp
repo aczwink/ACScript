@@ -26,13 +26,14 @@ namespace IR
 	{
 	public:
 		//Methods
-		void Visit(Visitor &visitor) const override
-		{
-		}
-
 		String ToString() const override
 		{
 			return u8"null";
+		}
+
+		void Visit(ValueVisitor &visitor) const override
+		{
+
 		}
 	};
 }

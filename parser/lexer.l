@@ -27,22 +27,26 @@ extern AST::ParserState* g_parserState;
 
 %%
 [ \t\r\n]       ; //ignore whitespaces
+"//".*      {} //skip comments
 
 ","         { return TOKEN_COMMA; }
 ":"         { return TOKEN_COLON; }
 ";"         { return TOKEN_SEMICOLON; }
 ":="        { return TOKEN_ASSIGN; }
 "->"        { return TOKEN_MAP; }
+"|"         { return TOKEN_GUARD; }
 "("         { return TOKEN_PAREN_OPEN; }
 ")"         { return TOKEN_PAREN_CLOSE; }
 "{"         { return TOKEN_BRACE_OPEN; }
 "}"         { return TOKEN_BRACE_CLOSE; }
 "..."       { return TOKEN_MORE; }
 
-"extern"    { return TOKEN_KEYWORD_EXTERN; }
-"null"      { return TOKEN_KEYWORD_NULL; }
+"+"         { return TOKEN_PLUS; }
+"-"         { return TOKEN_MINUS; }
 
-[0-9]+      { yylval.str = g_parserState->CreateString(yytext); return TOKEN_NATURAL_LITERAL; }
-[\-\*]      { return TOKEN_OPERATOR; }
-[a-zA-Z]+   { yylval.str = g_parserState->CreateString(yytext); return TOKEN_IDENTIFIER; }
+"extern"    { return TOKEN_KEYWORD_EXTERN; }
+"let"       { return TOKEN_KEYWORD_LET; }
+
+[0-9]+              { yylval.str = g_parserState->CreateString(yytext); return TOKEN_NATURAL_LITERAL; }
+[a-zA-Z0-9\-\*<=]+  { yylval.str = g_parserState->CreateString(yytext); return TOKEN_IDENTIFIER; }
 %%

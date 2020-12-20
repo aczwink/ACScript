@@ -19,25 +19,28 @@
 #pragma once
 //Local
 #include "Statement.hpp"
-#include "../ASTVisitor.hpp"
-#include "../ASTNode.hpp"
+#include "../Node.hpp"
+#include "../visitors/StatementVisitor.hpp"
 
-class StatementBlock : public ASTNode
+namespace AST
 {
-public:
-	//Inline
-	inline void AddStatement(UniquePointer<Statement>&& stmt)
+	class StatementBlock : public Node
 	{
-		this->statements.InsertTail(Move(stmt));
-	}
+	public:
+		//Inline
+		inline void AddStatement(UniquePointer<Statement> &&stmt)
+		{
+			this->statements.InsertFront(Move(stmt));
+		}
 
-	inline void Visit(ASTVisitor& visitor) const
-	{
-		for (const UniquePointer<Statement>& statement : this->statements)
-			statement->Visit(visitor);
-		visitor.OnVisitedBlock(*this);
-	}
-private:
-	//Members
-	LinkedList<UniquePointer<Statement>> statements;
-};
+		inline void Visit(StatementVisitor &visitor) const
+		{
+			for (const UniquePointer<Statement> &statement : this->statements)
+				statement->Visit(visitor);
+		}
+
+	private:
+		//Members
+		LinkedList<UniquePointer<Statement>> statements;
+	};
+}

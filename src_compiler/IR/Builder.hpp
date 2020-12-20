@@ -27,6 +27,8 @@
 #include "instructions/CreateNewTupleInstruction.hpp"
 #include "instructions/ReturnInstruction.hpp"
 #include "NullValue.hpp"
+#include "instructions/CallInstruction.hpp"
+#include "instructions/BranchOnTrueInstruction.hpp"
 
 namespace IR
 {
@@ -46,11 +48,21 @@ namespace IR
 		}
 
 		//Inline
-		BasicBlock *CreateBasicBlock()
+		BasicBlock *CreateBasicBlock(const String& name)
 		{
-			BasicBlock* basicBlock = new BasicBlock;
+			BasicBlock* basicBlock = new BasicBlock(name);
 			this->basicBlocks.Push(basicBlock);
 			return basicBlock;
+		}
+
+		inline Instruction* CreateCall(const Value* function, const Value* argument)
+		{
+			return this->InsertInstruction(new CallInstruction(function, argument));
+		}
+
+		inline Instruction* CreateConditionalBranch(Value* condition, BasicBlock* thenBlock, BasicBlock* elseBlock)
+		{
+			return this->InsertInstruction(new BranchOnTrueInstruction(condition, thenBlock, elseBlock));
 		}
 
 		inline Value* CreateConstant(float64 value)
@@ -61,7 +73,7 @@ namespace IR
 			return this->Register(v);
 		}
 
-		inline External* CreateExternal(const String& externalName, const ::Type* returnType, const ::TupleType* argumentType)
+		inline External* CreateExternal(const String& externalName, const ::Type* returnType, const ::Type* argumentType)
 		{
 			External* external = new External(externalName, returnType, argumentType);
 			external->type = this->typeCatalog.GetFunctionType(returnType, argumentType);
@@ -76,7 +88,7 @@ namespace IR
 
 		inline Procedure* CreateMainProcedure()
 		{
-			Procedure* proc = new Procedure(this->typeCatalog.GetLeafType(LeafTypeEnum::Null), this->typeCatalog.GetEmptyTupleType());
+			Procedure* proc = new Procedure(this->typeCatalog.GetLeafType(LeafTypeEnum::Null), this->typeCatalog.GetEmptyTupleType(), nullptr);
 			proc->type = this->typeCatalog.GetFunctionType(proc->returnType, proc->argumentType);
 			proc->name = u8"main";
 
@@ -95,9 +107,16 @@ namespace IR
 			return this->InsertInstruction(instruction);
 		}
 
-		inline Procedure* CreateProcedure(const ::Type* returnType, const ::TupleType* argumentType)
+		inline Procedure* CreateProcedure(const ::Type* returnType, const ::Type* argumentType)
 		{
-			return this->Register( new Procedure(returnType, argumentType) );
+			if(argumentType == nullptr)
+				argumentType = this->typeCatalog.CreateGenericType();
+
+			Parameter* parameter = this->CreateUniqueNameAndRegisterSymbol(new Parameter, u8"$p");
+			parameter->type = argumentType;
+
+			Procedure* proc = new Procedure(returnType, argumentType, parameter);
+			return this->CreateUniqueNameAndRegisterSymbol(proc, u8"__func");
 		}
 
 		inline Instruction* CreateReturn(const Value* returnValue)
@@ -130,7 +149,8 @@ namespace IR
 
 		inline String CreateUniqueName(const String& prefix)
 		{
-			return prefix + String::Number(this->prefixes[prefix]++);
+			uint32 counter = this->prefixes[prefix]++;
+			return prefix + String::Number(counter);
 		}
 
 		inline Instruction* InsertInstruction(Instruction* instruction)

@@ -22,6 +22,7 @@ using namespace StdXX;
 
 enum class RuntimeValueType
 {
+	Bool,
 	Float64,
 	Null,
 	Tuple
@@ -35,6 +36,10 @@ public:
 	{
 	}
 
+	inline RuntimeValue(bool b) : type(RuntimeValueType::Bool), b(b)
+	{
+	}
+
 	inline RuntimeValue(float64 f64) : type(RuntimeValueType::Float64), f64(f64)
 	{
 	}
@@ -43,6 +48,11 @@ public:
 	inline RuntimeValueType Type() const
 	{
 		return this->type;
+	}
+
+	inline bool ValueBool() const
+	{
+		return this->b;
 	}
 
 	inline float64 ValueF64() const
@@ -69,6 +79,7 @@ private:
 	RuntimeValueType type;
 	union
 	{
+		bool b;
 		float64 f64;
 		DynamicArray<RuntimeValue>* array;
 	};

@@ -21,29 +21,31 @@
 #include "Expression.hpp"
 #include "ExpressionList.hpp"
 
-class TupleExpression : public Expression
+namespace AST
 {
-public:
-	//Constructor
-	inline TupleExpression(UniquePointer<ExpressionList>&& expressionList)
-		: expressionList(Move(expressionList))
+	class TupleExpression : public Expression
 	{
-	}
+	public:
+		//Constructor
+		inline TupleExpression(UniquePointer<ExpressionList> &&expressionList)
+				: expressionList(Move(expressionList))
+		{
+		}
 
-	//Properties
-	inline const LinkedList<UniquePointer<Expression>>& Expressions() const
-	{
-		return this->expressionList->Expressions();
-	}
+		//Properties
+		inline const LinkedList<UniquePointer<Expression>> &Expressions() const
+		{
+			return this->expressionList->Expressions();
+		}
 
-	//Methods
-	void Visit(ASTVisitor& visitor) const
-	{
-		this->expressionList->Visit(visitor);
-		visitor.OnVisitedTupleExpression(*this);
-	}
+		//Methods
+		void Visit(ExpressionVisitor &visitor) const
+		{
+			visitor.OnVisitedTupleExpression(*this);
+		}
 
-private:
-	//Members
-	UniquePointer<ExpressionList> expressionList;
-};
+	private:
+		//Members
+		UniquePointer<ExpressionList> expressionList;
+	};
+}

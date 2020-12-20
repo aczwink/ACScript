@@ -21,6 +21,7 @@
 #include "Symbol.hpp"
 #include "../types/TupleType.hpp"
 #include "BasicBlock.hpp"
+#include "Parameter.hpp"
 
 namespace IR
 {
@@ -29,19 +30,38 @@ namespace IR
 	public:
 		//Members
 		const ::Type* returnType;
-		const ::TupleType* argumentType;
-		BasicBlock* entryBlock;
+		const ::Type* argumentType;
+		Parameter* parameter;
 
 		//Constructor
-		inline Procedure(const ::Type* returnType, const ::TupleType* argumentType) : returnType(returnType), argumentType(argumentType)
+		inline Procedure(const ::Type* returnType, const ::Type* argumentType, Parameter* parameter)
+			: returnType(returnType), argumentType(argumentType), parameter(parameter)
 		{
-			this->name = name;
 		}
 
-		void Visit(Visitor &visitor) const override
+		//Properties
+		inline const DynamicArray<BasicBlock*>& BasicBlocks() const
 		{
-			visitor.OnVisitingProcedure(*this);
-			entryBlock->Visit(visitor);
+			return this->basicBlocks;
 		}
+
+		inline BasicBlock* EntryBlock()
+		{
+			return this->basicBlocks[0];
+		}
+
+		//Inline
+		inline void AddBlock(BasicBlock* basicBlock)
+		{
+			if(this->basicBlocks.IsEmpty())
+			{
+				basicBlock->namedValues[u8"self"] = this;
+			}
+			this->basicBlocks.Push(basicBlock);
+		}
+
+	private:
+		//Members
+		DynamicArray<BasicBlock*> basicBlocks;
 	};
 }

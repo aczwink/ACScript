@@ -21,8 +21,8 @@ using namespace StdXX;
 using namespace StdXX::FileSystem;
 #include "AST/Parser.hpp"
 
-void compile(const StatementBlock&);
-void llvm_main(const StatementBlock&);
+void compile(const AST::ParserState&);
+void llvm_main(const AST::StatementBlock&);
 
 static bool Parse(const Path& path, AST::ParserState& parserState)
 {
@@ -35,14 +35,10 @@ static bool Parse(const Path& path, AST::ParserState& parserState)
 	for(const String& childName : *libDir)
 	{
 		if(!parser.Parse(libPath / childName))
-		{
-			stdErr << u8"Failed parsing input." << endl;
 			return false;
-		}
 	}
 	parser.Parse(path);
-
-	return true;
+	return parser.Finish();
 }
 
 int32 Main(const String& programName, const FixedArray<String>& args)
@@ -69,6 +65,7 @@ int32 Main(const String& programName, const FixedArray<String>& args)
 	AST::ParserState parserState;
 	if(!Parse(path, parserState))
 	{
+		stdErr << u8"Failed parsing input." << endl;
 		return EXIT_FAILURE;
 	}
 

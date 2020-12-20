@@ -19,10 +19,19 @@
 #include "expressions/CallExpression.hpp"
 #include "expressions/Expression.hpp"
 #include "expressions/ExpressionList.hpp"
+#include "expressions/FunctionExpression.hpp"
+#include "expressions/IdentifierExpression.hpp"
 #include "expressions/NaturalLiteralExpression.hpp"
 #include "expressions/TupleExpression.hpp"
 
+#include "leftValues/IdentifierLeftValue.hpp"
+
 #include "statements/ExpressionStatement.hpp"
 #include "statements/StatementBlock.hpp"
+#include "statements/VariableDefinitionStatement.hpp"
 
-#include "External.hpp"
+#include "typeSpecifications/FunctionTypeSpec.hpp"
+#include "typeSpecifications/IdentifierTypeSpec.hpp"
+#include "typeSpecifications/TupleTypeSpec.hpp"
+
+#include "statements/ExternalDeclarationStatement.hpp"

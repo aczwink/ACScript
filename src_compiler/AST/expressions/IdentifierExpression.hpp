@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,23 +16,33 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-//Local
+#pragma once
 #include "Expression.hpp"
 
-class IntLiteralExpression : public Expression
+namespace AST
 {
-public:
-	//Constructor
-	inline IntLiteralExpression(const String& literal) : value(literal.ToInt())
+	class IdentifierExpression : public Expression
 	{
-	}
+	public:
+		//Constructor
+		IdentifierExpression(const String& identifier) : identifier(Move(identifier))
+		{
+		}
 
-	//Methods
-	IR::Symbol Compile(IR::Block& block, const ExpressionCompileFlags& flags) const override;
-	void CompileAsUnpack(Program & p, bool localAssign) const override;
-	IR::Type GetType() const override;
+		//Properties
+		inline const String& Identifier() const
+		{
+			return this->identifier;
+		}
 
-private:
-	//Members
-	int64 value;
-};
+		//Methods
+		void Visit(ExpressionVisitor &visitor) const override
+		{
+			visitor.OnVisitingIdentifier(*this);
+		}
+
+	private:
+		//Members
+		String identifier;
+	};
+}

@@ -16,14 +16,16 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
 #include "Type.hpp"
 
 enum class LeafTypeEnum
 {
-	Null,
-	Float64,
 	Any,
+	Bool,
+	Float64,
+	Null,
 };
 
 class LeafType : public ::Type
@@ -35,18 +37,66 @@ public:
 	}
 
 	//Public methods
+	bool IsTriviallyAssignableTo(const Type &other) const override
+	{
+		const LeafType* otherLeafType = dynamic_cast<const LeafType *>(&other);
+		if(otherLeafType)
+		{
+			if(this->type == otherLeafType->type)
+				return true;
+
+			switch(this->type)
+			{
+				case LeafTypeEnum::Any:
+					NOT_IMPLEMENTED_ERROR;
+					break;
+				case LeafTypeEnum::Bool:
+					NOT_IMPLEMENTED_ERROR;
+					break;
+				case LeafTypeEnum::Float64:
+				{
+					switch(otherLeafType->type)
+					{
+						case LeafTypeEnum::Any:
+							return true;
+						case LeafTypeEnum::Bool:
+							NOT_IMPLEMENTED_ERROR;
+							break;
+						case LeafTypeEnum::Null:
+							NOT_IMPLEMENTED_ERROR;
+							break;
+					}
+				}
+					break;
+				case LeafTypeEnum::Null:
+					NOT_IMPLEMENTED_ERROR;
+					break;
+			}
+		}
+
+		NOT_IMPLEMENTED_ERROR;
+		return false;
+	}
+
 	String ToString() const override
 	{
 		switch (this->type)
 		{
-			case LeafTypeEnum::Null:
-				return u8"null";
-			case LeafTypeEnum::Float64:
-				return u8"float64";
 			case LeafTypeEnum::Any:
 				return u8"any";
+			case LeafTypeEnum::Bool:
+				return u8"bool";
+			case LeafTypeEnum::Float64:
+				return u8"float64";
+			case LeafTypeEnum::Null:
+				return u8"null";
 		}
 		RAISE(ErrorHandling::IllegalCodePathError);
+	}
+
+	void Visit(TypeVisitor &visitor) const override
+	{
+		visitor.OnVisitingLeafType(*this);
 	}
 
 private:

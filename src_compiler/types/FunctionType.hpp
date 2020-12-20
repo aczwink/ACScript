@@ -16,6 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
 #include <Std++/Definitions.h>
 #include "Type.hpp"
@@ -24,14 +25,36 @@ class FunctionType : public ::Type
 {
 public:
 	//Constructor
-	inline FunctionType(const ::Type* returnType, const ::TupleType* argumentType) : returnType(returnType), argumentType(argumentType)
+	inline FunctionType(const ::Type* returnType, const ::Type* argumentType) : returnType(returnType), argumentType(argumentType)
 	{
 	}
 
+	//Properties
+	inline const ::Type* ArgumentType() const
+	{
+		return this->argumentType;
+	}
+
+	inline const ::Type* ReturnType() const
+	{
+		return this->returnType;
+	}
+
 	//Methods
+	bool IsTriviallyAssignableTo(const Type &other) const override
+	{
+		NOT_IMPLEMENTED_ERROR;
+		return false;
+	}
+
 	String ToString() const override
 	{
 		return this->argumentType->ToString() + u8" -> " + this->returnType->ToString();
+	}
+
+	void Visit(TypeVisitor &visitor) const override
+	{
+		NOT_IMPLEMENTED_ERROR;
 	}
 
 private:

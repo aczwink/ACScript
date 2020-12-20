@@ -24,36 +24,25 @@
 using namespace IR;
 
 //Public methods
-void Printer::OnVisitedNewTupleInstruction(const CreateNewTupleInstruction &createNewTupleInstruction)
+//this->textWriter << constantFloat.name << u8" := " << constantFloat.Value() << endl;
+void Printer::Print(const Module &module)
 {
-}
+	for(const auto& kv : module.Externals())
+	{
+		this->textWriter << kv.value->ToString() << endl;
+	}
 
-void Printer::OnVisitingConstant(const ConstantFloat &constantFloat)
-{
-	//this->textWriter << constantFloat.name << u8" := " << constantFloat.Value() << endl;
-}
+	this->textWriter << endl;
 
-void Printer::OnVisitingExternal(const External &external)
-{
-	this->textWriter << external.ToString() << endl;
-}
-
-void Printer::OnVisitingExternalCallInstruction(const ExternalCallInstruction &externalCallInstruction)
-{
-	this->PrintInstruction(externalCallInstruction);
-}
-
-void Printer::OnVisitingNewTupleInstruction(const CreateNewTupleInstruction &createNewTupleInstruction)
-{
-	this->PrintInstruction(createNewTupleInstruction);
-}
-
-void Printer::OnVisitingProcedure(const Procedure &procedure)
-{
-	this->textWriter << procedure.ToString() << endl;
-}
-
-void Printer::OnVisitingReturnInstruction(const ReturnInstruction &returnInstruction)
-{
-	this->PrintInstruction(returnInstruction);
+	for(Procedure*const& procedure : module.Procedures())
+	{
+		this->textWriter << u8"procedure " << procedure->ToString() << endl;
+		for(const auto& basicBlock : procedure->BasicBlocks())
+		{
+			this->textWriter << basicBlock->Name() << u8":" << endl;
+			for(const Instruction*const& instruction : basicBlock->Instructions())
+				this->PrintInstruction(*instruction);
+		}
+		this->textWriter << endl;
+	}
 }

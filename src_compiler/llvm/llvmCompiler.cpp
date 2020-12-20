@@ -19,17 +19,16 @@
 //Class header
 #include "llvmCompiler.hpp"
 //Local
-#include "../AST/AllNodes.hpp"
 #include "../CompileException.hpp"
 
 //Public methods
-void llvmCompiler::OnVisitedBlock(const StatementBlock &statementBlock)
+void llvmCompiler::OnVisitedBlock(const AST::StatementBlock &statementBlock)
 {
 	//return value for main
 	this->irBuilder->CreateRet(llvm::ConstantInt::get(*this->context, llvm::APInt(32, 0)));
 }
 
-void llvmCompiler::OnVisitedCall(const CallExpression &callExpression)
+void llvmCompiler::OnVisitedCall(const AST::CallExpression &callExpression)
 {
 
 	llvm::Function* function = this->module->getFunction(
@@ -45,36 +44,66 @@ void llvmCompiler::OnVisitedCall(const CallExpression &callExpression)
 		throw CompileException(u8"Unknown function: " + callExpression.FunctionName());
 	}
 
-	if (function->arg_size() != callExpression.Argument().Expressions().GetNumberOfElements())
+	//if (function->arg_size() != callExpression.Argument().Expressions().GetNumberOfElements())
 		throw CompileException(u8"Incorrect number of arguments passed");
 
 	std::vector<llvm::Value *> ArgsV;
-	for(const auto& expr : callExpression.Argument().Expressions())
+	//for(const auto& expr : callExpression.Argument().Expressions())
 		ArgsV.push_back(this->valueStack.Pop());
 
 	llvm::Value* call = this->irBuilder->CreateCall(function, ArgsV, u8"calltmp");
 	this->valueStack.Push(call);
 }
 
-void llvmCompiler::OnVisitedTupleExpression(const TupleExpression &tupleExpression)
+void llvmCompiler::OnVisitingExternalDeclaration(const AST::ExternalDeclarationStatement &externalDeclaration)
+{
+}
+
+void llvmCompiler::OnVisitedFunctionTypeSpec(const AST::FunctionTypeSpec &functionTypeSpec)
 {
 	//NOT IMPLEMENTED
 }
 
-void llvmCompiler::OnVisitingNaturalLiteral(const NaturalLiteralExpression &naturalLiteralExpression)
+void llvmCompiler::OnVisitedIdentifierTypeSpec(const AST::IdentifierTypeSpec &identifierTypeSpec)
+{
+	//NOT IMPLEMENTED
+}
+
+void llvmCompiler::OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression)
+{
+	//NOT IMPLEMENTED
+}
+
+void llvmCompiler::OnVisitedTupleTypeSpec(const AST::TupleTypeSpec &tupleTypeSpec)
+{
+	//NOT IMPLEMENTED
+}
+
+void llvmCompiler::OnVisitingFunctionExpression(const AST::FunctionExpression &functionExpression)
+{
+	//NOT IMPLEMENTED
+}
+
+void llvmCompiler::OnVisitingIdentifier(const AST::IdentifierExpression &identifierExpression)
+{
+	//NOT IMPLEMENTED
+}
+
+void llvmCompiler::OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression)
 {
 	llvm::Value* value = llvm::ConstantFP::get(*this->context, llvm::APFloat((float64)naturalLiteralExpression.Value()));
 	this->valueStack.Push(value);
 }
 
 //Private methods
-void llvmCompiler::CompilePrintCall(const CallExpression &callExpression)
+void llvmCompiler::CompilePrintCall(const AST::CallExpression &callExpression)
 {
 	std::vector<llvm::Value *> ArgsV;
 	llvm::Value* formatStr = this->irBuilder->CreateGlobalStringPtr(u8"%f\n");
 	ArgsV.push_back(formatStr);
 
-	for(uint32 i = 0; i < callExpression.Argument().Expressions().GetNumberOfElements(); i++)
+	//for(uint32 i = 0; i < callExpression.Argument().Expressions().GetNumberOfElements(); i++)
+	NOT_IMPLEMENTED_ERROR;
 	{
 		ArgsV.push_back(this->valueStack.Pop());
 	}
@@ -96,4 +125,10 @@ void llvmCompiler::Initialize()
 
 	llvm::BasicBlock *entry = llvm::BasicBlock::Create(*this->context, u8"entry", main);
 	this->irBuilder->SetInsertPoint(entry);
+}
+
+//Event handlers
+void llvmCompiler::OnVisitingExpressionStatement(const AST::ExpressionStatement &expressionStatement)
+{
+
 }

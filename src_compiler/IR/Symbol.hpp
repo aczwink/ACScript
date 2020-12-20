@@ -35,7 +35,12 @@ namespace IR
 
 		String ToString() const override
 		{
-			return this->name + u8": " + this->type->ToString();
+			return this->name + u8": " + TypePointerToString(this->type);
+		}
+
+		void Visit(ValueVisitor &visitor) const override
+		{
+
 		}
 	};
 }

@@ -29,23 +29,25 @@ void yyerror(AST::ParserState* parserState, const char* s);
 %token TOKEN_BRACE_CLOSE
 %token TOKEN_COLON
 %token TOKEN_COMMA
+%token TOKEN_GUARD
 %token TOKEN_MAP
 %token TOKEN_MORE
 %token TOKEN_PAREN_OPEN
 %token TOKEN_PAREN_CLOSE
 %token TOKEN_SEMICOLON
 
+%token TOKEN_PLUS
+%token TOKEN_MINUS
+
 %token TOKEN_KEYWORD_EXTERN
-%token TOKEN_KEYWORD_NULL
+%token TOKEN_KEYWORD_LET
 
 %token TOKEN_IDENTIFIER
 %token TOKEN_NATURAL_LITERAL
-%token TOKEN_OPERATOR
 
 %start module
 
 
-%left TOKEN_OPERATOR
 %left TOKEN_PAREN_OPEN
 
 
@@ -54,41 +56,51 @@ void yyerror(AST::ParserState* parserState, const char* s);
 {
     String* str;
 
-    Expression* expr;
-    ExpressionList* exprList;
-    TupleExpression* tupleExpr;
+    AST::Expression* expr;
+    AST::FunctionExpression* funcExpr;
+    AST::ExpressionList* exprList;
 
-    AST::External* external;
+    AST::LeftValue* lvalue;
 
-    Statement* stmt;
+    AST::Statement* stmt;
+
+    AST::TypeSpec* type;
+    AST::TupleTypeSpec* tupleTypeSpec;
 }
 %type <str> TOKEN_IDENTIFIER
 %type <str> TOKEN_NATURAL_LITERAL
+%type <str> function_name
 
 %type <expr> expression
 %type <expr> value_expression
-%type <expr> tuple_call
-%type <tupleExpr> tuple_expression
+%type <expr> function_call
+%type <expr> function_expression
+%type <funcExpr> functionRules
+%type <expr> pattern
+%type <expr> tuple_expression
 %type <exprList> tuple_expressions
-%type <external> external
 %type <stmt> statement
+
+%type <type> typespec
+%type <type> function_type
+%type <type> tuple_type
+%type <tupleTypeSpec> tuple_type_entries
+
+%type <lvalue> left_value
 
 %parse-param { AST::ParserState* parserState }
 
 %%
 
 module:
-    external                                                { parserState->AddExternal($1); }
-    | statement                                             { parserState->ModuleStatements().AddStatement($1); }
-    | statement module                                      { parserState->ModuleStatements().AddStatement($1); }
-;
-
-external:
-    TOKEN_KEYWORD_EXTERN TOKEN_IDENTIFIER TOKEN_COLON typespec TOKEN_SEMICOLON
+    statement                                                                     { parserState->ModuleStatements().AddStatement($1); }
+    | statement module                                                              { parserState->ModuleStatements().AddStatement($1); }
 ;
 
 statement:
-    tuple_call TOKEN_SEMICOLON                              { $$ = new ExpressionStatement($1); }
+    TOKEN_KEYWORD_EXTERN function_name TOKEN_COLON typespec TOKEN_SEMICOLON         { $$ = new AST::ExternalDeclarationStatement(*$2, $4); }
+    | function_call TOKEN_SEMICOLON                                                    { $$ = new AST::ExpressionStatement($1); }
+    | TOKEN_KEYWORD_LET left_value TOKEN_ASSIGN expression TOKEN_SEMICOLON          { $$ = new AST::VariableDefinitionStatement($2, $4); }
 ;
 
 
@@ -96,79 +108,89 @@ statement:
 
 
 typespec:
-    TOKEN_KEYWORD_NULL
-    | TOKEN_IDENTIFIER
-    | function_type
-    | tuple_type
+    TOKEN_IDENTIFIER                                        { $$ = new AST::IdentifierTypeSpec(*$1); }
+    | function_type                                         { $$ = $1; }
+    | tuple_type                                            { $$ = $1; }
 ;
 
 function_type:
-    typespec TOKEN_MAP typespec
+    typespec TOKEN_MAP typespec                             { $$ = new AST::FunctionTypeSpec($1, $3); }
 ;
 
-tuple_type_entry:
-    typespec
-    | typespec TOKEN_MORE
+tuple_type_entries:
+    typespec                                                { $$ = new AST::TupleTypeSpec($1); }
+    | typespec TOKEN_MORE                                   { $$ = new AST::TupleTypeSpec($1, true); }
+    | typespec TOKEN_COMMA tuple_type_entries               { $$ = $3; $3->AddTypeSpec($1); }
 ;
 
 tuple_type:
-    TOKEN_PAREN_OPEN tuple_type_entry TOKEN_PAREN_CLOSE
+    TOKEN_PAREN_OPEN tuple_type_entries TOKEN_PAREN_CLOSE     { $$ = $2; }
 ;
 
 
 
 
 
-
-tuple_call:
-    TOKEN_IDENTIFIER tuple_expression                       { $$ = new CallExpression(*$1, $2); }
+function_name:
+    TOKEN_IDENTIFIER                                                { $$ = $1; }
+    | TOKEN_PLUS                                                    { $$ = parserState->CreateString(u8"+"); }
+    | TOKEN_MINUS                                                   { $$ = parserState->CreateString(u8"-"); }
 ;
+
+
+
+function_call:
+    TOKEN_IDENTIFIER TOKEN_PAREN_OPEN expression TOKEN_PAREN_CLOSE                       { $$ = new AST::CallExpression(*$1, $3); }
+;
+
+
+
+
+expression:
+    value_expression                                                    { $$ = $1; }
+    | TOKEN_IDENTIFIER                                                  { $$ = new AST::IdentifierExpression(*$1); }
+    | function_call                                                     { $$ = $1; }
+    | expression function_name expression /*infix notation call*/       { $$ = new AST::CallExpression(*$2, new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
+;
+
+value_expression:
+    TOKEN_NATURAL_LITERAL                                           { $$ = new AST::NaturalLiteralExpression(*$1); }
+    | function_expression                                           { $$ = $1; }
+    | tuple_expression                                              { $$ = $1; }
+;
+
+
+function_expression:
+    pattern TOKEN_MAP expression                                    { $$ = new AST::FunctionExpression($1, nullptr, $3); }
+    | TOKEN_BRACE_OPEN functionRules TOKEN_BRACE_CLOSE              { $$ = $2; }
+;
+
+functionRules:
+    pattern TOKEN_MAP expression                                                        { $$ = new AST::FunctionExpression($1, nullptr, $3); }
+    | pattern TOKEN_MAP expression TOKEN_COMMA functionRules                            { $$ = $5; $5->AddRule($1, nullptr, $3); }
+    | pattern TOKEN_GUARD expression TOKEN_MAP expression TOKEN_COMMA functionRules     { $$ = $7; $7->AddRule($1, $3, $5); }
+;
+
 
 tuple_expressions:
-    expression                                              { $$ = new ExpressionList($1); }
+    expression                                              { $$ = new AST::ExpressionList($1); }
     | expression TOKEN_COMMA tuple_expressions              { $3->InsertAtBeginning($1); $$ = $3; }
 ;
 
 tuple_expression:
-    TOKEN_PAREN_OPEN tuple_expressions TOKEN_PAREN_CLOSE    { $$ = new TupleExpression($2); }
-;
-
-expression:
-    value_expression                                        { $$ = $1; }
-;
-
-value_expression:
-    TOKEN_NATURAL_LITERAL                                   { $$ = new NaturalLiteralExpression(*$1); }
+    TOKEN_PAREN_OPEN tuple_expressions TOKEN_PAREN_CLOSE            { $$ = new AST::TupleExpression($2); }
 ;
 
 
 
 
-
-
-
-
-/*
-statement:
-    call TOKEN_SEMICOLON                                  { $$ = new ExpressionStatement($1); }
-    //| TOKEN_IDENTIFIER TOKEN_ASSIGN expression TOKEN_SEMICOLON  { $$ = new AssignmentStatement($1, $3); }
+left_value:
+    TOKEN_IDENTIFIER                                                { $$ = new AST::IdentifierLeftValue(*$1); }
 ;
 
-expression:
-    value_expression
-    | expression TOKEN_OPERATOR expression //binary operator call
-    | call
+pattern:
+    TOKEN_NATURAL_LITERAL                                           { $$ = new AST::NaturalLiteralExpression(*$1); }
+    | TOKEN_IDENTIFIER                                              { $$ = new AST::IdentifierExpression(*$1); }
 ;
-
-value_expression:
-    TOKEN_IDENTIFIER
-    | TOKEN_NATURAL_LITERAL
-    | TOKEN_KEYWORD_FUNCTION TOKEN_BRACE_OPEN functionRules TOKEN_BRACE_CLOSE
-;
-
-functionRules:
-    expression TOKEN_MAP expression
-    | expression TOKEN_MAP expression TOKEN_COMMA functionRules
-;*/
 
 %%

@@ -17,19 +17,24 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-//Forward declarations
-class CallExpression;
-class NaturalLiteralExpression;
-class StatementBlock;
-class TupleExpression;
 
-class ASTVisitor
+namespace AST
 {
-public:
-	//Methods
-	virtual void OnVisitedBlock(const StatementBlock& statementBlock) = 0;
-	virtual void OnVisitedCall(const CallExpression& callExpression) = 0;
-	virtual void OnVisitedTupleExpression(const TupleExpression& tupleExpression) = 0;
+	//Forward declarations
+	class CallExpression;
+	class FunctionExpression;
+	class IdentifierExpression;
+	class NaturalLiteralExpression;
+	class TupleExpression;
 
-	virtual void OnVisitingNaturalLiteral(const NaturalLiteralExpression& naturalLiteralExpression) = 0;
-};
+	class ExpressionVisitor
+	{
+	public:
+		//Abstract
+		virtual void OnVisitedCall(const CallExpression& callExpression) = 0;
+		virtual void OnVisitingFunctionExpression(const FunctionExpression& functionExpression) = 0;
+		virtual void OnVisitingIdentifier(const IdentifierExpression& identifierExpression) = 0;
+		virtual void OnVisitingNaturalLiteral(const NaturalLiteralExpression& naturalLiteralExpression) = 0;
+		virtual void OnVisitedTupleExpression(const TupleExpression& tupleExpression) = 0;
+	};
+}

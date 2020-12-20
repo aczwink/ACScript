@@ -17,12 +17,12 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 //Local
-#include "Visitor.hpp"
 #include "../Instruction.hpp"
+#include "../Module.hpp"
 
 namespace IR
 {
-	class Printer : public Visitor
+	class Printer
 	{
 	public:
 		//Constructor
@@ -31,14 +31,7 @@ namespace IR
 		}
 
 		//Methods
-		void OnVisitedNewTupleInstruction(const CreateNewTupleInstruction &createNewTupleInstruction) override;
-
-		void OnVisitingConstant(const ConstantFloat &constantFloat) override;
-		void OnVisitingExternal(const External& external) override;
-		void OnVisitingExternalCallInstruction(const ExternalCallInstruction &externalCallInstruction) override;
-		void OnVisitingNewTupleInstruction(const CreateNewTupleInstruction &createNewTupleInstruction) override;
-		void OnVisitingProcedure(const Procedure &procedure) override;
-		void OnVisitingReturnInstruction(const ReturnInstruction &returnInstruction) override;
+		void Print(const Module& module);
 
 	private:
 		//Members

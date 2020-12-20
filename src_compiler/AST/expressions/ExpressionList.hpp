@@ -17,37 +17,39 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "../ASTNode.hpp"
+#include "../Node.hpp"
 
-class ExpressionList : public ASTNode
+namespace AST
 {
-public:
-	//Constructor
-	inline ExpressionList(UniquePointer<Expression>&& expr)
+	class ExpressionList : public Node
 	{
-		this->expressions.InsertTail(Move(expr));
-	}
+	public:
+		//Constructors
+		inline ExpressionList(UniquePointer<Expression> &&expr)
+		{
+			this->expressions.InsertTail(Move(expr));
+		}
 
-	//Properties
-	inline const LinkedList<UniquePointer<Expression>>& Expressions() const
-	{
-		return this->expressions;
-	}
+		inline ExpressionList(UniquePointer<Expression> &&expr1, UniquePointer<Expression> &&expr2)
+		{
+			this->expressions.InsertTail(Move(expr1));
+			this->expressions.InsertTail(Move(expr2));
+		}
 
-	//Methods
-	void Visit(ASTVisitor& visitor) const
-	{
-		for(const UniquePointer<Expression>& expr : this->expressions)
-			expr->Visit(visitor);
-	}
+		//Properties
+		inline const LinkedList<UniquePointer<Expression>> &Expressions() const
+		{
+			return this->expressions;
+		}
 
-	//Inline
-	inline void InsertAtBeginning(UniquePointer<Expression>&& expr)
-	{
-		this->expressions.InsertFront(Move(expr));
-	}
+		//Inline
+		inline void InsertAtBeginning(UniquePointer<Expression> &&expr)
+		{
+			this->expressions.InsertFront(Move(expr));
+		}
 
-private:
-	//Members
-	LinkedList<UniquePointer<Expression>> expressions;
-};
+	private:
+		//Members
+		LinkedList<UniquePointer<Expression>> expressions;
+	};
+}

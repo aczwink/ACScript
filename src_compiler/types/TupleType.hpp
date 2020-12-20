@@ -33,13 +33,44 @@ public:
 	{
 	}
 
+	//Properties
+	inline const DynamicArray<const ::Type*>& Types() const
+	{
+		return this->types;
+	}
+
 	//Methods
+	bool IsTriviallyAssignableTo(const Type& other) const override
+	{
+		const TupleType* rightTupleType = dynamic_cast<const TupleType *>(&other);
+		if(rightTupleType)
+		{
+			if(this->types.GetNumberOfElements() != rightTupleType->types.GetNumberOfElements())
+				return false;
+			for(uint32 i = 0; i < this->types.GetNumberOfElements(); i++)
+			{
+				const ::Type* t1 = this->types[i];
+				const ::Type* t2 = rightTupleType->types[i];
+				if(t1 && !t1->IsTriviallyAssignableTo(*t2))
+					return false;
+			}
+			return true;
+		}
+
+		return false;
+	}
+
 	String ToString() const override
 	{
 		DynamicArray<String> strings;
 		for(const ::Type*const& type : this->types)
-			strings.Push(type->ToString());
-		return u8"(" + String::Join(strings, u8", ") + (this->lastArgIsVariadic ? u8"..." : u8"") + u8")";
+			strings.Push(TypePointerToString(type));
+		return u8"(" + String::Join(strings, u8" x ") + (this->lastArgIsVariadic ? u8"..." : u8"") + u8")";
+	}
+
+	void Visit(TypeVisitor &visitor) const override
+	{
+		visitor.OnVisitingTupleType(*this);
 	}
 
 private:

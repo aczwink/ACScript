@@ -16,6 +16,8 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "../instructions/BranchOnTrueInstruction.hpp"
+#include "../instructions/CallInstruction.hpp"
 #include "../instructions/CreateNewTupleInstruction.hpp"
 #include "../instructions/ExternalCallInstruction.hpp"
 #include "../instructions/ReturnInstruction.hpp"

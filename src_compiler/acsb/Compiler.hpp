@@ -18,29 +18,28 @@
 */
 //Local
 #include <acsb/Opcode.hpp>
-#include "../IR/visitors/Visitor.hpp"
+#include "../IR/visitors/BasicBlockVisitor.hpp"
+#include "../IR/External.hpp"
+#include "../IR/Module.hpp"
 
 namespace ACSB
 {
-	class Compiler : public IR::Visitor
+	class Compiler : private IR::BasicBlockVisitor, private IR::ValueVisitor
 	{
 	public:
 		//Methods
-		void OnVisitedNewTupleInstruction(const IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
-		void OnVisitingConstant(const IR::ConstantFloat &constantFloat) override;
-		void OnVisitingExternal(const IR::External &external) override;
-		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override;
-		void OnVisitingNewTupleInstruction(const IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
-		void OnVisitingProcedure(const IR::Procedure &procedure) override;
-		void OnVisitingReturnInstruction(const IR::ReturnInstruction &returnInstruction) override;
+		void Compile(const IR::Module& module);
 		void Write(OutputStream& outputStream);
 
 	private:
 		//Members
 		DynamicArray<String> externals;
 		Map<const IR::External*, uint16> externalMap;
+		Map<String, uint16> procedureOffsetMap;
 		DynamicArray<float64> constants;
 		FIFOBuffer codeSegment;
+		Map<const IR::BasicBlock*, uint16> blockOffsets;
+		Map<const IR::BasicBlock*, DynamicArray<uint16>> missingBlockOffsets;
 
 		//Inline
 		inline uint16 AddConstant(float64 value)
@@ -59,5 +58,16 @@ namespace ACSB
 			dataWriter.WriteByte(static_cast<byte>(op));
 			dataWriter.WriteUInt16(arg0);
 		}
+
+		//Event handlers
+		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override;
+		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
+		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override;
+		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
+		void OnVisitingReturnInstruction(const IR::ReturnInstruction &returnInstruction) override;
+
+		void OnVisitingConstantFloat(const IR::ConstantFloat &constantFloat) override;
+		void OnVisitingExternal(const IR::External &external) override;
+		void OnVisitingParameter(const IR::Parameter &parameter) override;
 	};
 }

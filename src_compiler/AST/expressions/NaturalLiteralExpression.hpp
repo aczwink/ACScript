@@ -16,30 +16,34 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 //Local
 #include "Expression.hpp"
 
-class NaturalLiteralExpression : public Expression
+namespace AST
 {
-public:
-	//Constructor
-	inline NaturalLiteralExpression(const String& literal) : value(literal.ToUInt())
+	class NaturalLiteralExpression : public Expression
 	{
-	}
+	public:
+		//Constructor
+		inline NaturalLiteralExpression(const String &literal) : value(literal.ToUInt())
+		{
+		}
 
-	//Properties
-	inline uint64 Value() const
-	{
-		return this->value;
-	}
+		//Properties
+		inline uint64 Value() const
+		{
+			return this->value;
+		}
 
-	//Methods
-	void Visit(ASTVisitor& visitor) const
-	{
-		visitor.OnVisitingNaturalLiteral(*this);
-	}
+		//Methods
+		void Visit(ExpressionVisitor &visitor) const
+		{
+			visitor.OnVisitingNaturalLiteral(*this);
+		}
 
-private:
-	//Members
-	uint64 value;
-};
+	private:
+		//Members
+		uint64 value;
+	};
+}

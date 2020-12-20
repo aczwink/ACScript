@@ -25,40 +25,17 @@ using namespace ACSB;
 using namespace IR;
 
 //Public methods
-void Compiler::OnVisitedNewTupleInstruction(const CreateNewTupleInstruction &createNewTupleInstruction)
+void Compiler::Compile(const Module &module)
 {
-	this->AddInstruction(Opcode::NewTuple, createNewTupleInstruction.Values().GetNumberOfElements());
-}
-
-void Compiler::OnVisitingConstant(const ConstantFloat &constantFloat)
-{
-	this->constants.Push(constantFloat.Value());
-
-	this->AddInstruction(Opcode::LoadConstant, this->AddConstant(constantFloat.Value()));
-}
-
-void ACSB::Compiler::OnVisitingExternal(const IR::External& external)
-{
-	uint16 idx = this->externals.Push(external.name);
-	this->externalMap[&external] = idx;
-}
-
-void ACSB::Compiler::OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction)
-{
-	this->AddInstruction(Opcode::CallExtern, this->externalMap[externalCallInstruction.external]);
-}
-
-void ACSB::Compiler::OnVisitingNewTupleInstruction(const IR::CreateNewTupleInstruction &createNewTupleInstruction)
-{
-}
-
-void ACSB::Compiler::OnVisitingProcedure(const IR::Procedure &procedure)
-{
-}
-
-void Compiler::OnVisitingReturnInstruction(const ReturnInstruction &returnInstruction)
-{
-	this->AddInstruction(Opcode::Return);
+	for(const auto& proc : module.Procedures())
+	{
+		this->procedureOffsetMap[proc->name] = this->codeSegment.GetRemainingBytes();
+		for(const auto& basicBlock : proc->BasicBlocks())
+		{
+			this->blockOffsets[basicBlock] = this->codeSegment.GetRemainingBytes();
+			basicBlock->Visit(*this);
+		}
+	}
 }
 
 void Compiler::Write(OutputStream &outputStream)
@@ -76,5 +53,78 @@ void Compiler::Write(OutputStream &outputStream)
 	for(float64 constant : this->constants)
 		dataWriter.WriteFloat64(constant);
 
-	this->codeSegment.FlushTo(outputStream);
+	dataWriter.WriteUInt16(this->procedureOffsetMap[u8"main"]);
+
+	FixedSizeBuffer tmpBuffer(this->codeSegment.GetSize());
+	this->codeSegment.ReadBytes(tmpBuffer.Data(), tmpBuffer.Size());
+	BufferOutputStream bufferOutputStream(tmpBuffer.Data(), tmpBuffer.Size());
+	DataWriter bufferDataWriter(true, bufferOutputStream);
+
+	for(const auto& kv: this->missingBlockOffsets)
+	{
+		uint16 blockOffset = this->blockOffsets[kv.key];
+		for(uint16 offsetToWrite : kv.value)
+		{
+			bufferOutputStream.SeekTo(offsetToWrite);
+			bufferDataWriter.WriteUInt16(blockOffset);
+		}
+	}
+
+	outputStream.WriteBytes(tmpBuffer.Data(), tmpBuffer.Size());
+}
+
+//Event handlers
+void Compiler::OnVisitingCallInstruction(CallInstruction &callInstruction)
+{
+	callInstruction.argument->Visit(*this);
+
+	const Procedure* procedure = dynamic_cast<const Procedure *>(callInstruction.function);
+	this->AddInstruction(Opcode::Call, this->procedureOffsetMap[procedure->name]);
+}
+
+void Compiler::OnVisitingConditionalBranchInstruction(const BranchOnTrueInstruction &branchOnTrueInstruction)
+{
+	this->missingBlockOffsets[branchOnTrueInstruction.ElseBlock()].Push(this->codeSegment.GetRemainingBytes() + 1);
+	this->AddInstruction(Opcode::JumpOnFalse, 0);
+}
+
+void ACSB::Compiler::OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction)
+{
+	externalCallInstruction.external->Visit(*this);
+	externalCallInstruction.argument->Visit(*this);
+
+	this->AddInstruction(Opcode::CallExtern, this->externalMap[externalCallInstruction.external]);
+}
+
+void ACSB::Compiler::OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction)
+{
+	for(uint32 i = 0; i < createNewTupleInstruction.Values().GetNumberOfElements(); i++)
+		createNewTupleInstruction.Values()[createNewTupleInstruction.Values().GetNumberOfElements() - 1 - i]->Visit(*this);
+	this->AddInstruction(Opcode::NewTuple, createNewTupleInstruction.Values().GetNumberOfElements());
+}
+
+void Compiler::OnVisitingReturnInstruction(const ReturnInstruction &returnInstruction)
+{
+	returnInstruction.returnValue->Visit(*this);
+
+	this->AddInstruction(Opcode::Return);
+}
+
+void Compiler::OnVisitingConstantFloat(const ConstantFloat &constantFloat)
+{
+	this->AddInstruction(Opcode::LoadConstant, this->AddConstant(constantFloat.Value()));
+}
+
+void Compiler::OnVisitingExternal(const External &external)
+{
+	if(this->externalMap.Contains(&external))
+		return;
+
+	uint16 idx = this->externals.Push(external.name);
+	this->externalMap[&external] = idx;
+}
+
+void Compiler::OnVisitingParameter(const Parameter &parameter)
+{
+	this->AddInstruction(Opcode::PushParameter);
 }

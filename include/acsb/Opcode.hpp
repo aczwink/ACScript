@@ -20,8 +20,11 @@
 
 enum class Opcode : uint8
 {
+	Call,
 	CallExtern,
+	JumpOnFalse,
 	LoadConstant,
 	NewTuple,
+	PushParameter,
 	Return,
 };

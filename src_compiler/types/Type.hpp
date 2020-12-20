@@ -17,6 +17,9 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
+#include <StdXX.hpp>
+using namespace StdXX;
+#include "TypeVisitor.hpp"
 
 class Type
 {
@@ -25,5 +28,14 @@ public:
 	virtual ~Type(){}
 
 	//Abstract
+	virtual bool IsTriviallyAssignableTo(const Type& other) const = 0;
 	virtual String ToString() const = 0;
+	virtual void Visit(TypeVisitor& visitor) const = 0;
 };
+
+inline String TypePointerToString(const ::Type* type)
+{
+	if(type)
+		return type->ToString();
+	return u8"unknown";
+}

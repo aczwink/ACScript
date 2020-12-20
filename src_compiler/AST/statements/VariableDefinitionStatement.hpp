@@ -17,16 +17,39 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "ASTNode.hpp"
+//Local
+#include "Statement.hpp"
 
 namespace AST
 {
-	class External : public ASTNode
+	class VariableDefinitionStatement : public Statement
 	{
 	public:
-		//Inline
-		inline void Visit(ASTVisitor &visitor) const
+		//Constructor
+		VariableDefinitionStatement(UniquePointer<LeftValue>&& leftValue, UniquePointer<Expression>&& expr)
+				: leftValue(Move(leftValue)), expr(Move(expr))
 		{
 		}
+
+		//Properties
+		inline const LeftValue& LeftHandSide() const
+		{
+			return *this->leftValue;
+		}
+
+		inline const Expression& RightHandSide() const
+		{
+			return *this->expr;
+		}
+
+		void Visit(StatementVisitor &visitor) const override
+		{
+			visitor.OnVisitingVariableDefinitionStatement(*this);
+		}
+
+	private:
+		//Members
+		UniquePointer<LeftValue> leftValue;
+		UniquePointer<Expression> expr;
 	};
 }

@@ -91,11 +91,13 @@ void OutputObjectCode(llvm::Module& module)
 	llvm::outs() << "Wrote " << Filename << "\n";
 }
 
-void llvm_main(const StatementBlock& statementBlock)
+void llvm_main(const AST::StatementBlock& statementBlock)
 {
+	/*
 	llvmCompiler compiler;
 	statementBlock.Visit(compiler);
+	compiler.OnVisitedBlock(statementBlock);
 
 	compiler.Module().print(llvm::outs(), nullptr);
-	OutputObjectCode(compiler.Module());
+	OutputObjectCode(compiler.Module());*/
 }
