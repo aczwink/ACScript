@@ -26,6 +26,10 @@ public:
 		BinaryTreeSet<DynamicArray<RuntimeValue>*> toDelete = this->allocatedArrays;
 		for (DynamicArray<RuntimeValue>*const& toDeleteElement : toDelete)
 			this->Release(toDeleteElement);
+
+		BinaryTreeSet<Map<String, RuntimeValue>*> toDelete2 = this->allocatedDictionaries;
+		for(Map<String, RuntimeValue>*const& toDeleteElement : toDelete2)
+			this->Release(toDeleteElement);
 	}
 
 	//Inline
@@ -53,14 +57,28 @@ public:
 		return ptr;
 	}
 
+	inline Map<String, RuntimeValue>* NewDictionary()
+	{
+		Map<String, RuntimeValue>* ptr = new Map<String, RuntimeValue>;
+		this->allocatedDictionaries.Insert(ptr);
+		return ptr;
+	}
+
 private:
 	//Members
 	BinaryTreeSet<DynamicArray<RuntimeValue>*> allocatedArrays;
+	BinaryTreeSet<Map<String, RuntimeValue>*> allocatedDictionaries;
 
 	//Inline
 	inline void Release(DynamicArray<RuntimeValue>* ptr)
 	{
 		this->allocatedArrays.Remove(ptr);
+		delete ptr;
+	}
+
+	inline void Release(Map<String, RuntimeValue>* ptr)
+	{
+		this->allocatedDictionaries.Remove(ptr);
 		delete ptr;
 	}
 };

@@ -37,10 +37,5 @@ namespace IR
 		{
 			return this->name + u8": " + TypePointerToString(this->type);
 		}
-
-		void Visit(ValueVisitor &visitor) const override
-		{
-
-		}
 	};
 }

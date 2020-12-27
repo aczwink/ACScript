@@ -18,10 +18,12 @@
 */
 #include "../instructions/BranchOnTrueInstruction.hpp"
 #include "../instructions/CallInstruction.hpp"
+#include "../instructions/CreateNewObjectInstruction.hpp"
 #include "../instructions/CreateNewTupleInstruction.hpp"
 #include "../instructions/ExternalCallInstruction.hpp"
 #include "../instructions/ReturnInstruction.hpp"
 
 #include "../ConstantFloat.hpp"
+#include "../ConstantString.hpp"
 #include "../External.hpp"
 #include "../Procedure.hpp"

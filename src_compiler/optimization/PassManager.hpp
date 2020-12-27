@@ -18,6 +18,7 @@
 */
 //Local
 #include "../IR/Module.hpp"
+#include "CallGraph.hpp"
 
 namespace Optimization
 {
@@ -27,13 +28,16 @@ namespace Optimization
 		//Constructor
 		PassManager(IR::Module& module, TypeCatalog& typeCatalog) : module(module), typeCatalog(typeCatalog)
 		{
+			CallGraph callGraph(this->module.Procedures());
+			DynamicArray<IR::Procedure*> orderedProcedures = callGraph.QueryProceduresOrdered();
+			module.Procedures(orderedProcedures);
 		}
 
 		//Inline
 		template<typename T>
 		inline void AddProcedurePass(const String& passName)
 		{
-			for(IR::Procedure*const& procedure : this->module.Procedures())
+			for(IR::Procedure*const& procedure : module.Procedures())
 			{
 				T pass(*procedure, this->typeCatalog);
 				pass.Transform();

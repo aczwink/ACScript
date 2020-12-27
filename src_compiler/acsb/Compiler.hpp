@@ -21,11 +21,18 @@
 #include "../IR/visitors/BasicBlockVisitor.hpp"
 #include "../IR/External.hpp"
 #include "../IR/Module.hpp"
+#include "../optimization/DependencyGraph.hpp"
 
 namespace ACSB
 {
 	class Compiler : private IR::BasicBlockVisitor, private IR::ValueVisitor
 	{
+		struct Constant
+		{
+			bool isString;
+			float64 f64;
+			String string;
+		};
 	public:
 		//Methods
 		void Compile(const IR::Module& module);
@@ -36,15 +43,26 @@ namespace ACSB
 		DynamicArray<String> externals;
 		Map<const IR::External*, uint16> externalMap;
 		Map<String, uint16> procedureOffsetMap;
-		DynamicArray<float64> constants;
+		DynamicArray<Constant> constants;
 		FIFOBuffer codeSegment;
 		Map<const IR::BasicBlock*, uint16> blockOffsets;
 		Map<const IR::BasicBlock*, DynamicArray<uint16>> missingBlockOffsets;
+		DynamicArray<const IR::Value*> valueStack;
+		const IR::Module* module;
+		Map<const IR::Value*, uint32> instructionReferenceCounts;
+
+		//Methods
+		void PushValue(const IR::Value* value);
 
 		//Inline
 		inline uint16 AddConstant(float64 value)
 		{
-			return this->constants.Push(value);
+			return this->constants.Push({ .isString = false, .f64 = value });
+		}
+
+		inline uint16 AddConstant(const String& value)
+		{
+			return this->constants.Push({ .isString = true, .string = value });
 		}
 
 		inline void AddInstruction(Opcode op)
@@ -59,15 +77,26 @@ namespace ACSB
 			dataWriter.WriteUInt16(arg0);
 		}
 
+		inline void AddPopAssignInstruction()
+		{
+			this->AddInstruction(Opcode::PopAssign);
+			const IR::Value* top = this->valueStack.Pop();
+			this->valueStack.Last() = top;
+		}
+
 		//Event handlers
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override;
 		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
 		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override;
+		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override;
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
-		void OnVisitingReturnInstruction(const IR::ReturnInstruction &returnInstruction) override;
+		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override;
 
 		void OnVisitingConstantFloat(const IR::ConstantFloat &constantFloat) override;
+		void OnVisitingConstantString(const IR::ConstantString &constantString) override;
 		void OnVisitingExternal(const IR::External &external) override;
+		void OnVisitingInstructionResultValue(const IR::Instruction &instruction) override;
 		void OnVisitingParameter(const IR::Parameter &parameter) override;
+		void OnVisitingProcedure(const IR::Procedure &procedure) override;
 	};
 }

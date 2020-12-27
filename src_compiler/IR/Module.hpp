@@ -43,6 +43,14 @@ namespace IR
 			return this->procedures;
 		}
 
+		template<typename Iterable>
+		inline void Procedures(const Iterable& iterable)
+		{
+			this->procedures.Release();
+			for(const auto& current : iterable)
+				this->procedures.InsertTail(current);
+		}
+
 		//Inline
 		inline void AddExternal(External* external)
 		{
@@ -60,6 +68,12 @@ namespace IR
 			if(it == this->externals.end())
 				return nullptr;
 			return (*it).value;
+		}
+
+		inline Procedure* GetMainProcedure()
+		{
+			ASSERT_EQUALS(u8"main", this->procedures.Last()->name);
+			return this->procedures.Last();
 		}
 
 	private:

@@ -20,56 +20,42 @@
 #include "../RuntimeValue.hpp"
 #include "../Module.hpp"
 
-RuntimeValue Add(RuntimeValue& arg, const Module&)
+RuntimeValue ObjectSet(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Tuple)
 	{
 		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
-				)
-		{
-			float64 lhs = arg.ValuesArray()[0].ValueF64();
-			float64 rhs = arg.ValuesArray()[1].ValueF64();
-			return { lhs + rhs };
-		}
-	}
-	return RuntimeValue();
-}
-
-RuntimeValue Multiply(RuntimeValue& arg, const Module&)
-{
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-			(arg.ValuesArray().GetNumberOfElements() == 2)
-			&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
-			&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
+				(arg.ValuesArray().GetNumberOfElements() == 3)
+				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Dictionary)
+				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::String)
 		)
 		{
-			float64 lhs = arg.ValuesArray()[0].ValueF64();
-			float64 rhs = arg.ValuesArray()[1].ValueF64();
-			return { lhs * rhs };
+			auto& dict = arg.ValuesArray()[0].ValuesDictionary();
+			auto& key = arg.ValuesArray()[1].ValueString();
+			dict[key] = arg.ValuesArray()[2];
+			return arg.ValuesArray()[0];
 		}
 	}
+	NOT_IMPLEMENTED_ERROR;
 	return RuntimeValue();
 }
 
-RuntimeValue Subtract(RuntimeValue& arg, const Module&)
+RuntimeValue Select(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Tuple)
 	{
 		if(
 				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
+				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Tuple)
 				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
+				&& (arg.ValuesArray()[0].ValuesArray().GetNumberOfElements() > arg.ValuesArray()[1].ValueF64())
 				)
 		{
-			float64 lhs = arg.ValuesArray()[0].ValueF64();
-			float64 rhs = arg.ValuesArray()[1].ValueF64();
-			return { lhs - rhs };
+			const DynamicArray<RuntimeValue>& array = arg.ValuesArray()[0].ValuesArray();
+			float64 index = arg.ValuesArray()[1].ValueF64();
+			return { array[index] };
 		}
 	}
+	NOT_IMPLEMENTED_ERROR;
 	return RuntimeValue();
 }

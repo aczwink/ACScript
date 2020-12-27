@@ -23,32 +23,41 @@
 void ExternalsManager::RegisterAllExternals()
 {
 	//arithmetical
-	extern RuntimeValue Add(const RuntimeValue&);
+	extern RuntimeValue Add(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"+", Add);
 
-	extern RuntimeValue Multiply(const RuntimeValue&);
+	extern RuntimeValue Multiply(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"*", Multiply);
 
-	extern RuntimeValue Subtract(const RuntimeValue&);
+	extern RuntimeValue Subtract(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"-", Subtract);
 
 	//logical
-	extern RuntimeValue And(const RuntimeValue&);
+	extern RuntimeValue And(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"and", And);
 
-	extern RuntimeValue LessThan(const RuntimeValue&);
+	extern RuntimeValue Equals(RuntimeValue&, const Module&);
+	this->RegisterExternal(u8"=", Equals);
+
+	extern RuntimeValue LessThan(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"<", LessThan);
 
-	extern RuntimeValue LessThanOrEqual(const RuntimeValue&);
+	extern RuntimeValue LessThanOrEqual(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"<=", LessThanOrEqual);
 
-	extern RuntimeValue Not(const RuntimeValue&);
+	extern RuntimeValue Not(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"not", Not);
 
-	extern RuntimeValue Or(const RuntimeValue&);
+	extern RuntimeValue Or(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"or", Or);
 
 	//other
-	extern RuntimeValue Print(const RuntimeValue&);
+	extern RuntimeValue Select(RuntimeValue&, const Module&);
+	this->RegisterExternal(u8"[]", Select);
+
+	extern RuntimeValue ObjectSet(RuntimeValue&, const Module&);
+	this->RegisterExternal(u8"__set", ObjectSet);
+
+	extern RuntimeValue Print(RuntimeValue&, const Module&);
 	this->RegisterExternal(u8"print", Print);
 }

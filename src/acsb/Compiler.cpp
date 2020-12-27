@@ -47,14 +47,6 @@ void ACSB::Compiler::CompileCall(const IR::CallOperation & op)
 
 	this->executionStack.Pop();
 	this->executionStack.Pop();
-	this->executionStack.Pop();
-	this->executionStack.Push(&op.GetValue());
-}
-
-void Compiler::CompileCreateArray(const IR::CreateArrayOperation & op)
-{
-	this->AddInstruction(Opcode::CreateArray);
-	this->executionStack.Push(&op.GetValue());
 }
 
 void Compiler::CompileStore(const IR::StoreOperation& op)
@@ -118,21 +110,6 @@ void ACSB::Compiler::CompileSymbol(const IR::Symbol & symbol)
 	case IR::SymbolType::Procedure:
 	{
 		this->AddInstruction(Opcode::PushProc, symbol.GetNumber());
-	}
-	break;
-	case IR::SymbolType::Temporary:
-	{
-		uint32 index = Unsigned<uint32>::Max();
-		for (int32 idx = this->executionStack.GetNumberOfElements() - 1; idx >= 0; idx--)
-		{
-			if (*this->executionStack[idx] == symbol)
-			{
-				index = idx;
-				break;
-			}
-		}
-
-		this->AddInstruction(Opcode::Push, index);
 	}
 	break;
 	case IR::SymbolType::This:

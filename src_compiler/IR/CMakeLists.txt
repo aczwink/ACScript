@@ -3,6 +3,7 @@ set(SOURCE_FILES_COMPILER
 
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/BranchOnTrueInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CallInstruction.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CreateNewObjectInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CreateNewTupleInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/ExternalCallInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/ReturnInstruction.hpp
@@ -16,6 +17,7 @@ set(SOURCE_FILES_COMPILER
 	${CMAKE_CURRENT_SOURCE_DIR}/BasicBlock.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Builder.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ConstantFloat.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ConstantString.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/External.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Instruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Module.hpp

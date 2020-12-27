@@ -5,6 +5,7 @@ set(SOURCE_FILES_COMPILER
 	${CMAKE_CURRENT_SOURCE_DIR}/AST2IRTranslator.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ASTFunction2IRTranslator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ASTFunction2IRTranslator.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/PatternMatching2IRTranslator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/PatternMatching2IRTranslator.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/TypeEvaluator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/TypeEvaluator.hpp

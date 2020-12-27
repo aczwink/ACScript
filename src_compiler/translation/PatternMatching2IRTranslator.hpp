@@ -28,13 +28,16 @@ public:
 	inline PatternMatching2IRTranslator(IR::Builder& builder, IR::Procedure& procedure, IR::BasicBlock* basicBlock)
 		: builder(builder), procedure(procedure), basicBlock(basicBlock)
 	{
+		this->valueStack.Push(procedure.parameter);
 	}
 
 	//Inline
 	inline IR::Value* Translate(const AST::Expression& expression)
 	{
 		expression.Visit(*this);
-		return this->result;
+		if(this->valueStack.IsEmpty())
+			return nullptr;
+		return this->valueStack.Pop();
 	}
 
 private:
@@ -42,7 +45,7 @@ private:
 	IR::Builder& builder;
 	IR::Procedure& procedure;
 	IR::BasicBlock* basicBlock;
-	IR::Value* result;
+	DynamicArray<IR::Value*> valueStack;
 
 	//Event handlers
 	void OnVisitedCall(const AST::CallExpression &callExpression) override
@@ -58,52 +61,12 @@ private:
 	void OnVisitingIdentifier(const AST::IdentifierExpression &identifierExpression) override
 	{
 		String varName = identifierExpression.Identifier();
-		this->basicBlock->namedValues[varName] = this->procedure.parameter;
-
-		this->result = nullptr;
+		this->basicBlock->namedValues[varName] = this->valueStack.Pop();
 	}
 
-	void OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression) override
-	{
-		const IR::External* lessThanExternal = this->builder.Module().FindExternal(u8"<");
-		const IR::External* orExternal = this->builder.Module().FindExternal(u8"or");
-		const IR::External* notExternal = this->builder.Module().FindExternal(u8"not");
-
-		DynamicArray<IR::Value*> values;
-		values.Push(this->builder.CreateConstant(naturalLiteralExpression.Value()));
-		values.Push(this->procedure.parameter);
-		IR::Instruction* argInstruction = this->builder.CreateNewTuple(Move(values));
-		this->AddInstruction(argInstruction);
-
-		IR::Instruction* cmpInstruction1 = this->builder.CreateExternalCall(lessThanExternal, argInstruction);
-		this->AddInstruction(cmpInstruction1);
-
-		values.Push(this->procedure.parameter);
-		values.Push(this->builder.CreateConstant(naturalLiteralExpression.Value()));
-		argInstruction = this->builder.CreateNewTuple(Move(values));
-		this->AddInstruction(argInstruction);
-
-		IR::Instruction* cmpInstruction2 = this->builder.CreateExternalCall(lessThanExternal, argInstruction);
-		this->AddInstruction(cmpInstruction2);
-
-		values.Push(cmpInstruction1);
-		values.Push(cmpInstruction2);
-		argInstruction = this->builder.CreateNewTuple(Move(values));
-		this->AddInstruction(argInstruction);
-
-		IR::Instruction* andInstruction = this->builder.CreateExternalCall(orExternal, argInstruction);
-		this->AddInstruction(andInstruction);
-
-		IR::Instruction* notInstruction = this->builder.CreateExternalCall(notExternal, andInstruction);
-		this->AddInstruction(notInstruction);
-
-		this->result = notInstruction;
-	}
-
-	void OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression) override
-	{
-		NOT_IMPLEMENTED_ERROR;
-	}
+	void OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression) override;
+	void OnVisitingObjectExpression(const AST::ObjectExpression &objectExpression) override;
+	void OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression) override;
 
 	//Inline
 	inline void AddInstruction(IR::Instruction* instruction)

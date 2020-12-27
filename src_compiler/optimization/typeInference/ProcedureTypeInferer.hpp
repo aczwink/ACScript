@@ -44,7 +44,8 @@ namespace Optimization
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override;
 		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
 		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override;
+		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override;
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
-		void OnVisitingReturnInstruction(const IR::ReturnInstruction &returnInstruction) override;
+		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override;
 	};
 }

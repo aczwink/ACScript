@@ -7,6 +7,7 @@ set(SOURCE_FILES_COMPILER
 	${CMAKE_CURRENT_SOURCE_DIR}/expressions/FunctionExpression.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/expressions/IdentifierExpression.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/expressions/NaturalLiteralExpression.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/expressions/ObjectExpression.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/expressions/TupleExpression.hpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}/leftValues/LeftValue.hpp

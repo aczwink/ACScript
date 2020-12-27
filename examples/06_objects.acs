@@ -1,0 +1,30 @@
+/*let square := x -> x * x;
+
+let test := square(5);
+print(test);*/
+
+
+
+let new_vec := {
+    x: 5,
+    y: 5,
+
+    test: { x, y } -> x * y
+};
+print(new_vec);
+//print(new_vec.test());
+
+
+
+/*
+let new_vec := (x, y) -> {
+    x: x,
+    y: y,
+
+    *: ( { x, y }, scaleFactor) -> new_vec( (x * scaleFactor, y * scaleFactor) )
+};
+
+let vec := new_vec( (5, 5) );
+
+let vecTest := square(vec);
+print(vecTest);*/

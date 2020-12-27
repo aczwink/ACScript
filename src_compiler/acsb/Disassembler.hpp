@@ -30,14 +30,19 @@ namespace ACSB
 		}
 
 		//Methods
-		void Disassemble(InputStream &inputStream) const;
+		void Disassemble(FIFOBuffer &inputStream);
 
 	private:
 		//Members
 		TextWriter &textWriter;
+		Map<uint16, uint32> jumpOffsets;
+		DynamicArray<String> externals;
+		DynamicArray<String> constantsAsStrings;
 
 		//Methods
 		void DisassembleInstruction(DataReader& dataReader, uint16& offset) const;
+		void FindJumpOffsets(DataReader& dataReader);
+		uint8 GetArgumentsSize(Opcode opcode) const;
 
 		//Inline
 		inline void OutputMnemonic(const String& mnemonic) const
@@ -57,6 +62,13 @@ namespace ACSB
 		{
 			this->OutputMnemonic(mnemonic);
 			this->textWriter << arg;
+		}
+
+		inline void OutputMnemonicWithOneArgumentAndComment(const String& mnemonic, const String& arg, const String& comment) const
+		{
+			this->OutputMnemonicWithOneArgument(mnemonic, arg);
+			this->textWriter.WriteTabs(2);
+			this->textWriter << u8"//" << comment;
 		}
 	};
 }

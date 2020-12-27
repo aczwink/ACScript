@@ -29,6 +29,8 @@
 #include "NullValue.hpp"
 #include "instructions/CallInstruction.hpp"
 #include "instructions/BranchOnTrueInstruction.hpp"
+#include "instructions/CreateNewObjectInstruction.hpp"
+#include "ConstantString.hpp"
 
 namespace IR
 {
@@ -73,6 +75,14 @@ namespace IR
 			return this->Register(v);
 		}
 
+		inline Value* CreateConstant(const String& value)
+		{
+			Value* v = new ConstantString(value);
+			v->type = this->typeCatalog.GetLeafType(LeafTypeEnum::String);
+
+			return this->Register(v);
+		}
+
 		inline External* CreateExternal(const String& externalName, const ::Type* returnType, const ::Type* argumentType)
 		{
 			External* external = new External(externalName, returnType, argumentType);
@@ -88,11 +98,23 @@ namespace IR
 
 		inline Procedure* CreateMainProcedure()
 		{
-			Procedure* proc = new Procedure(this->typeCatalog.GetLeafType(LeafTypeEnum::Null), this->typeCatalog.GetEmptyTupleType(), nullptr);
+			Procedure* proc = new Procedure(this->typeCatalog.GetLeafType(LeafTypeEnum::Null), this->typeCatalog.GetLeafType(LeafTypeEnum::Null), nullptr);
 			proc->type = this->typeCatalog.GetFunctionType(proc->returnType, proc->argumentType);
 			proc->name = u8"main";
 
 			return this->Register( proc );
+		}
+
+		inline Instruction* CreateNewObject(Map<String, Value*>&& members)
+		{
+			CreateNewObjectInstruction* instruction = new CreateNewObjectInstruction(Move(members));
+
+			Map<String, const ::Type*> types;
+			for(const auto& member : instruction->Members())
+				types.Insert(member.key, member.value->type);
+			instruction->type = this->typeCatalog.GetObjectType(Move(types));
+
+			return this->InsertInstruction(instruction);
 		}
 
 		inline Instruction *CreateNewTuple(DynamicArray<Value *>&& values)

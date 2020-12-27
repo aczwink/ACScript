@@ -23,7 +23,7 @@
 Module::Module(SeekableInputStream &inputStream, ExternalsManager& externalsManager)
 {
 	DataReader dataReader(true, inputStream);
-	TextReader textReader(inputStream, TextCodecType::ASCII);
+	TextReader textReader(inputStream, TextCodecType::UTF8);
 
 	dataReader.Skip(4); //skip signature
 
@@ -36,9 +36,16 @@ Module::Module(SeekableInputStream &inputStream, ExternalsManager& externalsMana
 
 	uint16 nConstants = dataReader.ReadUInt16();
 	this->constants.Resize(nConstants);
+	this->constantStrings.EnsureCapacity(nConstants);
 	for(uint16 i = 0; i < nConstants; i++)
 	{
-		this->constants[i] = dataReader.ReadFloat64();
+		if(dataReader.ReadByte())
+		{
+			uint32 index = this->constantStrings.Push(textReader.ReadZeroTerminatedString());
+			this->constants[i] = &this->constantStrings[index];
+		}
+		else
+			this->constants[i] = dataReader.ReadFloat64();
 	}
 
 	this->entryPoint = dataReader.ReadUInt16();

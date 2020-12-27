@@ -16,17 +16,39 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
+//Local
+#include "Value.hpp"
 
-//Forward declarations
-class GenericType;
-class LeafType;
-class ObjectType;
-class TupleType;
-
-class TypeVisitor
+namespace IR
 {
-public:
-	virtual void OnVisitingGenericType(const GenericType& genericType) = 0;
-	virtual void OnVisitingLeafType(const LeafType& leafType) = 0;
-	virtual void OnVisitingTupleType(const TupleType& tupleType) = 0;
-};
+	class ConstantString : public Value
+	{
+	public:
+		//Constructor
+		inline ConstantString(const String& value) : value(value)
+		{
+		}
+
+		//Properties
+		inline const String& Value() const
+		{
+			return this->value;
+		}
+
+		//Methods
+		String ToString() const override
+		{
+			return this->value;
+		}
+
+		void Visit(ValueVisitor &visitor) const override
+		{
+			visitor.OnVisitingConstantString(*this);
+		}
+
+	private:
+		//Members
+		String value;
+	};
+}

@@ -34,12 +34,13 @@ public:
 		return this->GetCodeAtOffset(this->entryPoint);
 	}
 
+	//Inline
 	inline const void* GetCodeAtOffset(uint16 offset) const
 	{
 		return reinterpret_cast<const void *>( &((const uint8 *) this->code)[offset] );
 	}
 
-	inline float64 GetConstant(uint16 constantIndex) const
+	inline const RuntimeValue& GetConstant(uint16 constantIndex) const
 	{
 		return this->constants[constantIndex];
 	}
@@ -53,6 +54,7 @@ private:
 	//Members
 	uint16 entryPoint;
 	void* code;
-	DynamicArray<float64> constants;
+	DynamicArray<RuntimeValue> constants;
+	DynamicArray<String> constantStrings;
 	DynamicArray<External> moduleExternals;
 };

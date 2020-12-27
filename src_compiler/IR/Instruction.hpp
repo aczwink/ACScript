@@ -31,7 +31,7 @@ namespace IR
 
 		void Visit(ValueVisitor &visitor) const override
 		{
-
+			visitor.OnVisitingInstructionResultValue(*this);
 		}
 	};
 }

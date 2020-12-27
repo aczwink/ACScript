@@ -18,6 +18,7 @@
 */
 //Local
 #include "../RuntimeValue.hpp"
+#include "../Module.hpp"
 
 static String ToString(const RuntimeValue& value)
 {
@@ -29,18 +30,25 @@ static String ToString(const RuntimeValue& value)
 			return String::Number(value.ValueF64());
 		case RuntimeValueType::Null:
 			return u8"null";
+		case RuntimeValueType::Dictionary:
+		{
+			DynamicArray<String> strings;
+			for(const auto& kv : value.ValuesDictionary())
+				strings.Push(kv.key + u8": " + ToString(kv.value));
+			return u8"{ " + String::Join(strings, u8", ") + u8" }";
+		}
 		case RuntimeValueType::Tuple:
 		{
 			DynamicArray<String> strings;
 			for(const RuntimeValue& subValue : value.ValuesArray())
-				strings.Push(ToString((subValue)));
+				strings.Push(ToString(subValue));
 			return u8"(" + String::Join(strings, u8", ") + u8")";
 		}
 	}
 	return String();
 }
 
-RuntimeValue Print(const RuntimeValue& arg)
+RuntimeValue Print(RuntimeValue& arg, const Module& module)
 {
 	stdOut << ToString(arg) << endl;
 	return RuntimeValue();

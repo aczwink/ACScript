@@ -18,8 +18,9 @@
 */
 //Local
 #include "../RuntimeValue.hpp"
+#include "../Module.hpp"
 
-RuntimeValue And(const RuntimeValue& arg)
+RuntimeValue And(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Tuple)
 	{
@@ -38,7 +39,26 @@ RuntimeValue And(const RuntimeValue& arg)
 	return RuntimeValue();
 }
 
-RuntimeValue LessThan(const RuntimeValue& arg)
+RuntimeValue Equals(RuntimeValue& arg, const Module&)
+{
+	if(arg.Type() == RuntimeValueType::Tuple)
+	{
+		if(
+				(arg.ValuesArray().GetNumberOfElements() == 2)
+				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
+				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
+				)
+		{
+			float64 lhs = arg.ValuesArray()[0].ValueF64();
+			float64 rhs = arg.ValuesArray()[1].ValueF64();
+			return { lhs == rhs };
+		}
+	}
+	NOT_IMPLEMENTED_ERROR;
+	return RuntimeValue();
+}
+
+RuntimeValue LessThan(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Tuple)
 	{
@@ -57,7 +77,7 @@ RuntimeValue LessThan(const RuntimeValue& arg)
 	return RuntimeValue();
 }
 
-RuntimeValue LessThanOrEqual(const RuntimeValue& arg)
+RuntimeValue LessThanOrEqual(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Tuple)
 	{
@@ -76,7 +96,7 @@ RuntimeValue LessThanOrEqual(const RuntimeValue& arg)
 	return RuntimeValue();
 }
 
-RuntimeValue Not(const RuntimeValue& arg)
+RuntimeValue Not(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Bool)
 	{
@@ -86,7 +106,7 @@ RuntimeValue Not(const RuntimeValue& arg)
 	return RuntimeValue();
 }
 
-RuntimeValue Or(const RuntimeValue& arg)
+RuntimeValue Or(RuntimeValue& arg, const Module&)
 {
 	if(arg.Type() == RuntimeValueType::Tuple)
 	{

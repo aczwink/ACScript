@@ -25,6 +25,7 @@ namespace AST
 	class FunctionExpression;
 	class IdentifierExpression;
 	class NaturalLiteralExpression;
+	class ObjectExpression;
 	class TupleExpression;
 
 	class ExpressionVisitor
@@ -35,6 +36,7 @@ namespace AST
 		virtual void OnVisitingFunctionExpression(const FunctionExpression& functionExpression) = 0;
 		virtual void OnVisitingIdentifier(const IdentifierExpression& identifierExpression) = 0;
 		virtual void OnVisitingNaturalLiteral(const NaturalLiteralExpression& naturalLiteralExpression) = 0;
+		virtual void OnVisitingObjectExpression(const ObjectExpression& objectExpression) = 0;
 		virtual void OnVisitedTupleExpression(const TupleExpression& tupleExpression) = 0;
 	};
 }

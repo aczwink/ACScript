@@ -25,6 +25,7 @@ namespace IR
 	//Forward declarations
 	class BranchOnTrueInstruction;
 	class CallInstruction;
+	class CreateNewObjectInstruction;
 	class CreateNewTupleInstruction;
 	class ExternalCallInstruction;
 	class ReturnInstruction;
@@ -36,7 +37,8 @@ namespace IR
 		virtual void OnVisitingCallInstruction(CallInstruction& callInstruction) = 0;
 		virtual void OnVisitingConditionalBranchInstruction(const BranchOnTrueInstruction& branchOnTrueInstruction) = 0;
 		virtual void OnVisitingExternalCallInstruction(const ExternalCallInstruction& externalCallInstruction) = 0;
+		virtual void OnVisitingNewObjectInstruction(const CreateNewObjectInstruction& createNewObjectInstruction) = 0;
 		virtual void OnVisitingNewTupleInstruction(CreateNewTupleInstruction& createNewTupleInstruction) = 0;
-		virtual void OnVisitingReturnInstruction(const ReturnInstruction& returnInstruction) = 0;
+		virtual void OnVisitingReturnInstruction(ReturnInstruction& returnInstruction) = 0;
 	};
 }

@@ -46,6 +46,14 @@ namespace AST
 			this->rules.InsertFront({ Move(parameter), Move(guard), Move(statementBlock) });
 		}
 
+		inline void CombineRulesAndPrepend(UniquePointer<FunctionExpression> functionExpression)
+		{
+			while (!functionExpression->Rules().IsEmpty())
+			{
+				this->rules.InsertFront(functionExpression->rules.PopTail());
+			}
+		}
+
 		void Visit(ExpressionVisitor &visitor) const override
 		{
 			visitor.OnVisitingFunctionExpression(*this);

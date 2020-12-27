@@ -39,7 +39,7 @@ public:
 	void OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression) override;
 	void OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression) override;
 
-	void Translate(const AST::StatementBlock &statementBlock);
+	void TranslateMain(const AST::StatementBlock &statementBlock);
 
 private:
 	//Members
@@ -67,6 +67,7 @@ private:
 	//Event handlers
 	void OnVisitingExternalDeclaration(const AST::ExternalDeclarationStatement &externalDeclaration) override;
 	void OnVisitingExpressionStatement(const AST::ExpressionStatement &expressionStatement) override;
+	void OnVisitingObjectExpression(const AST::ObjectExpression &objectExpression) override;
 	void OnVisitingReturnStatement(const AST::ReturnStatement &returnStatement) override;
 	void OnVisitingVariableDefinitionStatement(const AST::VariableDefinitionStatement &variableDefinitionStatement) override;
 };

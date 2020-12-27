@@ -20,6 +20,7 @@
 #include "Compiler.hpp"
 //Local
 #include "../IR/visitors/AllSymbols.hpp"
+#include "../types/ObjectType.hpp"
 //Namespaces
 using namespace ACSB;
 using namespace IR;
@@ -27,9 +28,19 @@ using namespace IR;
 //Public methods
 void Compiler::Compile(const Module &module)
 {
+	this->module = &module;
+
 	for(const auto& proc : module.Procedures())
 	{
+		Optimization::DependencyGraph dependencyGraph(*proc);
+		for(const auto& kv : dependencyGraph.Dependencies())
+			this->instructionReferenceCounts[kv.key] = kv.value.GetNumberOfElements();
+
 		this->procedureOffsetMap[proc->name] = this->codeSegment.GetRemainingBytes();
+
+		this->valueStack.Release();
+		this->valueStack.Push(proc->parameter);
+
 		for(const auto& basicBlock : proc->BasicBlocks())
 		{
 			this->blockOffsets[basicBlock] = this->codeSegment.GetRemainingBytes();
@@ -41,7 +52,7 @@ void Compiler::Compile(const Module &module)
 void Compiler::Write(OutputStream &outputStream)
 {
 	DataWriter dataWriter(true, outputStream);
-	TextWriter textWriter(outputStream, TextCodecType::ASCII);
+	TextWriter textWriter(outputStream, TextCodecType::UTF8);
 
 	textWriter.WriteString(u8"ACSB");
 
@@ -50,8 +61,14 @@ void Compiler::Write(OutputStream &outputStream)
 		textWriter.WriteStringZeroTerminated(externalName);
 
 	dataWriter.WriteUInt16(this->constants.GetNumberOfElements());
-	for(float64 constant : this->constants)
-		dataWriter.WriteFloat64(constant);
+	for(const Constant& constant : this->constants)
+	{
+		dataWriter.WriteByte(constant.isString);
+		if(constant.isString)
+			textWriter.WriteStringZeroTerminated(constant.string);
+		else
+			dataWriter.WriteFloat64(constant.f64);
+	}
 
 	dataWriter.WriteUInt16(this->procedureOffsetMap[u8"main"]);
 
@@ -73,6 +90,27 @@ void Compiler::Write(OutputStream &outputStream)
 	outputStream.WriteBytes(tmpBuffer.Data(), tmpBuffer.Size());
 }
 
+//Private methods
+void Compiler::PushValue(const IR::Value* value)
+{
+	uint32 offset = Unsigned<uint32>::Max();
+	for (int32 idx = this->valueStack.GetNumberOfElements() - 1; idx >= 0; idx--)
+	{
+		if (this->valueStack[idx] == value)
+		{
+			offset = this->valueStack.GetNumberOfElements() - 1 - idx;
+			break;
+		}
+	}
+	ASSERT(offset != Unsigned<uint32>::Max(), u8"Value not found on stack");
+
+	if(--this->instructionReferenceCounts[value] > 0)
+	{
+		this->AddInstruction(Opcode::Push, offset);
+		this->valueStack.Push(this->valueStack[this->valueStack.GetNumberOfElements() - 1 - offset]);
+	}
+}
+
 //Event handlers
 void Compiler::OnVisitingCallInstruction(CallInstruction &callInstruction)
 {
@@ -80,12 +118,19 @@ void Compiler::OnVisitingCallInstruction(CallInstruction &callInstruction)
 
 	const Procedure* procedure = dynamic_cast<const Procedure *>(callInstruction.function);
 	this->AddInstruction(Opcode::Call, this->procedureOffsetMap[procedure->name]);
+
+	this->valueStack.Pop();
+	this->valueStack.Push(&callInstruction);
 }
 
 void Compiler::OnVisitingConditionalBranchInstruction(const BranchOnTrueInstruction &branchOnTrueInstruction)
 {
+	branchOnTrueInstruction.Condition()->Visit(*this);
+
 	this->missingBlockOffsets[branchOnTrueInstruction.ElseBlock()].Push(this->codeSegment.GetRemainingBytes() + 1);
 	this->AddInstruction(Opcode::JumpOnFalse, 0);
+
+	this->valueStack.Pop();
 }
 
 void ACSB::Compiler::OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction)
@@ -94,25 +139,79 @@ void ACSB::Compiler::OnVisitingExternalCallInstruction(const IR::ExternalCallIns
 	externalCallInstruction.argument->Visit(*this);
 
 	this->AddInstruction(Opcode::CallExtern, this->externalMap[externalCallInstruction.external]);
+
+	this->valueStack.Pop();
+	this->valueStack.Push(&externalCallInstruction);
+}
+
+void Compiler::OnVisitingNewObjectInstruction(const CreateNewObjectInstruction &createNewObjectInstruction)
+{
+	this->AddInstruction(Opcode::NewDictionary);
+	const IR::Value* dictInstance = &createNewObjectInstruction;
+	this->valueStack.Push(dictInstance);
+
+	const External* setter = this->module->FindExternal(u8"__set");
+
+	for(const auto& kv : createNewObjectInstruction.Members())
+	{
+		DynamicArray<Value*> values;
+		values.Push(const_cast<Value*>(dictInstance));
+
+		ConstantString constantString(kv.key);
+		values.Push(&constantString);
+
+		values.Push(kv.value);
+
+		IR::CreateNewTupleInstruction argInstruction(Move(values));
+		argInstruction.Visit(*this);
+
+		IR::ExternalCallInstruction externalCallInstruction(setter, &argInstruction);
+		externalCallInstruction.Visit(*this);
+
+		this->AddInstruction(Opcode::Pop);
+		this->valueStack.Pop();
+	}
 }
 
 void ACSB::Compiler::OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction)
 {
 	for(uint32 i = 0; i < createNewTupleInstruction.Values().GetNumberOfElements(); i++)
 		createNewTupleInstruction.Values()[createNewTupleInstruction.Values().GetNumberOfElements() - 1 - i]->Visit(*this);
+
 	this->AddInstruction(Opcode::NewTuple, createNewTupleInstruction.Values().GetNumberOfElements());
+
+	for(uint32 i = 0; i < createNewTupleInstruction.Values().GetNumberOfElements(); i++)
+		this->valueStack.Pop();
+	this->valueStack.Push(&createNewTupleInstruction);
 }
 
-void Compiler::OnVisitingReturnInstruction(const ReturnInstruction &returnInstruction)
+void Compiler::OnVisitingReturnInstruction(ReturnInstruction &returnInstruction)
 {
 	returnInstruction.returnValue->Visit(*this);
 
+	//remove spilled
+	bool hasReturn = true;//this->currentProcedure->name != u8"main";
+	while (this->valueStack.GetNumberOfElements() > (hasReturn ? 1 : 0))
+		this->AddPopAssignInstruction();
+
 	this->AddInstruction(Opcode::Return);
+
+	if(hasReturn)
+		this->valueStack.Pop();
 }
 
 void Compiler::OnVisitingConstantFloat(const ConstantFloat &constantFloat)
 {
 	this->AddInstruction(Opcode::LoadConstant, this->AddConstant(constantFloat.Value()));
+
+	this->valueStack.Push(&constantFloat);
+}
+
+void Compiler::OnVisitingConstantString(const ConstantString &constantString)
+{
+	this->AddInstruction(Opcode::LoadConstant, this->AddConstant(constantString.Value()));
+
+	this->valueStack.Push(&constantString);
 }
 
 void Compiler::OnVisitingExternal(const External &external)
@@ -124,7 +223,18 @@ void Compiler::OnVisitingExternal(const External &external)
 	this->externalMap[&external] = idx;
 }
 
+void Compiler::OnVisitingInstructionResultValue(const Instruction &instruction)
+{
+	this->PushValue(&instruction);
+}
+
 void Compiler::OnVisitingParameter(const Parameter &parameter)
 {
-	this->AddInstruction(Opcode::PushParameter);
+	this->PushValue(&parameter);
+}
+
+void Compiler::OnVisitingProcedure(const Procedure &procedure)
+{
+	this->AddInstruction(Opcode::LoadConstant, this->AddConstant(this->procedureOffsetMap[procedure.name]));
+	this->valueStack.Push(&procedure);
 }

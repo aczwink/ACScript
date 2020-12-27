@@ -24,7 +24,6 @@ enum Opcode : byte
 	AssignGlobal,
 	AssignLocal,
 	CreateArray,
-	Push,
 	PushGlobal,
 	PushLocal,
 	PushNull,
@@ -38,7 +37,6 @@ enum Opcode : byte
 	LessOrEqual,
 	Minus,
 	Multiply,
-	Pop,
 	PushBool,
 	PushSelf,
 	*/

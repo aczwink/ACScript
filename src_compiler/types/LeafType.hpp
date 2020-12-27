@@ -26,6 +26,7 @@ enum class LeafTypeEnum
 	Bool,
 	Float64,
 	Null,
+	String,
 };
 
 class LeafType : public ::Type
@@ -36,6 +37,12 @@ public:
 	{
 	}
 
+	//Properties
+	inline LeafTypeEnum EnumType() const
+	{
+		return this->type;
+	}
+
 	//Public methods
 	bool IsTriviallyAssignableTo(const Type &other) const override
 	{
@@ -44,12 +51,13 @@ public:
 		{
 			if(this->type == otherLeafType->type)
 				return true;
+			if(otherLeafType->type == LeafTypeEnum::Any)
+				return true;
 
 			switch(this->type)
 			{
 				case LeafTypeEnum::Any:
-					NOT_IMPLEMENTED_ERROR;
-					break;
+					return false;
 				case LeafTypeEnum::Bool:
 					NOT_IMPLEMENTED_ERROR;
 					break;
@@ -57,20 +65,36 @@ public:
 				{
 					switch(otherLeafType->type)
 					{
-						case LeafTypeEnum::Any:
-							return true;
 						case LeafTypeEnum::Bool:
 							NOT_IMPLEMENTED_ERROR;
 							break;
 						case LeafTypeEnum::Null:
 							NOT_IMPLEMENTED_ERROR;
 							break;
+						case LeafTypeEnum::String:
+							NOT_IMPLEMENTED_ERROR;
+							break;
 					}
 				}
-					break;
+				break;
 				case LeafTypeEnum::Null:
 					NOT_IMPLEMENTED_ERROR;
 					break;
+				case LeafTypeEnum::String:
+				{
+					switch(otherLeafType->type)
+					{
+						case LeafTypeEnum::Bool:
+							NOT_IMPLEMENTED_ERROR;
+							break;
+						case LeafTypeEnum::Float64:
+							return false;
+						case LeafTypeEnum::Null:
+							NOT_IMPLEMENTED_ERROR;
+							break;
+					}
+				}
+				break;
 			}
 		}
 
@@ -90,6 +114,8 @@ public:
 				return u8"float64";
 			case LeafTypeEnum::Null:
 				return u8"null";
+			case LeafTypeEnum::String:
+				return u8"string";
 		}
 		RAISE(ErrorHandling::IllegalCodePathError);
 	}

@@ -68,12 +68,16 @@ namespace Optimization
 		{
 		}
 
+		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override
+		{
+		}
+
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override
 		{
 			this->ReplaceType(createNewTupleInstruction.type);
 		}
 
-		void OnVisitingReturnInstruction(const IR::ReturnInstruction &returnInstruction) override
+		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override
 		{
 		}
 

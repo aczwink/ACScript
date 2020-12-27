@@ -97,15 +97,6 @@ void VM::ExecuteTask(RuntimeCall* task)
 			executionStack.Push(RuntimeObject::Array());
 		}
 		break;
-		case Opcode::Push:
-		{
-			uint32 stackIndex = *(uint32*)pc;
-			pc += sizeof(stackIndex);
-
-			RuntimeObject obj = executionStack[stackIndex];
-			executionStack.Push( obj );
-		}
-		break;
 		case Opcode::PushGlobal:
 		{
 			uint16 globalIndex = *(uint16*)pc;

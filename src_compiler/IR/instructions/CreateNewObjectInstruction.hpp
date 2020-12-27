@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -19,45 +19,39 @@
 #pragma once
 //Local
 #include "../Instruction.hpp"
-#include "../BasicBlock.hpp"
 
 namespace IR
 {
-	class BranchOnTrueInstruction : public Instruction
+	class CreateNewObjectInstruction : public Instruction
 	{
 	public:
 		//Constructor
-		inline BranchOnTrueInstruction(Value* condition, BasicBlock* thenBlock, BasicBlock* elseBlock)
-			: condition(condition), thenBlock(thenBlock), elseBlock(elseBlock)
+		inline CreateNewObjectInstruction(Map<String, Value *>&& members) : members(Move(members))
 		{
 		}
 
 		//Properties
-		inline const Value* Condition() const
+		inline const Map<String, Value *>& Members() const
 		{
-			return this->condition;
+			return this->members;
 		}
 
-		inline const BasicBlock* ElseBlock() const
-		{
-			return this->elseBlock;
-		}
-
-		//Methods
 		void Visit(BasicBlockVisitor &visitor) override
 		{
-			visitor.OnVisitingConditionalBranchInstruction(*this);
+			visitor.OnVisitingNewObjectInstruction(*this);
 		}
 
 		String ToString() const override
 		{
-			return u8"br " + this->condition->ToReferenceString() + u8", " + this->thenBlock->Name() + u8", " + this->elseBlock->Name();
+			DynamicArray<String> strings;
+			for(const auto& kv : this->members)
+				strings.Push(kv.key + u8": " + kv.value->ToReferenceString());
+
+			return Symbol::ToString() + u8" <-- new_object " + String::Join(strings, u8", ");
 		}
 
 	private:
 		//Members
-		Value* condition;
-		BasicBlock* thenBlock;
-		BasicBlock* elseBlock;
+		Map<String, Value *> members;
 	};
 }

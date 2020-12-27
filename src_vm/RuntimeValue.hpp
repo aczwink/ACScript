@@ -23,8 +23,10 @@ using namespace StdXX;
 enum class RuntimeValueType
 {
 	Bool,
+	Dictionary,
 	Float64,
 	Null,
+	String,
 	Tuple
 };
 
@@ -44,6 +46,10 @@ public:
 	{
 	}
 
+	inline RuntimeValue(String* string) : type(RuntimeValueType::String), string(string)
+	{
+	}
+
 	//Properties
 	inline RuntimeValueType Type() const
 	{
@@ -60,12 +66,40 @@ public:
 		return this->f64;
 	}
 
+	inline DynamicArray<RuntimeValue>& ValuesArray()
+	{
+		return *this->array;
+	}
+
 	inline const DynamicArray<RuntimeValue>& ValuesArray() const
 	{
 		return *this->array;
 	}
 
+	inline Map<String, RuntimeValue>& ValuesDictionary()
+	{
+		return *this->dictionary;
+	}
+
+	inline const Map<String, RuntimeValue>& ValuesDictionary() const
+	{
+		return *this->dictionary;
+	}
+
+	inline const String& ValueString() const
+	{
+		return *this->string;
+	}
+
 	//Functions
+	inline static RuntimeValue CreateDictionary(Map<String, RuntimeValue>* values)
+	{
+		RuntimeValue v;
+		v.type = RuntimeValueType::Dictionary;
+		v.dictionary = values;
+		return v;
+	}
+
 	inline static RuntimeValue CreateTuple(DynamicArray<RuntimeValue>* values)
 	{
 		RuntimeValue v;
@@ -82,5 +116,7 @@ private:
 		bool b;
 		float64 f64;
 		DynamicArray<RuntimeValue>* array;
+		Map<String, RuntimeValue>* dictionary;
+		String* string;
 	};
 };

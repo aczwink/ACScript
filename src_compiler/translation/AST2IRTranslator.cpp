@@ -34,5 +34,5 @@ void AST2IRTranslator::Translate(const AST::StatementBlock &statementBlock)
 	mainProc->AddBlock(basicBlock);
 
 	ASTFunction2IRTranslator functionTranslator(this->builder, this->typeCatalog, *mainProc);
-	functionTranslator.Translate(statementBlock);
+	functionTranslator.TranslateMain(statementBlock);
 }

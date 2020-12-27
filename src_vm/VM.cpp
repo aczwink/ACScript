@@ -27,7 +27,8 @@ void VM::Run()
 	const uint8* pc = static_cast<const uint8 *>(this->module.EntryPoint());
 	DynamicArray<RuntimeValue> executionStack;
 	DynamicArray<const uint8*> callStack;
-	DynamicArray<RuntimeValue> argumentStack;
+
+	executionStack.Push(RuntimeValue()); //arg for main function
 
 	while(true)
 	{
@@ -40,15 +41,14 @@ void VM::Run()
 
 				callStack.Push(pc);
 				pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
-
-				argumentStack.Push(executionStack.Pop());
 			}
 			break;
 			case Opcode::CallExtern:
 			{
 				uint16 externIndex = this->ExtractUInt16FromProgramCounter(pc);
-				const auto& arg = executionStack.Pop();
-				auto result = this->module.GetExternal(externIndex)(arg);
+				RuntimeValue arg = executionStack.Pop();
+				const auto& external = this->module.GetExternal(externIndex);
+				auto result = external(arg, this->module);
 				executionStack.Push(result);
 			}
 			break;
@@ -66,11 +66,19 @@ void VM::Run()
 				executionStack.Push(this->module.GetConstant(constantIndex));
 			}
 			break;
+			case Opcode::NewDictionary:
+			{
+				this->garbageCollector.CleanUp(executionStack);
+				Map<String, RuntimeValue>* values = this->garbageCollector.NewDictionary();
+
+				executionStack.Push(RuntimeValue::CreateDictionary(values));
+			}
+			break;
 			case Opcode::NewTuple:
 			{
 				uint16 nEntries = this->ExtractUInt16FromProgramCounter(pc);
 
-				this->garbageCollector.CleanUp(argumentStack);
+				this->garbageCollector.CleanUp(executionStack);
 
 				DynamicArray<RuntimeValue>* values = this->garbageCollector.NewArray();
 				for(uint16 i = 0; i < nEntries; i++)
@@ -79,9 +87,22 @@ void VM::Run()
 				executionStack.Push(RuntimeValue::CreateTuple(values));
 			}
 			break;
-			case Opcode::PushParameter:
+			case Opcode::Pop:
 			{
-				executionStack.Push(argumentStack.Last());
+				executionStack.Pop();
+			}
+			break;
+			case Opcode::PopAssign:
+			{
+				RuntimeValue value = executionStack.Pop();
+				executionStack.Last() = value;
+			}
+			break;
+			case Opcode::Push:
+			{
+				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
+				RuntimeValue value = executionStack[executionStack.GetNumberOfElements() - 1 - offset];
+				executionStack.Push(value);
 			}
 			break;
 			case Opcode::Return:
@@ -89,10 +110,7 @@ void VM::Run()
 				if(callStack.IsEmpty())
 					return;
 				else
-				{
 					pc = callStack.Pop();
-					argumentStack.Pop();
-				}
 			}
 			break;
 			default:

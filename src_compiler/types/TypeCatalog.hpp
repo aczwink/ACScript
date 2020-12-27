@@ -22,6 +22,7 @@
 #include "TupleType.hpp"
 #include "FunctionType.hpp"
 #include "GenericType.hpp"
+#include "ObjectType.hpp"
 
 class TypeCatalog
 {
@@ -51,6 +52,11 @@ public:
 		if(!this->types.Contains(key))
 			this->types.Insert(key, new LeafType(leafType));
 		return this->types[key].operator->();
+	}
+
+	inline const ::Type* GetObjectType(Map<String, const ::Type*>&& types)
+	{
+		return dynamic_cast<const ObjectType *>(this->FindOrInsert(new ObjectType(Move(types))));
 	}
 
 	inline const ::TupleType* GetTupleType(DynamicArray<const ::Type*>&& types, bool lastArgIsVariadic = false)

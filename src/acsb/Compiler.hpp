@@ -36,7 +36,6 @@ namespace ACSB
 		void BeginProcedure() override;
 		void CompileAccess(const IR::AccessOperation & op) override;
 		void CompileCall(const IR::CallOperation & op) override;
-		void CompileCreateArray(const IR::CreateArrayOperation & op) override;
 		void CompileStore(const IR::StoreOperation& op) override;
 		void CompileWait(const IR::WaitOperation & op) override;
 		void EndProcedure() override;
@@ -55,7 +54,6 @@ namespace ACSB
 		Map<String, uint32> localMap;
 		Map<String, uint32> globalMap;
 		uint16 nextLocalIdx;
-		DynamicArray<const IR::Symbol*> executionStack;
 		uint32 lastProcOffset;
 
 		//Methods

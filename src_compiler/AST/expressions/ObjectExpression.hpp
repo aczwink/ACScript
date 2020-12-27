@@ -18,41 +18,46 @@
 */
 #pragma once
 //Local
-#include "../Instruction.hpp"
+#include "Expression.hpp"
 
-namespace IR
+namespace AST
 {
-	class CreateNewTupleInstruction : public Instruction
+	class ObjectExpression : public Expression
 	{
 	public:
 		//Constructor
-		inline CreateNewTupleInstruction(DynamicArray<Value *>&& values) : values(Move(values))
+		inline ObjectExpression(const String& memberName)
 		{
+			this->members[memberName] = nullptr;
+		}
+
+		inline ObjectExpression(const String& memberName, UniquePointer<Expression>&& expr)
+		{
+			this->members[memberName] = Move(expr);
 		}
 
 		//Properties
-		inline const DynamicArray<Value *>& Values() const
+		inline const Map<String, UniquePointer<Expression>>& Members() const
 		{
-			return this->values;
+			return this->members;
 		}
 
 		//Methods
-		String ToString() const override
+		void Visit(ExpressionVisitor &visitor) const override
 		{
-			DynamicArray<String> strings;
-			for(const Value*const& value : this->values)
-				strings.Push(value->ToReferenceString());
-
-			return Symbol::ToString() + u8" <-- new_tuple " + String::Join(strings, u8", ");
+			visitor.OnVisitingObjectExpression(*this);
 		}
 
-		void Visit(BasicBlockVisitor &visitor) override
+		//Inline
+		inline void AddMember(UniquePointer<ObjectExpression>&& objectExpression)
 		{
-			visitor.OnVisitingNewTupleInstruction(*this);
+			auto it = objectExpression->members.begin();
+			this->members[(*it).key] = Move((*it).value);
+			objectExpression->members.Release();
 		}
 
 	private:
 		//Members
-		DynamicArray<Value *> values;
+		Map<String, UniquePointer<Expression>> members;
 	};
 }

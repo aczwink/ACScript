@@ -19,7 +19,9 @@
 #pragma once
 #include "RuntimeValue.hpp"
 
-typedef RuntimeValue(*External)(const RuntimeValue&);
+//Forward declarations
+class Module;
+typedef RuntimeValue(*External)(RuntimeValue&, const Module&);
 
 class ExternalsManager
 {
@@ -33,6 +35,7 @@ public:
 	//Inline
 	inline External GetExternal(const String& name)
 	{
+		ASSERT(this->externals.Contains(name), u8"Missing external: " + name);
 		return this->externals.Get(name);
 	}
 

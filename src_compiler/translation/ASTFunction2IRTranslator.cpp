@@ -53,6 +53,11 @@ void ASTFunction2IRTranslator::OnVisitingFunctionExpression(const AST::FunctionE
 	this->builder.Module().AddProcedure(proc, &this->procedure);
 
 	IR::BasicBlock* basicBlock = this->builder.CreateBasicBlock(u8"entry");
+	if(this->procedure.name == u8"main")
+	{
+		//the function to compile is defined within the module, derive variables
+		basicBlock->namedValues = this->GetCurrentBlock()->namedValues;
+	}
 	proc->AddBlock(basicBlock);
 
 	ASTFunction2IRTranslator functionTranslator(this->builder, this->typeCatalog, *proc);
@@ -91,7 +96,7 @@ void ASTFunction2IRTranslator::OnVisitedTupleExpression(const AST::TupleExpressi
 	this->AddInstruction(instruction);
 }
 
-void ASTFunction2IRTranslator::Translate(const AST::StatementBlock &statementBlock)
+void ASTFunction2IRTranslator::TranslateMain(const AST::StatementBlock &statementBlock)
 {
 	this->blockStack.Push(this->procedure.EntryBlock());
 	statementBlock.Visit(*this);
@@ -118,7 +123,8 @@ void ASTFunction2IRTranslator::Translate(const LinkedList<Tuple<UniquePointer<AS
 			IR::Value* guardCondition = this->valueStack.Pop();
 			if(condition)
 			{
-				NOT_IMPLEMENTED_ERROR;
+				this->blockStack.Push(lastBlock);
+
 				const IR::External* andExternal = this->builder.Module().FindExternal(u8"and");
 
 				DynamicArray<IR::Value*> values;
@@ -129,6 +135,8 @@ void ASTFunction2IRTranslator::Translate(const LinkedList<Tuple<UniquePointer<AS
 
 				IR::Instruction* andInstruction = this->builder.CreateExternalCall(andExternal, argInstruction);
 				this->AddInstruction(andInstruction);
+
+				this->blockStack.Pop();
 
 				condition = andInstruction;
 			}
@@ -175,6 +183,19 @@ void ASTFunction2IRTranslator::OnVisitingExternalDeclaration(const AST::External
 
 	IR::External* external = builder.CreateExternal(externalDeclaration.Name(), functionType->ReturnType(), functionType->ArgumentType());
 	builder.Module().AddExternal(external);
+}
+
+void ASTFunction2IRTranslator::OnVisitingObjectExpression(const AST::ObjectExpression &objectExpression)
+{
+	Map<String, IR::Value*> values;
+	for(const auto& kv : objectExpression.Members())
+	{
+		kv.value->Visit(*this);
+		values.Insert(kv.key, this->valueStack.Pop());
+	}
+
+	IR::Instruction* instruction = this->builder.CreateNewObject(Move(values));
+	this->AddInstruction(instruction);
 }
 
 void ASTFunction2IRTranslator::OnVisitingReturnStatement(const AST::ReturnStatement &returnStatement)

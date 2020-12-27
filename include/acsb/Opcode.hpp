@@ -24,7 +24,10 @@ enum class Opcode : uint8
 	CallExtern,
 	JumpOnFalse,
 	LoadConstant,
+	NewDictionary,
 	NewTuple,
-	PushParameter,
+	Pop,
+	PopAssign,
+	Push,
 	Return,
 };

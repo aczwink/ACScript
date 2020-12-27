@@ -22,6 +22,7 @@
 #include "expressions/FunctionExpression.hpp"
 #include "expressions/IdentifierExpression.hpp"
 #include "expressions/NaturalLiteralExpression.hpp"
+#include "expressions/ObjectExpression.hpp"
 #include "expressions/TupleExpression.hpp"
 
 #include "leftValues/IdentifierLeftValue.hpp"

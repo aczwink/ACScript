@@ -72,6 +72,10 @@ void ProcedureTypeInferer::OnVisitingExternalCallInstruction(const IR::ExternalC
 	this->InferTypesMustBeEqual(externalCallInstruction.argument->type, externalCallInstruction.external->argumentType);
 }
 
+void ProcedureTypeInferer::OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction)
+{
+}
+
 void ProcedureTypeInferer::OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction)
 {
 	DynamicArray<const ::Type*> types;
@@ -80,13 +84,24 @@ void ProcedureTypeInferer::OnVisitingNewTupleInstruction(IR::CreateNewTupleInstr
 	createNewTupleInstruction.type = this->typeCatalog.GetTupleType(Move(types));
 }
 
-void ProcedureTypeInferer::OnVisitingReturnInstruction(const IR::ReturnInstruction &returnInstruction)
+void ProcedureTypeInferer::OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction)
 {
+	returnInstruction.type = returnInstruction.returnValue->type;
+
 	if(this->procedure.returnType == nullptr)
+	{
 		this->procedure.returnType = returnInstruction.type;
-	else
+		this->procedure.type = nullptr;
+	}
+	else if(returnInstruction.type != nullptr)
+	{
 		this->InferTypesMustBeEqual(this->procedure.returnType, returnInstruction.type);
-	this->procedure.type = nullptr;
+		this->procedure.type = nullptr;
+	}
+	else
+	{
+		//returnInstruction.type should be nullptr only if we come from recursion
+	}
 
 	if(this->procedure.type == nullptr)
 	{

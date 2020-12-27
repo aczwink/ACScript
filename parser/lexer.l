@@ -28,6 +28,7 @@ extern AST::ParserState* g_parserState;
 %%
 [ \t\r\n]       ; //ignore whitespaces
 "//".*      {} //skip comments
+[/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]       {} //skip comments
 
 ","         { return TOKEN_COMMA; }
 ":"         { return TOKEN_COLON; }
@@ -43,10 +44,11 @@ extern AST::ParserState* g_parserState;
 
 "+"         { return TOKEN_PLUS; }
 "-"         { return TOKEN_MINUS; }
+"="         { return TOKEN_EQUALS; }
 
 "extern"    { return TOKEN_KEYWORD_EXTERN; }
 "let"       { return TOKEN_KEYWORD_LET; }
 
 [0-9]+              { yylval.str = g_parserState->CreateString(yytext); return TOKEN_NATURAL_LITERAL; }
-[a-zA-Z0-9\-\*<=]+  { yylval.str = g_parserState->CreateString(yytext); return TOKEN_IDENTIFIER; }
+[a-zA-Z0-9\-\*<=_\[\]]+  { yylval.str = g_parserState->CreateString(yytext); return TOKEN_IDENTIFIER; }
 %%

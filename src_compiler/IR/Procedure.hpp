@@ -50,6 +50,12 @@ namespace IR
 			return this->basicBlocks[0];
 		}
 
+		//Methods
+		void Visit(ValueVisitor &visitor) const override
+		{
+			visitor.OnVisitingProcedure(*this);
+		}
+
 		//Inline
 		inline void AddBlock(BasicBlock* basicBlock)
 		{

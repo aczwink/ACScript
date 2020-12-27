@@ -53,6 +53,8 @@ void Translation::TypeEvaluator::OnVisitedIdentifierTypeSpec(const AST::Identifi
 		this->typeStack.Push(this->typeCatalog.GetLeafType(LeafTypeEnum::Float64));
 	else if(identifierTypeSpec.Identififer() == u8"null")
 		this->typeStack.Push(this->typeCatalog.GetLeafType(LeafTypeEnum::Null));
+	else if(identifierTypeSpec.Identififer() == u8"string")
+		this->typeStack.Push(this->typeCatalog.GetLeafType(LeafTypeEnum::String));
 	else
 		NOT_IMPLEMENTED_ERROR;
 }
