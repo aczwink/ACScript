@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -20,13 +20,16 @@
 //Local
 #include "../Instruction.hpp"
 
+//Forward declarations
+class TypeCatalog;
+
 namespace IR
 {
 	class CreateNewObjectInstruction : public Instruction
 	{
 	public:
-		//Constructor
-		inline CreateNewObjectInstruction(Map<String, Value *>&& members) : members(Move(members))
+		//Constructors
+		inline CreateNewObjectInstruction()
 		{
 		}
 
@@ -36,11 +39,7 @@ namespace IR
 			return this->members;
 		}
 
-		void Visit(BasicBlockVisitor &visitor) override
-		{
-			visitor.OnVisitingNewObjectInstruction(*this);
-		}
-
+		//Methods
 		String ToString() const override
 		{
 			DynamicArray<String> strings;
@@ -48,6 +47,13 @@ namespace IR
 				strings.Push(kv.key + u8": " + kv.value->ToReferenceString());
 
 			return Symbol::ToString() + u8" <-- new_object " + String::Join(strings, u8", ");
+		}
+
+		void UpdateType(TypeCatalog& typeCatalog);
+
+		void Visit(BasicBlockVisitor &visitor) override
+		{
+			visitor.OnVisitingNewObjectInstruction(*this);
 		}
 
 	private:

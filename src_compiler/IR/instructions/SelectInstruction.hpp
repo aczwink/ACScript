@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -18,31 +18,31 @@
 */
 #pragma once
 //Local
-#include "Symbol.hpp"
+#include "../Instruction.hpp"
 
 namespace IR
 {
-	class External : public Symbol
+	class SelectInstruction : public Instruction
 	{
 	public:
 		//Members
-		const ::Type* returnType;
-		const ::Type* argumentType;
+		Value* inner;
+		Value* selector;
 
 		//Constructor
-		inline External(const String& name, const ::Type* returnType, const ::Type* argumentType) : returnType(returnType), argumentType(argumentType)
+		inline SelectInstruction(Value* inner, Value* selector) : inner(inner), selector(selector)
 		{
-			this->name = name;
+		}
+
+		//Methods
+		void Visit(BasicBlockVisitor &visitor) override
+		{
+			visitor.OnVisitingSelectInstruction(*this);
 		}
 
 		String ToString() const override
 		{
-			return u8"extern " + Symbol::ToString();
-		}
-
-		void Visit(ValueVisitor &visitor) override
-		{
-			visitor.OnVisitingExternal(*this);
+			return Symbol::ToString() + u8" <-- select " + this->inner->ToReferenceString() + u8", " + this->selector->ToReferenceString();
 		}
 	};
 }

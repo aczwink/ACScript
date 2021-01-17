@@ -9,5 +9,6 @@ set(SOURCE_FILES_COMPILER
 	${CMAKE_CURRENT_SOURCE_DIR}/DependencyGraph.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/PassManager.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ProcedureTransformer.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ValueEvaluator.hpp
 
 	PARENT_SCOPE)

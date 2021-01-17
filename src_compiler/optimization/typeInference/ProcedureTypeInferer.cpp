@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -21,10 +21,30 @@
 //Local
 #include "../../IR/visitors/AllSymbols.hpp"
 #include "ProcedureTypeReplacer.hpp"
+#include "../ValueEvaluator.hpp"
 //Namespaces
 using namespace Optimization;
 
 //Private methods
+void ProcedureTypeInferer::InferTypeMustHaveMember(const ::Type* type, const String &memberName) const
+{
+	const ObjectType* objectType = dynamic_cast<const ObjectType *>(type);
+	if(objectType)
+	{
+		ASSERT_EQUALS(true, objectType->Members().Contains(memberName));
+		return;
+	}
+
+	GenericType* leftGenericType = const_cast<GenericType *>(dynamic_cast<const GenericType *>(type));
+	if(leftGenericType)
+	{
+		leftGenericType->AddMemberConstraint(memberName, this->typeCatalog.CreateGenericType());
+		return;
+	}
+
+	NOT_IMPLEMENTED_ERROR;
+}
+
 void ProcedureTypeInferer::InferTypesMustBeEqual(const ::Type *type, const ::Type *mustBeType) const
 {
 	if(type->IsTriviallyAssignableTo(*mustBeType))
@@ -58,12 +78,13 @@ void ProcedureTypeInferer::OnVisitingCallInstruction(IR::CallInstruction &callIn
 {
 	if(callInstruction.type == nullptr)
 	{
-		const IR::Procedure* procedure = dynamic_cast<const IR::Procedure *>(callInstruction.function);
+		ValueEvaluator valueEvaluator;
+		const IR::Procedure* procedure = dynamic_cast<const IR::Procedure *>(valueEvaluator.Evaluate(callInstruction.function));
 		callInstruction.type = procedure->returnType;
 	}
 }
 
-void ProcedureTypeInferer::OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction)
+void ProcedureTypeInferer::OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction)
 {
 }
 
@@ -72,8 +93,9 @@ void ProcedureTypeInferer::OnVisitingExternalCallInstruction(const IR::ExternalC
 	this->InferTypesMustBeEqual(externalCallInstruction.argument->type, externalCallInstruction.external->argumentType);
 }
 
-void ProcedureTypeInferer::OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction)
+void ProcedureTypeInferer::OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction)
 {
+	createNewObjectInstruction.UpdateType(this->typeCatalog);
 }
 
 void ProcedureTypeInferer::OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction)
@@ -109,5 +131,20 @@ void ProcedureTypeInferer::OnVisitingReturnInstruction(IR::ReturnInstruction &re
 		{
 			this->procedure.type = this->typeCatalog.GetFunctionType(this->procedure.returnType, this->procedure.argumentType);
 		}
+	}
+}
+
+void ProcedureTypeInferer::OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction)
+{
+	const IR::ConstantString* constantString = dynamic_cast<const IR::ConstantString *>(selectInstruction.selector);
+	this->InferTypeMustHaveMember(selectInstruction.inner->type, constantString->Value());
+
+	const ObjectType* objectType = dynamic_cast<const ObjectType *>(selectInstruction.inner->type);
+	if(objectType)
+		selectInstruction.type = objectType->Members()[constantString->Value()];
+	else
+	{
+		const GenericType* genericType = dynamic_cast<const GenericType *>(selectInstruction.inner->type);
+		selectInstruction.type = genericType->GetMemberConstraint(constantString->Value());
 	}
 }

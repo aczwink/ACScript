@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -40,7 +40,7 @@ namespace IR
 
 		//Abstract
 		virtual String ToString() const = 0;
-		virtual void Visit(ValueVisitor& visitor) const = 0;
+		virtual void Visit(ValueVisitor& visitor) = 0;
 
 		//Overrideable
 		virtual String ToReferenceString() const

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -102,9 +102,7 @@ void Disassembler::DisassembleInstruction(DataReader &dataReader, uint16& offset
 	{
 		case Opcode::Call:
 		{
-			uint16 callOffset = dataReader.ReadUInt16();
-
-			this->OutputMnemonicWithOneArgument(u8"call", u8"__lbl" + String::Number(this->jumpOffsets[callOffset]));
+			this->OutputMnemonic(u8"call");
 		}
 		break;
 		case Opcode::CallExtern:
@@ -161,6 +159,11 @@ void Disassembler::DisassembleInstruction(DataReader &dataReader, uint16& offset
 			this->OutputMnemonic(u8"ret");
 		}
 		break;
+		case Opcode::Select:
+		{
+			this->OutputMnemonic(u8"slct");
+		}
+		break;
 		default:
 			this->textWriter << u8"??? Unknown instruction ???: " << String::HexNumber(static_cast<uint64>(op));
 	}
@@ -176,8 +179,7 @@ void Disassembler::FindJumpOffsets(DataReader &dataReader)
 		{
 			case Opcode::Call:
 			{
-				uint16 callOffset = dataReader.ReadUInt16();
-				this->jumpOffsets.Insert(callOffset, Unsigned<uint32>::Max());
+				//this->jumpOffsets.Insert(callOffset, Unsigned<uint32>::Max());
 			}
 			break;
 			default:
@@ -190,7 +192,6 @@ uint8 Disassembler::GetArgumentsSize(Opcode opcode) const
 {
 	switch(opcode)
 	{
-		case Opcode::Call:
 		case Opcode::CallExtern:
 		case Opcode::JumpOnFalse:
 		case Opcode::LoadConstant:

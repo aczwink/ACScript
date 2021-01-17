@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -18,31 +18,38 @@
 */
 #pragma once
 //Local
-#include "Symbol.hpp"
+#include "Expression.hpp"
 
-namespace IR
+namespace AST
 {
-	class External : public Symbol
+	class SelectExpression : public Expression
 	{
 	public:
-		//Members
-		const ::Type* returnType;
-		const ::Type* argumentType;
-
 		//Constructor
-		inline External(const String& name, const ::Type* returnType, const ::Type* argumentType) : returnType(returnType), argumentType(argumentType)
+		inline SelectExpression(UniquePointer<class Expression>&& expr, const String& memberName)
+			: expr(Move(expr)), memberName(memberName)
 		{
-			this->name = name;
 		}
 
-		String ToString() const override
+		//Properties
+		inline const Expression& Expression() const
 		{
-			return u8"extern " + Symbol::ToString();
+			return *this->expr;
 		}
 
-		void Visit(ValueVisitor &visitor) override
+		inline const String& MemberName() const
 		{
-			visitor.OnVisitingExternal(*this);
+			return this->memberName;
 		}
+
+		//Methods
+		void Visit(ExpressionVisitor &visitor) const override
+		{
+			visitor.OnVisitingSelectExpression(*this);
+		}
+
+	private:
+		UniquePointer<class Expression> expr;
+		String memberName;
 	};
 }

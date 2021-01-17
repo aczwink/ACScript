@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -33,7 +33,7 @@ namespace IR
 		}
 
 		//Properties
-		inline const Value* Condition() const
+		inline Value* Condition()
 		{
 			return this->condition;
 		}

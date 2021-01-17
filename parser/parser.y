@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -29,9 +29,11 @@ void yyerror(AST::ParserState* parserState, const char* s);
 %token TOKEN_BRACE_CLOSE
 %token TOKEN_COLON
 %token TOKEN_COMMA
+%token TOKEN_DOT
 %token TOKEN_GUARD
 %token TOKEN_MAP
 %token TOKEN_MORE
+%token TOKEN_MULTIPLY
 %token TOKEN_PAREN_OPEN
 %token TOKEN_PAREN_CLOSE
 %token TOKEN_SEMICOLON
@@ -93,7 +95,9 @@ void yyerror(AST::ParserState* parserState, const char* s);
 
 %parse-param { AST::ParserState* parserState }
 
-%right infixprec
+%left TOKEN_PLUS
+%left TOKEN_MULTIPLY
+
 %left TOKEN_IDENTIFIER
 %left TOKEN_MAP
 
@@ -114,6 +118,7 @@ function_name:
     TOKEN_IDENTIFIER                                                { $$ = $1; }
     | TOKEN_PLUS                                                    { $$ = parserState->CreateString(u8"+"); }
     | TOKEN_MINUS                                                   { $$ = parserState->CreateString(u8"-"); }
+    | TOKEN_MULTIPLY                                                { $$ = parserState->CreateString(u8"*"); }
     | TOKEN_EQUALS                                                  { $$ = parserState->CreateString(u8"="); }
 ;
 
@@ -130,13 +135,15 @@ expression:
 ;
 
 expression_without_function_value:
-    TOKEN_IDENTIFIER TOKEN_PAREN_OPEN expression TOKEN_PAREN_CLOSE                                                      { $$ = new AST::CallExpression(*$1, $3); }
+    expression_without_function_value TOKEN_PAREN_OPEN expression TOKEN_PAREN_CLOSE                                     { $$ = new AST::CallExpression($1, $3); }
+    | expression_without_function_value TOKEN_DOT TOKEN_IDENTIFIER                                                      { $$ = new AST::SelectExpression($1, *$3); }
     | value_expression                                                                                                  { $$ = $1; }
 
     //infix
-    | expression_without_function_value TOKEN_IDENTIFIER expression_without_function_value                              { $$ = new AST::CallExpression(*$2, new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
-    | expression_without_function_value TOKEN_PLUS expression_without_function_value                                    { $$ = new AST::CallExpression(u8"+", new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
-    | expression_without_function_value TOKEN_EQUALS expression_without_function_value                                  { $$ = new AST::CallExpression(u8"=", new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
+    | expression_without_function_value TOKEN_IDENTIFIER expression_without_function_value                              { $$ = new AST::CallExpression(new AST::IdentifierExpression(*$2), new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
+    | expression_without_function_value TOKEN_MULTIPLY expression_without_function_value                                { $$ = new AST::CallExpression(new AST::IdentifierExpression(u8"*"), new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
+    | expression_without_function_value TOKEN_PLUS expression_without_function_value                                    { $$ = new AST::CallExpression(new AST::IdentifierExpression(u8"+"), new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
+    | expression_without_function_value TOKEN_EQUALS expression_without_function_value                                  { $$ = new AST::CallExpression(new AST::IdentifierExpression(u8"="), new AST::TupleExpression(new AST::ExpressionList($1, $3))); }
 ;
 
 

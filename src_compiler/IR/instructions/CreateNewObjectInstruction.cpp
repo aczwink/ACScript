@@ -16,33 +16,17 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-#pragma once
+//Class header
+#include "CreateNewObjectInstruction.hpp"
 //Local
-#include "Symbol.hpp"
+#include "../../types/TypeCatalog.hpp"
+//Namespaces
+using namespace IR;
 
-namespace IR
+void CreateNewObjectInstruction::UpdateType(TypeCatalog& typeCatalog)
 {
-	class External : public Symbol
-	{
-	public:
-		//Members
-		const ::Type* returnType;
-		const ::Type* argumentType;
-
-		//Constructor
-		inline External(const String& name, const ::Type* returnType, const ::Type* argumentType) : returnType(returnType), argumentType(argumentType)
-		{
-			this->name = name;
-		}
-
-		String ToString() const override
-		{
-			return u8"extern " + Symbol::ToString();
-		}
-
-		void Visit(ValueVisitor &visitor) override
-		{
-			visitor.OnVisitingExternal(*this);
-		}
-	};
+	Map<String, const ::Type*> types;
+	for(const auto& member : this->Members())
+		types.Insert(member.key, member.value->type);
+	this->type = typeCatalog.GetObjectType(Move(types));
 }

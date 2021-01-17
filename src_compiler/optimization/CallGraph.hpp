@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -21,6 +21,7 @@ using namespace StdXX;
 //Local
 #include "../IR/visitors/AllSymbols.hpp"
 #include "../IR/Procedure.hpp"
+#include "ValueEvaluator.hpp"
 
 namespace Optimization
 {
@@ -80,12 +81,13 @@ namespace Optimization
 		//Event handlers
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override
 		{
-			IR::Procedure* called = const_cast<IR::Procedure *>(dynamic_cast<const IR::Procedure *>(callInstruction.function));
+			ValueEvaluator valueEvaluator;
+			IR::Procedure* called = dynamic_cast<IR::Procedure *>(valueEvaluator.Evaluate(callInstruction.function));
 
 			this->callLinks[this->currentProc].Insert(called);
 		}
 
-		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
+		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
 		{
 		}
 
@@ -93,7 +95,7 @@ namespace Optimization
 		{
 		}
 
-		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override
+		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override
 		{
 		}
 
@@ -102,6 +104,10 @@ namespace Optimization
 		}
 
 		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override
+		{
+		}
+
+		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override
 		{
 		}
 	};

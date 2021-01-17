@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -37,6 +37,7 @@ public:
 	void OnVisitingFunctionExpression(const AST::FunctionExpression &functionExpression) override;
 	void OnVisitingIdentifier(const AST::IdentifierExpression &identifierExpression) override;
 	void OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression) override;
+	void OnVisitingSelectExpression(const AST::SelectExpression &selectExpression) override;
 	void OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression) override;
 
 	void TranslateMain(const AST::StatementBlock &statementBlock);
@@ -48,6 +49,7 @@ private:
 	IR::Procedure& procedure;
 	DynamicArray<IR::BasicBlock*> blockStack;
 	DynamicArray<IR::Value*> valueStack;
+	DynamicArray<IR::Scope*> scopeStack;
 
 	//Methods
 	void Translate(const LinkedList<Tuple<UniquePointer<AST::Expression>, UniquePointer<AST::Expression>, AST::StatementBlock>>& rules);
@@ -55,13 +57,25 @@ private:
 	//Inline
 	inline void AddInstruction(IR::Instruction* instruction)
 	{
-		this->GetCurrentBlock()->Add(instruction);
+		this->blockStack.Last()->Add(instruction);
 		this->valueStack.Push(instruction);
 	}
 
-	inline IR::BasicBlock* GetCurrentBlock()
+	inline void PopBlock()
 	{
-		return this->blockStack.Last();
+		this->blockStack.Pop();
+		this->scopeStack.Pop();
+	}
+
+	inline void PushBlock(IR::BasicBlock* block)
+	{
+		this->blockStack.Push(block);
+		this->scopeStack.Push(&block->scope);
+	}
+
+	inline IR::Scope* GetCurrentScope()
+	{
+		return this->scopeStack.Last();
 	}
 
 	//Event handlers

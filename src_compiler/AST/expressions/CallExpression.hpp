@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -26,20 +26,25 @@ namespace AST
 	{
 	public:
 		//Constructor
-		inline CallExpression(const String &functionName, UniquePointer<Expression> &&argument)
-				: functionName(functionName), arg(Move(argument))
+		inline CallExpression(UniquePointer<Expression>&& called)
+				: called(Move(called))
+		{
+		}
+
+		inline CallExpression(UniquePointer<Expression>&& called, UniquePointer<Expression> &&argument)
+				: called(Move(called)), arg(Move(argument))
 		{
 		}
 
 		//Properties
-		inline const Expression &Argument() const
+		inline const Expression& Argument() const
 		{
 			return *this->arg;
 		}
 
-		inline const String &FunctionName() const
+		inline const Expression& Called() const
 		{
-			return this->functionName;
+			return *this->called;
 		}
 
 		//Methods
@@ -50,7 +55,7 @@ namespace AST
 
 	private:
 		//Members
-		String functionName;
+		UniquePointer<Expression> called;
 		UniquePointer<Expression> arg;
 	};
 }

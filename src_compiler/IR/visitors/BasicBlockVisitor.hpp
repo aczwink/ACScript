@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -29,16 +29,18 @@ namespace IR
 	class CreateNewTupleInstruction;
 	class ExternalCallInstruction;
 	class ReturnInstruction;
+	class SelectInstruction;
 
 	class BasicBlockVisitor
 	{
 	public:
 		//Abstract
 		virtual void OnVisitingCallInstruction(CallInstruction& callInstruction) = 0;
-		virtual void OnVisitingConditionalBranchInstruction(const BranchOnTrueInstruction& branchOnTrueInstruction) = 0;
+		virtual void OnVisitingConditionalBranchInstruction(BranchOnTrueInstruction& branchOnTrueInstruction) = 0;
 		virtual void OnVisitingExternalCallInstruction(const ExternalCallInstruction& externalCallInstruction) = 0;
-		virtual void OnVisitingNewObjectInstruction(const CreateNewObjectInstruction& createNewObjectInstruction) = 0;
+		virtual void OnVisitingNewObjectInstruction(CreateNewObjectInstruction& createNewObjectInstruction) = 0;
 		virtual void OnVisitingNewTupleInstruction(CreateNewTupleInstruction& createNewTupleInstruction) = 0;
 		virtual void OnVisitingReturnInstruction(ReturnInstruction& returnInstruction) = 0;
+		virtual void OnVisitingSelectInstruction(SelectInstruction& selectInstruction) = 0;
 	};
 }

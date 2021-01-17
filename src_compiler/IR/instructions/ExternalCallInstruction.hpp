@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -27,11 +27,11 @@ namespace IR
 	{
 	public:
 		//Members
-		const External* external;
-		const Value* argument;
+		External* external;
+		Value* argument;
 
 		//Constructor
-		inline ExternalCallInstruction(const External* external, const Value* argument) : external(external), argument(argument)
+		inline ExternalCallInstruction(External* external, Value* argument) : external(external), argument(argument)
 		{
 			this->type = external->returnType;
 		}

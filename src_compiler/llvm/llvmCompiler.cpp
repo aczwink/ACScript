@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -30,7 +30,8 @@ void llvmCompiler::OnVisitedBlock(const AST::StatementBlock &statementBlock)
 
 void llvmCompiler::OnVisitedCall(const AST::CallExpression &callExpression)
 {
-
+	NOT_IMPLEMENTED_ERROR;
+	/*
 	llvm::Function* function = this->module->getFunction(
 			reinterpret_cast<const char *>(callExpression.FunctionName().ToUTF8().GetRawZeroTerminatedData()));
 
@@ -52,7 +53,7 @@ void llvmCompiler::OnVisitedCall(const AST::CallExpression &callExpression)
 		ArgsV.push_back(this->valueStack.Pop());
 
 	llvm::Value* call = this->irBuilder->CreateCall(function, ArgsV, u8"calltmp");
-	this->valueStack.Push(call);
+	this->valueStack.Push(call);*/
 }
 
 void llvmCompiler::OnVisitingExternalDeclaration(const AST::ExternalDeclarationStatement &externalDeclaration)

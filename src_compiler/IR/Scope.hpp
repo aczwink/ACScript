@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,33 +16,38 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-#pragma once
-//Local
-#include "Symbol.hpp"
+
+#include <Std++/Containers/Strings/String.hpp>
 
 namespace IR
 {
-	class External : public Symbol
+	class Scope
 	{
 	public:
 		//Members
-		const ::Type* returnType;
-		const ::Type* argumentType;
+		Scope* parent;
 
 		//Constructor
-		inline External(const String& name, const ::Type* returnType, const ::Type* argumentType) : returnType(returnType), argumentType(argumentType)
+		inline Scope()
 		{
-			this->name = name;
+			this->parent = nullptr;
 		}
 
-		String ToString() const override
+		//Inline
+		inline void Add(const String& name, IR::Value* value)
 		{
-			return u8"extern " + Symbol::ToString();
+			this->namedValues[name] = value;
 		}
 
-		void Visit(ValueVisitor &visitor) override
+		inline IR::Value* Resolve(const String& name)
 		{
-			visitor.OnVisitingExternal(*this);
+			if(this->namedValues.Contains(name))
+				return this->namedValues[name];
+			return this->parent ? this->parent->Resolve(name) : nullptr;
 		}
+
+	private:
+		//Members
+		Map<String, IR::Value*> namedValues;
 	};
 }

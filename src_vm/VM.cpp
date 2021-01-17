@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -37,7 +37,7 @@ void VM::Run()
 		{
 			case Opcode::Call:
 			{
-				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
+				uint16 offset = executionStack.Pop().ValueF64();
 
 				callStack.Push(pc);
 				pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
@@ -103,6 +103,14 @@ void VM::Run()
 				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
 				RuntimeValue value = executionStack[executionStack.GetNumberOfElements() - 1 - offset];
 				executionStack.Push(value);
+			}
+			break;
+			case Opcode::Select:
+			{
+				RuntimeValue selector = executionStack.Pop();
+				RuntimeValue object = executionStack.Pop();
+
+				executionStack.Push(object.ValuesDictionary()[selector.ValueString()]);
 			}
 			break;
 			case Opcode::Return:

@@ -3,10 +3,13 @@ set(SOURCE_FILES_COMPILER
 
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/BranchOnTrueInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CallInstruction.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CreateNewObjectInstruction.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CreateNewObjectInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/CreateNewTupleInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/ExternalCallInstruction.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/instructions/ReturnInstruction.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/instructions/SelectInstruction.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/instructions/StoreInstruction.hpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}/visitors/AllSymbols.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/visitors/BasicBlockVisitor.hpp
@@ -24,6 +27,7 @@ set(SOURCE_FILES_COMPILER
 	${CMAKE_CURRENT_SOURCE_DIR}/NullValue.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Parameter.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Procedure.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Scope.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Symbol.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/Value.hpp
 

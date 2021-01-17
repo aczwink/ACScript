@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -28,6 +28,17 @@ public:
 	{
 	}
 
+	//Properties
+	inline const auto& MemberConstraints() const
+	{
+		return this->memberConstraints;
+	}
+
+	inline void MemberConstraints(Map<String, const ::Type*>&& memberConstraints)
+	{
+		this->memberConstraints = Move(memberConstraints);
+	}
+
 	//Methods
 	bool IsTriviallyAssignableTo(const Type &other) const override
 	{
@@ -36,7 +47,17 @@ public:
 
 	String ToString() const override
 	{
-		return u8"T" + String::Number(this->number);
+		String result = u8"T" + String::Number(this->number);
+
+		if(!this->memberConstraints.IsEmpty())
+		{
+			DynamicArray<String> strings;
+			for(const auto& kv : this->memberConstraints)
+				strings.Push(kv.key + u8": " + TypePointerToString(kv.value));
+
+			result += u8"{ " + String::Join(strings, u8", ") + u8" }";
+		}
+		return result;
 	}
 
 	void Visit(TypeVisitor &visitor) const override
@@ -44,7 +65,19 @@ public:
 		visitor.OnVisitingGenericType(*this);
 	}
 
+	//Inline
+	inline void AddMemberConstraint(const String& memberName, const ::Type* memberType)
+	{
+		this->memberConstraints.Insert(memberName, memberType);
+	}
+
+	inline const ::Type* GetMemberConstraint(const String& memberName) const
+	{
+		return this->memberConstraints[memberName];
+	}
+
 private:
 	//Members
 	uint32 number;
+	Map<String, const ::Type*> memberConstraints;
 };

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -22,6 +22,8 @@
 #include "../instructions/CreateNewTupleInstruction.hpp"
 #include "../instructions/ExternalCallInstruction.hpp"
 #include "../instructions/ReturnInstruction.hpp"
+#include "../instructions/SelectInstruction.hpp"
+#include "../instructions/StoreInstruction.hpp"
 
 #include "../ConstantFloat.hpp"
 #include "../ConstantString.hpp"

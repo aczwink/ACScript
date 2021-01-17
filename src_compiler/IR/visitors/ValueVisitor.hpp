@@ -37,7 +37,7 @@ namespace IR
 		virtual void OnVisitingConstantFloat(const ConstantFloat& constantFloat) = 0;
 		virtual void OnVisitingConstantString(const ConstantString& constantString) = 0;
 		virtual void OnVisitingExternal(const External& external) = 0;
-		virtual void OnVisitingInstructionResultValue(const Instruction& instruction) = 0;
+		virtual void OnVisitingInstructionResultValue(Instruction& instruction) = 0;
 		virtual void OnVisitingParameter(const Parameter& parameter) = 0;
 		virtual void OnVisitingProcedure(const Procedure& procedure) = 0;
 	};

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -49,7 +49,7 @@ namespace Optimization
 		{
 		}
 
-		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
+		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
 		{
 
 		}
@@ -59,7 +59,7 @@ namespace Optimization
 
 		}
 
-		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override
+		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override
 		{
 
 		}
@@ -73,6 +73,10 @@ namespace Optimization
 		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override
 		{
 
+		}
+
+		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override
+		{
 		}
 
 		//Inline

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -37,15 +37,17 @@ namespace Optimization
 
 	private:
 		//Methods
+		void InferTypeMustHaveMember(const ::Type* type, const String& memberName) const;
 		void InferTypesMustBeEqual(const ::Type* type, const ::Type* mustBeType) const;
 		void ReplaceType(const ::Type* type, const ::Type* mustBeType) const;
 
 		//Event handlers
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override;
-		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
+		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
 		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override;
-		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override;
+		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override;
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
 		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override;
+		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override;
 	};
 }

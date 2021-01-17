@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -29,22 +29,17 @@ void ASTFunction2IRTranslator::OnVisitedCall(const AST::CallExpression &callExpr
 	callExpression.Argument().Visit(*this);
 	IR::Value* argument = this->valueStack.Pop();
 
-	if(this->GetCurrentBlock()->namedValues.Contains(callExpression.FunctionName()))
-	{
-		IR::Instruction* instruction = this->builder.CreateCall(this->GetCurrentBlock()->namedValues[callExpression.FunctionName()], argument);
-		this->AddInstruction(instruction);
-		return;
-	}
+	callExpression.Called().Visit(*this);
+	IR::Value* called = this->valueStack.Pop();
 
-	const IR::External* external = this->builder.Module().FindExternal(callExpression.FunctionName());
+	IR::Instruction* instruction;
+	IR::External* external = dynamic_cast<IR::External *>(called);
 	if(external)
-	{
-		IR::Instruction* instruction = this->builder.CreateExternalCall(external, argument);
-		this->AddInstruction(instruction);
-		return;
-	}
+		instruction = this->builder.CreateExternalCall(external, argument);
+	else
+		instruction = this->builder.CreateCall(called, argument);
 
-	throw CompileException(u8"Can't resolve function referred to by: " + callExpression.FunctionName());
+	this->AddInstruction(instruction);
 }
 
 void ASTFunction2IRTranslator::OnVisitingFunctionExpression(const AST::FunctionExpression &functionExpression)
@@ -53,11 +48,7 @@ void ASTFunction2IRTranslator::OnVisitingFunctionExpression(const AST::FunctionE
 	this->builder.Module().AddProcedure(proc, &this->procedure);
 
 	IR::BasicBlock* basicBlock = this->builder.CreateBasicBlock(u8"entry");
-	if(this->procedure.name == u8"main")
-	{
-		//the function to compile is defined within the module, derive variables
-		basicBlock->namedValues = this->GetCurrentBlock()->namedValues;
-	}
+	basicBlock->scope.parent = this->GetCurrentScope();
 	proc->AddBlock(basicBlock);
 
 	ASTFunction2IRTranslator functionTranslator(this->builder, this->typeCatalog, *proc);
@@ -68,19 +59,41 @@ void ASTFunction2IRTranslator::OnVisitingFunctionExpression(const AST::FunctionE
 
 void ASTFunction2IRTranslator::OnVisitingIdentifier(const AST::IdentifierExpression &identifierExpression)
 {
-	if(this->GetCurrentBlock()->namedValues.Contains(identifierExpression.Identifier()))
+	if(identifierExpression.Identifier() == u8"null")
 	{
-		this->valueStack.Push(this->GetCurrentBlock()->namedValues[identifierExpression.Identifier()]);
-		return;
+		this->valueStack.Push(this->builder.GetNull());
 	}
+	else if(this->GetCurrentScope()->Resolve(identifierExpression.Identifier()))
+	{
+		this->valueStack.Push(this->GetCurrentScope()->Resolve(identifierExpression.Identifier()));
+	}
+	else
+	{
+		IR::External* external = const_cast<IR::External *>(this->builder.Module().FindExternal(
+				identifierExpression.Identifier()));
 
-	throw CompileException(u8"Can't resolve identifier: " + identifierExpression.Identifier());
+		if(external)
+			this->valueStack.Push(external);
+		else
+			throw CompileException(u8"Can't resolve identifier: " + identifierExpression.Identifier());
+	}
 }
 
 void ASTFunction2IRTranslator::OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression)
 {
 	IR::Value* value = this->builder.CreateConstant(naturalLiteralExpression.Value());
 	this->valueStack.Push(value);
+}
+
+void ASTFunction2IRTranslator::OnVisitingSelectExpression(const AST::SelectExpression &selectExpression)
+{
+	selectExpression.Expression().Visit(*this);
+	IR::Value* innerValue = this->valueStack.Pop();
+
+	IR::Value* value = this->builder.CreateConstant(selectExpression.MemberName());
+
+	IR::Instruction* instruction = this->builder.CreateSelectInstruction(innerValue, value);
+	this->AddInstruction(instruction);
 }
 
 void ASTFunction2IRTranslator::OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression)
@@ -98,7 +111,7 @@ void ASTFunction2IRTranslator::OnVisitedTupleExpression(const AST::TupleExpressi
 
 void ASTFunction2IRTranslator::TranslateMain(const AST::StatementBlock &statementBlock)
 {
-	this->blockStack.Push(this->procedure.EntryBlock());
+	this->PushBlock(this->procedure.EntryBlock());
 	statementBlock.Visit(*this);
 	this->AddInstruction(this->builder.CreateReturn(this->builder.GetNull()));
 }
@@ -116,16 +129,16 @@ void ASTFunction2IRTranslator::Translate(const LinkedList<Tuple<UniquePointer<AS
 
 		if(!rule.Get<1>().IsNull())
 		{
-			this->blockStack.Push(lastBlock);
+			this->PushBlock(lastBlock);
 			rule.Get<1>()->Visit(*this);
-			this->blockStack.Pop();
+			this->PopBlock();
 
 			IR::Value* guardCondition = this->valueStack.Pop();
 			if(condition)
 			{
-				this->blockStack.Push(lastBlock);
+				this->PushBlock(lastBlock);
 
-				const IR::External* andExternal = this->builder.Module().FindExternal(u8"and");
+				IR::External* andExternal = this->builder.Module().FindExternal(u8"and");
 
 				DynamicArray<IR::Value*> values;
 				values.Push(condition);
@@ -136,7 +149,7 @@ void ASTFunction2IRTranslator::Translate(const LinkedList<Tuple<UniquePointer<AS
 				IR::Instruction* andInstruction = this->builder.CreateExternalCall(andExternal, argInstruction);
 				this->AddInstruction(andInstruction);
 
-				this->blockStack.Pop();
+				this->PopBlock();
 
 				condition = andInstruction;
 			}
@@ -149,22 +162,22 @@ void ASTFunction2IRTranslator::Translate(const LinkedList<Tuple<UniquePointer<AS
 			IR::BasicBlock *thenBlock = this->builder.CreateBasicBlock(u8"rule" + String::Number(ruleNumber++));
 			IR::BasicBlock *elseBlock = this->builder.CreateBasicBlock(u8"rule" + String::Number(ruleNumber++));
 
-			thenBlock->namedValues = lastBlock->namedValues;
-			elseBlock->namedValues = lastBlock->namedValues;
+			thenBlock->scope = lastBlock->scope;
+			elseBlock->scope = lastBlock->scope;
 
-			this->blockStack.Push(lastBlock);
+			this->PushBlock(lastBlock);
 
 			IR::Instruction* branchInstruction = this->builder.CreateConditionalBranch(condition, thenBlock, elseBlock);
 			this->AddInstruction(branchInstruction);
 
 			this->procedure.AddBlock(thenBlock);
 			this->procedure.AddBlock(elseBlock);
-			this->blockStack.Push(thenBlock);
+			this->PushBlock(thenBlock);
 
 			lastBlock = elseBlock;
 		}
 		else
-			this->blockStack.Push(lastBlock);
+			this->PushBlock(lastBlock);
 
 		rule.Get<2>().Visit(*this);
 	}
@@ -187,15 +200,28 @@ void ASTFunction2IRTranslator::OnVisitingExternalDeclaration(const AST::External
 
 void ASTFunction2IRTranslator::OnVisitingObjectExpression(const AST::ObjectExpression &objectExpression)
 {
-	Map<String, IR::Value*> values;
+	IR::Scope objectScope;
+	objectScope.parent = this->scopeStack.Last();
+	this->scopeStack.Push(&objectScope);
+
+	IR::CreateNewObjectInstruction* instruction = this->builder.CreateNewObject();
+	instruction->UpdateType(this->typeCatalog);
+	this->AddInstruction(instruction);
+	objectScope.Add(u8"this", instruction);
+
+	IR::Instruction* lastObjectInstruction = instruction;
 	for(const auto& kv : objectExpression.Members())
 	{
 		kv.value->Visit(*this);
-		values.Insert(kv.key, this->valueStack.Pop());
+		IR::Value* value = this->valueStack.Pop();
+
+		IR::Value* key = this->builder.CreateConstant(kv.key);
+
+		lastObjectInstruction = this->builder.CreateStoreInstruction(lastObjectInstruction, key, value);
+		this->AddInstruction(lastObjectInstruction);
 	}
 
-	IR::Instruction* instruction = this->builder.CreateNewObject(Move(values));
-	this->AddInstruction(instruction);
+	this->scopeStack.Pop();
 }
 
 void ASTFunction2IRTranslator::OnVisitingReturnStatement(const AST::ReturnStatement &returnStatement)
@@ -211,5 +237,5 @@ void ASTFunction2IRTranslator::OnVisitingVariableDefinitionStatement(const AST::
 	variableDefinitionStatement.RightHandSide().Visit(*this);
 
 	String varName = dynamic_cast<const AST::IdentifierLeftValue&>(variableDefinitionStatement.LeftHandSide()).Identifier();
-	this->GetCurrentBlock()->namedValues[varName] = this->valueStack.Pop();
+	this->GetCurrentScope()->Add(varName, this->valueStack.Pop());
 }

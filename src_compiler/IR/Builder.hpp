@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -21,16 +21,9 @@
 #include "Module.hpp"
 #include "../types/TypeCatalog.hpp"
 #include "Symbol.hpp"
-#include "External.hpp"
-#include "Procedure.hpp"
-#include "instructions/ExternalCallInstruction.hpp"
-#include "instructions/CreateNewTupleInstruction.hpp"
-#include "instructions/ReturnInstruction.hpp"
+#include "visitors/AllSymbols.hpp"
 #include "NullValue.hpp"
-#include "instructions/CallInstruction.hpp"
-#include "instructions/BranchOnTrueInstruction.hpp"
-#include "instructions/CreateNewObjectInstruction.hpp"
-#include "ConstantString.hpp"
+
 
 namespace IR
 {
@@ -57,7 +50,7 @@ namespace IR
 			return basicBlock;
 		}
 
-		inline Instruction* CreateCall(const Value* function, const Value* argument)
+		inline Instruction* CreateCall(Value* function, Value* argument)
 		{
 			return this->InsertInstruction(new CallInstruction(function, argument));
 		}
@@ -91,7 +84,7 @@ namespace IR
 			return this->Register(external);
 		}
 
-		inline Instruction* CreateExternalCall(const External* external, const Value* argument)
+		inline Instruction* CreateExternalCall(External* external, Value* argument)
 		{
 			return this->InsertInstruction(new ExternalCallInstruction(external, argument));
 		}
@@ -105,16 +98,9 @@ namespace IR
 			return this->Register( proc );
 		}
 
-		inline Instruction* CreateNewObject(Map<String, Value*>&& members)
+		inline CreateNewObjectInstruction* CreateNewObject()
 		{
-			CreateNewObjectInstruction* instruction = new CreateNewObjectInstruction(Move(members));
-
-			Map<String, const ::Type*> types;
-			for(const auto& member : instruction->Members())
-				types.Insert(member.key, member.value->type);
-			instruction->type = this->typeCatalog.GetObjectType(Move(types));
-
-			return this->InsertInstruction(instruction);
+			return this->InsertInstruction(new CreateNewObjectInstruction);
 		}
 
 		inline Instruction *CreateNewTuple(DynamicArray<Value *>&& values)
@@ -141,9 +127,19 @@ namespace IR
 			return this->CreateUniqueNameAndRegisterSymbol(proc, u8"__func");
 		}
 
-		inline Instruction* CreateReturn(const Value* returnValue)
+		inline Instruction* CreateReturn(Value* returnValue)
 		{
 			return this->InsertInstruction(new ReturnInstruction(returnValue));
+		}
+
+		inline Instruction* CreateSelectInstruction(IR::Value* innerValue, IR::Value* selectValue)
+		{
+			return this->InsertInstruction(new SelectInstruction(innerValue, selectValue));
+		}
+
+		inline Instruction* CreateStoreInstruction(IR::Value* objectValue, IR::Value* keyValue, IR::Value* value)
+		{
+			return this->InsertInstruction(new StoreInstruction(objectValue, keyValue, value));
 		}
 
 		inline Value* GetNull()
@@ -175,7 +171,8 @@ namespace IR
 			return prefix + String::Number(counter);
 		}
 
-		inline Instruction* InsertInstruction(Instruction* instruction)
+		template<typename T>
+		inline T* InsertInstruction(T* instruction)
 		{
 			return this->CreateUniqueNameAndRegisterSymbol(instruction, u8"$t");
 		}

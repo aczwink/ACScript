@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -24,9 +24,9 @@ void PatternMatching2IRTranslator::OnVisitingNaturalLiteral(const AST::NaturalLi
 {
 	IR::Value* argument = this->valueStack.Pop();
 
-	const IR::External* lessThanExternal = this->builder.Module().FindExternal(u8"<");
-	const IR::External* orExternal = this->builder.Module().FindExternal(u8"or");
-	const IR::External* notExternal = this->builder.Module().FindExternal(u8"not");
+	IR::External* lessThanExternal = this->builder.Module().FindExternal(u8"<");
+	IR::External* orExternal = this->builder.Module().FindExternal(u8"or");
+	IR::External* notExternal = this->builder.Module().FindExternal(u8"not");
 
 	DynamicArray<IR::Value*> values;
 	values.Push(this->builder.CreateConstant(naturalLiteralExpression.Value()));
@@ -61,31 +61,27 @@ void PatternMatching2IRTranslator::OnVisitingNaturalLiteral(const AST::NaturalLi
 
 void PatternMatching2IRTranslator::OnVisitingObjectExpression(const AST::ObjectExpression &objectExpression)
 {
-	const IR::External* subscript = this->builder.Module().FindExternal(u8"[]");
-
 	IR::Value* dictValue = this->valueStack.Pop();
 
 	for(const auto& kv : objectExpression.Members())
 	{
 		ASSERT_EQUALS(true, kv.value.IsNull()); //TODO: implement value conditions for objects
 
-		DynamicArray<IR::Value*> values;
-		values.Push(dictValue);
-		values.Push(this->builder.CreateConstant(kv.key));
-		IR::Instruction* argInstruction = this->builder.CreateNewTuple(Move(values));
-		this->AddInstruction(argInstruction);
-
-		IR::Instruction* selectInstruction = this->builder.CreateExternalCall(subscript, argInstruction);
+		IR::Instruction* selectInstruction = this->builder.CreateSelectInstruction(dictValue, this->builder.CreateConstant(kv.key));
 		this->AddInstruction(selectInstruction);
 
-		this->valueStack.Push(selectInstruction);
-		this->basicBlock->namedValues[kv.key] = selectInstruction;
+		this->basicBlock->scope.Add(kv.key, selectInstruction);
 	}
+}
+
+void PatternMatching2IRTranslator::OnVisitingSelectExpression(const AST::SelectExpression &selectExpression)
+{
+	NOT_IMPLEMENTED_ERROR;
 }
 
 void PatternMatching2IRTranslator::OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression)
 {
-	const IR::External* subscript = this->builder.Module().FindExternal(u8"[]");
+	IR::External* subscript = this->builder.Module().FindExternal(u8"[]");
 
 	IR::Value* tupleValue = this->valueStack.Pop();
 

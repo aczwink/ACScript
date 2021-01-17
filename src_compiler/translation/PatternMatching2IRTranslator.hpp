@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -61,11 +61,12 @@ private:
 	void OnVisitingIdentifier(const AST::IdentifierExpression &identifierExpression) override
 	{
 		String varName = identifierExpression.Identifier();
-		this->basicBlock->namedValues[varName] = this->valueStack.Pop();
+		this->basicBlock->scope.Add(varName, this->valueStack.Pop());
 	}
 
 	void OnVisitingNaturalLiteral(const AST::NaturalLiteralExpression &naturalLiteralExpression) override;
 	void OnVisitingObjectExpression(const AST::ObjectExpression &objectExpression) override;
+	void OnVisitingSelectExpression(const AST::SelectExpression &selectExpression) override;
 	void OnVisitedTupleExpression(const AST::TupleExpression &tupleExpression) override;
 
 	//Inline

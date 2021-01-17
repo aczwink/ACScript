@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -26,6 +26,7 @@ namespace AST
 	class IdentifierExpression;
 	class NaturalLiteralExpression;
 	class ObjectExpression;
+	class SelectExpression;
 	class TupleExpression;
 
 	class ExpressionVisitor
@@ -37,6 +38,7 @@ namespace AST
 		virtual void OnVisitingIdentifier(const IdentifierExpression& identifierExpression) = 0;
 		virtual void OnVisitingNaturalLiteral(const NaturalLiteralExpression& naturalLiteralExpression) = 0;
 		virtual void OnVisitingObjectExpression(const ObjectExpression& objectExpression) = 0;
+		virtual void OnVisitingSelectExpression(const SelectExpression& selectExpression) = 0;
 		virtual void OnVisitedTupleExpression(const TupleExpression& tupleExpression) = 0;
 	};
 }

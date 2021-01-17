@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -62,7 +62,7 @@ namespace IR
 			this->procedures.InsertBefore(this->procedures.Find(before), Move(procedure));
 		}
 
-		inline const External* FindExternal(const String& externalName) const
+		inline External* FindExternal(const String& externalName)
 		{
 			auto it = this->externals.Find(externalName);
 			if(it == this->externals.end())

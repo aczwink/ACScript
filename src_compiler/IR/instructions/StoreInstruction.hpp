@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -18,31 +18,35 @@
 */
 #pragma once
 //Local
-#include "Symbol.hpp"
+#include "../Instruction.hpp"
 
 namespace IR
 {
-	class External : public Symbol
+	class StoreInstruction : public Instruction
 	{
 	public:
 		//Members
-		const ::Type* returnType;
-		const ::Type* argumentType;
+		IR::Value* objectValue;
+		IR::Value* keyValue;
+		IR::Value* value;
 
 		//Constructor
-		inline External(const String& name, const ::Type* returnType, const ::Type* argumentType) : returnType(returnType), argumentType(argumentType)
+		inline StoreInstruction(IR::Value* objectValue, IR::Value* keyValue, IR::Value* value)
 		{
-			this->name = name;
+			this->objectValue = objectValue;
+			this->keyValue = keyValue;
+			this->value = value;
 		}
 
+		//Methods
 		String ToString() const override
 		{
-			return u8"extern " + Symbol::ToString();
+			return Symbol::ToString() + u8" <-- store " + this->objectValue->ToReferenceString() + u8", " + this->keyValue->ToReferenceString() + u8", " + this->value->ToReferenceString();
 		}
 
-		void Visit(ValueVisitor &visitor) override
+		void Visit(BasicBlockVisitor &visitor) override
 		{
-			visitor.OnVisitingExternal(*this);
+
 		}
 	};
 }

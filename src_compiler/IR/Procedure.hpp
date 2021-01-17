@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -32,11 +32,13 @@ namespace IR
 		const ::Type* returnType;
 		const ::Type* argumentType;
 		Parameter* parameter;
+		bool isMethod;
 
 		//Constructor
 		inline Procedure(const ::Type* returnType, const ::Type* argumentType, Parameter* parameter)
 			: returnType(returnType), argumentType(argumentType), parameter(parameter)
 		{
+			this->isMethod = false;
 		}
 
 		//Properties
@@ -51,7 +53,7 @@ namespace IR
 		}
 
 		//Methods
-		void Visit(ValueVisitor &visitor) const override
+		void Visit(ValueVisitor &visitor) override
 		{
 			visitor.OnVisitingProcedure(*this);
 		}
@@ -61,7 +63,7 @@ namespace IR
 		{
 			if(this->basicBlocks.IsEmpty())
 			{
-				basicBlock->namedValues[u8"self"] = this;
+				basicBlock->scope.Add(u8"self", this);
 			}
 			this->basicBlocks.Push(basicBlock);
 		}

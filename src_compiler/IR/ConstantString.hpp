@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -39,10 +39,10 @@ namespace IR
 		//Methods
 		String ToString() const override
 		{
-			return this->value;
+			return u8"\"" + this->value + u8"\"";
 		}
 
-		void Visit(ValueVisitor &visitor) const override
+		void Visit(ValueVisitor &visitor) override
 		{
 			visitor.OnVisitingConstantString(*this);
 		}

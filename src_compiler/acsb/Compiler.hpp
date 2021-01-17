@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -35,7 +35,7 @@ namespace ACSB
 		};
 	public:
 		//Methods
-		void Compile(const IR::Module& module);
+		void Compile(IR::Module& module);
 		void Write(OutputStream& outputStream);
 
 	private:
@@ -48,7 +48,7 @@ namespace ACSB
 		Map<const IR::BasicBlock*, uint16> blockOffsets;
 		Map<const IR::BasicBlock*, DynamicArray<uint16>> missingBlockOffsets;
 		DynamicArray<const IR::Value*> valueStack;
-		const IR::Module* module;
+		IR::Module* module;
 		Map<const IR::Value*, uint32> instructionReferenceCounts;
 
 		//Methods
@@ -86,16 +86,17 @@ namespace ACSB
 
 		//Event handlers
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override;
-		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
+		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override;
 		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override;
-		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override;
+		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override;
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
 		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override;
+		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override;
 
 		void OnVisitingConstantFloat(const IR::ConstantFloat &constantFloat) override;
 		void OnVisitingConstantString(const IR::ConstantString &constantString) override;
 		void OnVisitingExternal(const IR::External &external) override;
-		void OnVisitingInstructionResultValue(const IR::Instruction &instruction) override;
+		void OnVisitingInstructionResultValue(IR::Instruction &instruction) override;
 		void OnVisitingParameter(const IR::Parameter &parameter) override;
 		void OnVisitingProcedure(const IR::Procedure &procedure) override;
 	};

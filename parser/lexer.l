@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -32,6 +32,7 @@ extern AST::ParserState* g_parserState;
 
 ","         { return TOKEN_COMMA; }
 ":"         { return TOKEN_COLON; }
+"."         { return TOKEN_DOT; }
 ";"         { return TOKEN_SEMICOLON; }
 ":="        { return TOKEN_ASSIGN; }
 "->"        { return TOKEN_MAP; }
@@ -44,6 +45,7 @@ extern AST::ParserState* g_parserState;
 
 "+"         { return TOKEN_PLUS; }
 "-"         { return TOKEN_MINUS; }
+"*"         { return TOKEN_MULTIPLY; }
 "="         { return TOKEN_EQUALS; }
 
 "extern"    { return TOKEN_KEYWORD_EXTERN; }

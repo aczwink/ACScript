@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -46,13 +46,18 @@ namespace Optimization
 		DynamicArray<const ::Type*> typeStack;
 
 		//Methods
-		void ReplaceType(const ::Type*& type)
+		const ::Type* ComputeReplacedType(const ::Type* type)
 		{
 			if(type == nullptr)
-				return;
+				return nullptr;
 
 			type->Visit(*this);
-			type = this->typeStack.Pop();
+			return this->typeStack.Pop();
+		}
+
+		void ReplaceType(const ::Type*& type)
+		{
+			type = this->ComputeReplacedType(type);
 		}
 
 		//Event handlers
@@ -60,7 +65,7 @@ namespace Optimization
 		{
 		}
 
-		void OnVisitingConditionalBranchInstruction(const IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
+		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
 		{
 		}
 
@@ -68,7 +73,7 @@ namespace Optimization
 		{
 		}
 
-		void OnVisitingNewObjectInstruction(const IR::CreateNewObjectInstruction &createNewObjectInstruction) override
+		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override
 		{
 		}
 
@@ -81,12 +86,26 @@ namespace Optimization
 		{
 		}
 
+		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override
+		{
+			this->ReplaceType(selectInstruction.type);
+		}
+
 		void OnVisitingGenericType(const GenericType &genericType) override
 		{
 			if(&genericType == this->typeToReplace)
 				this->typeStack.Push(this->newType);
 			else
+			{
+				GenericType& editable = const_cast<GenericType &>(genericType);
+				Map<String, const ::Type*> newConstraints;
+				for(auto& kv : editable.MemberConstraints())
+				{
+					newConstraints.Insert(kv.key, this->ComputeReplacedType(kv.value));
+				}
+				editable.MemberConstraints(Move(newConstraints));
 				this->typeStack.Push(&genericType);
+			}
 		}
 
 		void OnVisitingLeafType(const LeafType &leafType) override

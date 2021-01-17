@@ -29,7 +29,7 @@ namespace IR
 		//Abstract
 		virtual void Visit(BasicBlockVisitor& visitor) = 0;
 
-		void Visit(ValueVisitor &visitor) const override
+		void Visit(ValueVisitor &visitor) override
 		{
 			visitor.OnVisitingInstructionResultValue(*this);
 		}

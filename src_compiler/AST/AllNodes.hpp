@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -23,6 +23,7 @@
 #include "expressions/IdentifierExpression.hpp"
 #include "expressions/NaturalLiteralExpression.hpp"
 #include "expressions/ObjectExpression.hpp"
+#include "expressions/SelectExpression.hpp"
 #include "expressions/TupleExpression.hpp"
 
 #include "leftValues/IdentifierLeftValue.hpp"

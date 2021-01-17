@@ -20,6 +20,7 @@
 //Local
 #include "Instruction.hpp"
 #include "visitors/BasicBlockVisitor.hpp"
+#include "Scope.hpp"
 
 namespace IR
 {
@@ -32,7 +33,7 @@ namespace IR
 		}
 
 		//Members
-		Map<String, IR::Value*> namedValues;
+		Scope scope;
 
 		//Properties
 		inline const DynamicArray<Instruction*>& Instructions() const

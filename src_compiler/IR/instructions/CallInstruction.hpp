@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -27,11 +27,11 @@ namespace IR
 	{
 	public:
 		//Members
-		const Value* function;
-		const Value* argument;
+		Value* function;
+		Value* argument;
 
 		//Constructor
-		inline CallInstruction(const Value* function, const Value* argument) : function(function), argument(argument)
+		inline CallInstruction(Value* function, Value* argument) : function(function), argument(argument)
 		{
 		}
 

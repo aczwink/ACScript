@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -26,10 +26,10 @@ namespace IR
 	{
 	public:
 		//Members
-		const Value* returnValue;
+		Value* returnValue;
 
 		//Constructor
-		inline ReturnInstruction(const Value* returnValue) : returnValue(returnValue)
+		inline ReturnInstruction(Value* returnValue) : returnValue(returnValue)
 		{
 			this->type = returnValue->type;
 		}

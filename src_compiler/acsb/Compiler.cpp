@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -21,12 +21,13 @@
 //Local
 #include "../IR/visitors/AllSymbols.hpp"
 #include "../types/ObjectType.hpp"
+#include "../optimization/ValueEvaluator.hpp"
 //Namespaces
 using namespace ACSB;
 using namespace IR;
 
 //Public methods
-void Compiler::Compile(const Module &module)
+void Compiler::Compile(Module &module)
 {
 	this->module = &module;
 
@@ -115,15 +116,16 @@ void Compiler::PushValue(const IR::Value* value)
 void Compiler::OnVisitingCallInstruction(CallInstruction &callInstruction)
 {
 	callInstruction.argument->Visit(*this);
+	callInstruction.function->Visit(*this);
 
-	const Procedure* procedure = dynamic_cast<const Procedure *>(callInstruction.function);
-	this->AddInstruction(Opcode::Call, this->procedureOffsetMap[procedure->name]);
+	this->AddInstruction(Opcode::Call);
 
+	this->valueStack.Pop();
 	this->valueStack.Pop();
 	this->valueStack.Push(&callInstruction);
 }
 
-void Compiler::OnVisitingConditionalBranchInstruction(const BranchOnTrueInstruction &branchOnTrueInstruction)
+void Compiler::OnVisitingConditionalBranchInstruction(BranchOnTrueInstruction &branchOnTrueInstruction)
 {
 	branchOnTrueInstruction.Condition()->Visit(*this);
 
@@ -144,13 +146,13 @@ void ACSB::Compiler::OnVisitingExternalCallInstruction(const IR::ExternalCallIns
 	this->valueStack.Push(&externalCallInstruction);
 }
 
-void Compiler::OnVisitingNewObjectInstruction(const CreateNewObjectInstruction &createNewObjectInstruction)
+void Compiler::OnVisitingNewObjectInstruction(CreateNewObjectInstruction &createNewObjectInstruction)
 {
 	this->AddInstruction(Opcode::NewDictionary);
 	const IR::Value* dictInstance = &createNewObjectInstruction;
 	this->valueStack.Push(dictInstance);
 
-	const External* setter = this->module->FindExternal(u8"__set");
+	External* setter = this->module->FindExternal(u8"__set");
 
 	for(const auto& kv : createNewObjectInstruction.Members())
 	{
@@ -200,6 +202,18 @@ void Compiler::OnVisitingReturnInstruction(ReturnInstruction &returnInstruction)
 		this->valueStack.Pop();
 }
 
+void Compiler::OnVisitingSelectInstruction(SelectInstruction &selectInstruction)
+{
+	selectInstruction.inner->Visit(*this);
+	selectInstruction.selector->Visit(*this);
+
+	this->AddInstruction(Opcode::Select);
+
+	this->valueStack.Pop();
+	this->valueStack.Pop();
+	this->valueStack.Push(&selectInstruction);
+}
+
 void Compiler::OnVisitingConstantFloat(const ConstantFloat &constantFloat)
 {
 	this->AddInstruction(Opcode::LoadConstant, this->AddConstant(constantFloat.Value()));
@@ -223,7 +237,7 @@ void Compiler::OnVisitingExternal(const External &external)
 	this->externalMap[&external] = idx;
 }
 
-void Compiler::OnVisitingInstructionResultValue(const Instruction &instruction)
+void Compiler::OnVisitingInstructionResultValue(Instruction &instruction)
 {
 	this->PushValue(&instruction);
 }

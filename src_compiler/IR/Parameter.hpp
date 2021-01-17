@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -24,7 +24,7 @@ namespace IR
 	class Parameter : public Symbol
 	{
 	public:
-		void Visit(ValueVisitor &visitor) const override
+		void Visit(ValueVisitor &visitor) override
 		{
 			visitor.OnVisitingParameter(*this);
 		}
