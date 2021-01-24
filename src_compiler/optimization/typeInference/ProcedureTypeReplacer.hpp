@@ -91,6 +91,10 @@ namespace Optimization
 			this->ReplaceType(selectInstruction.type);
 		}
 
+		void OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction) override
+		{
+		}
+
 		void OnVisitingGenericType(const GenericType &genericType) override
 		{
 			if(&genericType == this->typeToReplace)

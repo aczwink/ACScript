@@ -18,24 +18,26 @@
 */
 #pragma once
 //Local
-#include "../Instruction.hpp"
+#include "../ObjectValue.hpp"
 
 namespace IR
 {
-	class StoreInstruction : public Instruction
+	class StoreInstruction : public ObjectValue, public Instruction
 	{
 	public:
 		//Members
-		IR::Value* objectValue;
+		IR::ObjectValue* objectValue;
 		IR::Value* keyValue;
 		IR::Value* value;
 
 		//Constructor
-		inline StoreInstruction(IR::Value* objectValue, IR::Value* keyValue, IR::Value* value)
+		inline StoreInstruction(IR::ObjectValue* objectValue, IR::Value* keyValue, IR::Value* value) : ObjectValue(objectValue->Members())
 		{
 			this->objectValue = objectValue;
 			this->keyValue = keyValue;
 			this->value = value;
+
+			this->AddMember(this->keyValue, value);
 		}
 
 		//Methods
@@ -46,7 +48,7 @@ namespace IR
 
 		void Visit(BasicBlockVisitor &visitor) override
 		{
-
+			visitor.OnVisitingStoreInstruction(*this);
 		}
 	};
 }

@@ -16,120 +16,112 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "../IR/visitors/AllSymbols.hpp"
 
 namespace Optimization
 {
-	class ValueEvaluator : private IR::ValueVisitor, private IR::BasicBlockVisitor
+	class EvaluatedValue : public virtual IR::Value
 	{
-		class EvaluatedValue : public IR::Value
-		{
-		public:
-			String ToString() const override
-			{
-				return String();
-			}
-
-			void Visit(ValueVisitor &visitor) override
-			{
-
-			}
-		};
-
-		class Float64Value : public EvaluatedValue
-		{
-		public:
-			float64 value;
-
-			inline Float64Value(float64 value) : value(value)
-			{
-			}
-		};
-
-		class TupleValue : public EvaluatedValue
-		{
-		public:
-			DynamicArray<IR::Value*> entries;
-
-			inline TupleValue(DynamicArray<IR::Value*>&& entries) : entries(Move(entries))
-			{
-			}
-		};
 	public:
-		//Methods
-		IR::Value* Evaluate(IR::Value* value)
+		String ToString() const override
 		{
-			//TODO: store instruction
-			NOT_IMPLEMENTED_ERROR;
-			return nullptr;
+			return String();
+		}
 
-			value->Visit(*this);
+		void Visit(IR::ValueVisitor &visitor) override
+		{
 
-			return this->valueStack.Pop();
+		}
+	};
+
+	class DictValue : public virtual EvaluatedValue, public virtual IR::ObjectValue
+	{
+	public:
+		String ToString() const override
+		{
+			return String();
+		}
+
+		void Visit(IR::ValueVisitor &visitor) override
+		{
+		}
+	};
+
+	class Float64Value : public EvaluatedValue
+	{
+	public:
+		float64 value;
+
+		inline Float64Value(float64 value) : value(value)
+		{
+		}
+	};
+
+	class TupleValue : public EvaluatedValue
+	{
+	public:
+		DynamicArray<IR::Value*> entries;
+
+		inline TupleValue(DynamicArray<IR::Value*>&& entries) : entries(Move(entries))
+		{
+		}
+	};
+
+	class ValueEvaluator : protected IR::BasicBlockVisitor, protected IR::ValueVisitor
+	{
+	public:
+		//Inline
+		inline void TakeOwnership(ValueEvaluator& valueEvaluator, IR::Value* value)
+		{
+			for(auto& gen : valueEvaluator.generatedValues)
+			{
+				if(gen.operator->() == value)
+				{
+					this->generatedValues.Push(Move(gen));
+					break;
+				}
+			}
+		}
+
+	protected:
+		//Members
+		DynamicArray<IR::Value*> valueStack;
+		Map<const IR::Value*, uint32> instructionReferenceCounts;
+
+		//Methods
+		void PushValue(IR::Value* value)
+		{
+			int32 res = this->valueStack.Find(value);
+			if(res == -1 && this->instrGenerationMap.Contains(value))
+				res = this->valueStack.Find(this->instrGenerationMap[value]);
+			ASSERT(res != -1, u8"Value not found on stack");
+
+			if(--this->instructionReferenceCounts[value] > 0)
+				this->valueStack.Push(this->valueStack[res]);
 		}
 
 	private:
 		//Members
-		DynamicArray<IR::Value*> valueStack;
-		DynamicArray<IR::Value*> parameterStack;
 		DynamicArray<UniquePointer<IR::Value>> generatedValues;
+		Map<IR::Value*, IR::Value*> instrGenerationMap;
 
-		//Methods
-		void OnVisitingConstantFloat(const IR::ConstantFloat &constantFloat) override
-		{
-			IR::Value* value = new Float64Value(constantFloat.Value());
-			this->generatedValues.Push(value);
-			this->valueStack.Push(value);
-		}
-
-		void OnVisitingConstantString(const IR::ConstantString &constantString) override
-		{
-			this->valueStack.Push((IR::Value*)&constantString);
-		}
-
-		void OnVisitingExternal(const IR::External &external) override
-		{
-			NOT_IMPLEMENTED_ERROR;
-		}
-
-		void OnVisitingInstructionResultValue(IR::Instruction &instruction) override
-		{
-			instruction.Visit((IR::BasicBlockVisitor&)*this);
-		}
-
-		void OnVisitingParameter(const IR::Parameter &parameter) override
-		{
-			this->valueStack.Push(this->parameterStack.Last());
-		}
-
-		void OnVisitingProcedure(const IR::Procedure &procedure) override
-		{
-			this->valueStack.Push(const_cast<IR::Procedure *>(&procedure));
-		}
-
-		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override
-		{
-			callInstruction.function->Visit(*this);
-			IR::Procedure* proc = dynamic_cast<IR::Procedure *>(this->valueStack.Pop());
-
-			callInstruction.argument->Visit(*this);
-			this->parameterStack.Push(this->valueStack.Pop());
-			proc->EntryBlock()->Visit(*this);
-		}
-
-		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
-		{
-			NOT_IMPLEMENTED_ERROR;
-		}
-
+		//BasicBlockVisitor
 		void OnVisitingExternalCallInstruction(const IR::ExternalCallInstruction &externalCallInstruction) override
 		{
-			externalCallInstruction.argument->Visit(*this);
+			//TODO: create bound external call
+			//externalCallInstruction.argument->Visit(*this);
+			this->valueStack.Pop();
+			this->valueStack.Push(const_cast<IR::ExternalCallInstruction *>(&externalCallInstruction));
 		}
 
 		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override
 		{
-			this->valueStack.Push(&createNewObjectInstruction);
+			IR::Value* newDict = new DictValue;
+			this->generatedValues.Push(newDict);
+			this->valueStack.Push(newDict);
+
+			this->instrGenerationMap.Insert(&createNewObjectInstruction, newDict);
 		}
 
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override
@@ -143,23 +135,34 @@ namespace Optimization
 			IR::Value* result = new TupleValue(Move(entries));
 			this->generatedValues.Push(result);
 			this->valueStack.Push(result);
+
+			this->instrGenerationMap.Insert(&createNewTupleInstruction, result);
 		}
 
-		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override
+		void OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction) override
 		{
-			returnInstruction.returnValue->Visit(*this);
-			this->parameterStack.Pop();
+			storeInstruction.objectValue->Visit((IR::ValueVisitor &) *this);
+			storeInstruction.keyValue->Visit(*this);
+			storeInstruction.value->Visit(*this);
+
+			IR::Value* value = this->valueStack.Pop();
+			IR::ConstantString* key = dynamic_cast<IR::ConstantString *>(this->valueStack.Pop());
+			DictValue* object = dynamic_cast<DictValue *>(this->valueStack.Pop());
+
+			object->AddMember(key, value);
+
+			this->instrGenerationMap.Insert(&storeInstruction, object);
 		}
 
-		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override
+		//ValueVisitor
+		void OnVisitingConstantFloat(const IR::ConstantFloat &constantFloat) override
 		{
-			selectInstruction.inner->Visit(*this);
-			selectInstruction.selector->Visit(*this);
+			this->valueStack.Push(const_cast<IR::ConstantFloat *>(&constantFloat));
+		}
 
-			IR::ConstantString* selector = dynamic_cast<IR::ConstantString*>(this->valueStack.Pop());
-			IR::CreateNewObjectInstruction* inner = dynamic_cast<IR::CreateNewObjectInstruction*>(this->valueStack.Pop());
-
-			this->valueStack.Push(inner->Members()[selector->Value()]);
+		void OnVisitingProcedure(const IR::Procedure &procedure) override
+		{
+			this->valueStack.Push(const_cast<IR::Procedure *>(&procedure));
 		}
 	};
 }

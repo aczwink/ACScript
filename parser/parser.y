@@ -44,6 +44,7 @@ void yyerror(AST::ParserState* parserState, const char* s);
 
 %token TOKEN_KEYWORD_EXTERN
 %token TOKEN_KEYWORD_LET
+%token TOKEN_KEYWORD_TYPE
 
 %token TOKEN_IDENTIFIER
 %token TOKEN_NATURAL_LITERAL
@@ -64,6 +65,7 @@ void yyerror(AST::ParserState* parserState, const char* s);
     AST::LeftValue* lvalue;
 
     AST::Statement* stmt;
+    AST::StatementBlock* stmtBlock;
 
     AST::TypeSpec* type;
     AST::TupleTypeSpec* tupleTypeSpec;
@@ -85,6 +87,8 @@ void yyerror(AST::ParserState* parserState, const char* s);
 %type <exprList> tuple_entries
 
 %type <stmt> statement
+%type <stmt> declaration_statement
+%type <stmtBlock> declaration_statements
 
 %type <type> typespec
 %type <type> function_type
@@ -103,14 +107,27 @@ void yyerror(AST::ParserState* parserState, const char* s);
 
 %%
 module:
-    statement                                                                               { parserState->ModuleStatements().AddStatement($1); }
-    | statement module                                                                      { parserState->ModuleStatements().AddStatement($1); }
+    statement                                                                                                           { parserState->ModuleStatements().AddStatement($1); }
+    | statement module                                                                                                  { parserState->ModuleStatements().AddStatement($1); }
 ;
 
 statement:
-    TOKEN_KEYWORD_EXTERN function_name TOKEN_COLON typespec TOKEN_SEMICOLON         { $$ = new AST::ExternalDeclarationStatement(*$2, $4); }
-    | TOKEN_KEYWORD_LET left_value TOKEN_ASSIGN expression TOKEN_SEMICOLON          { $$ = new AST::VariableDefinitionStatement($2, $4); }
-    | expression TOKEN_SEMICOLON                                                    { $$ = new AST::ExpressionStatement($1); }
+    declaration_statement                                                                                               { $$ = $1; }
+    | TOKEN_KEYWORD_EXTERN TOKEN_KEYWORD_TYPE TOKEN_IDENTIFIER TOKEN_ASSIGN
+        TOKEN_BRACE_OPEN declaration_statements TOKEN_BRACE_CLOSE TOKEN_SEMICOLON                                       { $$ = new AST::TypeDeclarationStatement($6);  }
+    | TOKEN_KEYWORD_LET left_value TOKEN_ASSIGN expression TOKEN_SEMICOLON                                              { $$ = new AST::VariableDefinitionStatement($2, $4); }
+    | expression TOKEN_SEMICOLON                                                                                        { $$ = new AST::ExpressionStatement($1); }
+;
+
+
+
+declaration_statement:
+    TOKEN_KEYWORD_EXTERN function_name TOKEN_COLON typespec TOKEN_SEMICOLON                                             { $$ = new AST::ExternalDeclarationStatement(*$2, $4); }
+;
+
+declaration_statements:
+    declaration_statement                                                                                               { $$ = new AST::StatementBlock(); $$->AddStatement($1); }
+    | declaration_statement declaration_statements                                                                      { $$ = $2; $2->AddStatement($1); }
 ;
 
 
@@ -135,7 +152,8 @@ expression:
 ;
 
 expression_without_function_value:
-    expression_without_function_value TOKEN_PAREN_OPEN expression TOKEN_PAREN_CLOSE                                     { $$ = new AST::CallExpression($1, $3); }
+    expression_without_function_value TOKEN_PAREN_OPEN TOKEN_PAREN_CLOSE                                                { $$ = new AST::CallExpression($1); }
+    | expression_without_function_value TOKEN_PAREN_OPEN expression TOKEN_PAREN_CLOSE                                   { $$ = new AST::CallExpression($1, $3); }
     | expression_without_function_value TOKEN_DOT TOKEN_IDENTIFIER                                                      { $$ = new AST::SelectExpression($1, *$3); }
     | value_expression                                                                                                  { $$ = $1; }
 

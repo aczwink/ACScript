@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -17,25 +17,49 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
+
 #include "Value.hpp"
+#include "TupleValue.hpp"
 
 namespace IR
 {
-	class Symbol : public virtual Value
+	//Forward declarations
+	class Builder;
+	class Procedure;
+
+	class Environment : public TupleValue
 	{
 	public:
-		//Members
-		String name;
+		//Constructor
+		inline Environment(Procedure& procedure) : procedure(procedure)
+		{
+		}
 
 		//Methods
 		String ToReferenceString() const override
 		{
-			return this->name;
+			return u8"__env";
 		}
 
 		String ToString() const override
 		{
-			return this->name + u8": " + TypePointerToString(this->type);
+			return u8"(" + this->ValuesToString() + u8")";
 		}
+
+		//Inline
+		inline IR::Value* CaptureByReference(IR::Value* value, IR::Builder& builder)
+		{
+			this->Add(value);
+			return value;
+		}
+
+		void Visit(ValueVisitor &visitor) override
+		{
+
+		}
+
+	private:
+		//Members
+		Procedure& procedure;
 	};
 }

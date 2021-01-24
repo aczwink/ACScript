@@ -21,32 +21,84 @@ using namespace StdXX;
 //Local
 #include "../IR/visitors/AllSymbols.hpp"
 #include "../IR/Procedure.hpp"
+#include "../optimization/BackwardsEvaluator.hpp"
 
 namespace Optimization
 {
 	class DependencyGraph : private IR::BasicBlockVisitor
 	{
 	public:
-		//Constructor
+
+		//Constructors
 		inline DependencyGraph(const IR::Procedure& procedure)
 		{
-			for(const auto& basicBlock : procedure.BasicBlocks())
-				basicBlock->Visit(*this);
+			this->ProcessProcedure(const_cast<IR::Procedure &>(procedure));
+		}
+
+		inline DependencyGraph(const LinkedList<IR::Procedure*>& procedures)
+		{
+			for(const auto& procedure : procedures)
+				this->ProcessProcedure(*procedure);
 		}
 
 		//Properties
-		inline const Map<IR::Instruction*, BinaryTreeSet<const IR::Value*>>& Dependencies() const
+		inline const Map<IR::Instruction*, BinaryTreeSet<const IR::Value*>>& InstructionDependencies() const
 		{
-			return this->dependencies;
+			return this->instructionDependencies;
+		}
+
+		//Methods
+		DynamicArray<IR::Procedure*> QueryProceduresOrdered()
+		{
+			DynamicArray<IR::Procedure*> result;
+			BinaryTreeSet<const IR::Procedure*> marked;
+
+			for(auto& kv : this->procedureDependencies)
+				Collect(result, marked, kv.key);
+
+			return result;
 		}
 
 	private:
 		//Members
-		Map<IR::Instruction*, BinaryTreeSet<const IR::Value*>> dependencies;
+		Map<IR::Instruction*, BinaryTreeSet<const IR::Value*>> instructionDependencies;
+		Map<IR::Procedure*, BinaryTreeSet<IR::Procedure*>> procedureDependencies;
+		IR::Procedure* currentProcedure;
+
+		//Methods
+		inline void Collect(DynamicArray<IR::Procedure*>& result, BinaryTreeSet<const IR::Procedure*>& marked, IR::Procedure*const& procedure)
+		{
+			if(marked.Contains(procedure))
+				return;
+			marked.Insert(procedure); //mark now because of self-recursive functions
+
+			BinaryTreeSet<IR::Procedure*>& dependencies = this->procedureDependencies[procedure];
+			for(auto& dependency : dependencies)
+				Collect(result, marked, dependency);
+
+			result.Push(procedure);
+		}
+
+		//Inline
+		inline void AddDependency(IR::Instruction* target, const IR::Value* referencedValue)
+		{
+			this->instructionDependencies[target].Insert(referencedValue);
+		}
+
+		inline void ProcessProcedure(IR::Procedure &procedure)
+		{
+			this->currentProcedure = &procedure;
+			for(const auto& basicBlock : procedure.BasicBlocks())
+				basicBlock->Visit(*this);
+		}
 
 		//Event handlers
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override
 		{
+			Optimization::BackwardsEvaluator evaluator;
+			IR::Procedure* procedure = dynamic_cast<IR::Procedure *>(evaluator.Evaluate(callInstruction.function));
+
+			this->procedureDependencies[this->currentProcedure].Insert(procedure);
 		}
 
 		void OnVisitingConditionalBranchInstruction(IR::BranchOnTrueInstruction &branchOnTrueInstruction) override
@@ -61,7 +113,6 @@ namespace Optimization
 
 		void OnVisitingNewObjectInstruction(IR::CreateNewObjectInstruction &createNewObjectInstruction) override
 		{
-
 		}
 
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override
@@ -79,10 +130,8 @@ namespace Optimization
 		{
 		}
 
-		//Inline
-		inline void AddDependency(IR::Instruction* target, const IR::Value* referencedValue)
+		void OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction) override
 		{
-			this->dependencies[target].Insert(referencedValue);
 		}
 	};
 }

@@ -39,6 +39,15 @@ namespace IR
 			this->namedValues[name] = value;
 		}
 
+		inline bool IsInScope(const String& name, const Scope* maxParent) const
+		{
+			if(this->namedValues.Contains(name))
+				return true;
+			if(this != maxParent)
+				return this->parent->IsInScope(name, maxParent);
+			return false;
+		}
+
 		inline IR::Value* Resolve(const String& name)
 		{
 			if(this->namedValues.Contains(name))

@@ -1,0 +1,9 @@
+let square := x -> x * x;
+
+let m := 5;
+let n := square(3);
+
+let f := x -> m * x + n;
+
+let y := f(10);
+print(y);

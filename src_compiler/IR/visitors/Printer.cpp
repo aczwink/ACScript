@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -24,7 +24,6 @@
 using namespace IR;
 
 //Public methods
-//this->textWriter << constantFloat.name << u8" := " << constantFloat.Value() << endl;
 void Printer::Print(const Module &module)
 {
 	for(const auto& kv : module.Externals())
@@ -36,7 +35,9 @@ void Printer::Print(const Module &module)
 
 	for(Procedure*const& procedure : module.Procedures())
 	{
-		this->textWriter << u8"procedure " << procedure->ToString() << endl;
+		this->textWriter << u8"procedure " << procedure->ToString() << endl
+			<< u8"environment: " << (procedure->HasEnvironment() ? procedure->Environment().ToString() : u8"null") << endl;
+
 		for(const auto& basicBlock : procedure->BasicBlocks())
 		{
 			this->textWriter << basicBlock->Name() << u8":" << endl;

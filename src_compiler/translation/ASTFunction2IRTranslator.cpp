@@ -26,8 +26,12 @@
 //Public methods
 void ASTFunction2IRTranslator::OnVisitedCall(const AST::CallExpression &callExpression)
 {
-	callExpression.Argument().Visit(*this);
-	IR::Value* argument = this->valueStack.Pop();
+	IR::Value* argument = this->builder.GetNull();
+	if(callExpression.Argument())
+	{
+		callExpression.Argument()->Visit(*this);
+		argument = this->valueStack.Pop();
+	}
 
 	callExpression.Called().Visit(*this);
 	IR::Value* called = this->valueStack.Pop();
@@ -63,9 +67,15 @@ void ASTFunction2IRTranslator::OnVisitingIdentifier(const AST::IdentifierExpress
 	{
 		this->valueStack.Push(this->builder.GetNull());
 	}
-	else if(this->GetCurrentScope()->Resolve(identifierExpression.Identifier()))
+	else if(this->GetCurrentScope()->IsInScope(identifierExpression.Identifier(), &this->procedure.EntryBlock()->scope))
 	{
 		this->valueStack.Push(this->GetCurrentScope()->Resolve(identifierExpression.Identifier()));
+	}
+	else if(this->GetCurrentScope()->Resolve(identifierExpression.Identifier()))
+	{
+		IR::Value* value = this->procedure.Environment().CaptureByReference(
+				this->GetCurrentScope()->Resolve(identifierExpression.Identifier()), this->builder);
+		this->valueStack.Push(value);
 	}
 	else
 	{
@@ -209,7 +219,7 @@ void ASTFunction2IRTranslator::OnVisitingObjectExpression(const AST::ObjectExpre
 	this->AddInstruction(instruction);
 	objectScope.Add(u8"this", instruction);
 
-	IR::Instruction* lastObjectInstruction = instruction;
+	IR::ObjectValue* lastObjectInstruction = instruction;
 	for(const auto& kv : objectExpression.Members())
 	{
 		kv.value->Visit(*this);
@@ -217,8 +227,11 @@ void ASTFunction2IRTranslator::OnVisitingObjectExpression(const AST::ObjectExpre
 
 		IR::Value* key = this->builder.CreateConstant(kv.key);
 
-		lastObjectInstruction = this->builder.CreateStoreInstruction(lastObjectInstruction, key, value);
-		this->AddInstruction(lastObjectInstruction);
+		IR::StoreInstruction* store = this->builder.CreateStoreInstruction(lastObjectInstruction, key, value);
+		this->AddInstruction(store);
+
+		lastObjectInstruction = store;
+		lastObjectInstruction->UpdateType(this->typeCatalog);
 	}
 
 	this->scopeStack.Pop();

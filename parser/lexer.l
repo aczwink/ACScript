@@ -50,6 +50,7 @@ extern AST::ParserState* g_parserState;
 
 "extern"    { return TOKEN_KEYWORD_EXTERN; }
 "let"       { return TOKEN_KEYWORD_LET; }
+"type"      { return TOKEN_KEYWORD_TYPE; }
 
 [0-9]+              { yylval.str = g_parserState->CreateString(yytext); return TOKEN_NATURAL_LITERAL; }
 [a-zA-Z0-9\-\*<=_\[\]]+  { yylval.str = g_parserState->CreateString(yytext); return TOKEN_IDENTIFIER; }

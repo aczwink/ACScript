@@ -49,5 +49,6 @@ namespace Optimization
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
 		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override;
 		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override;
+		void OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction) override;
 	};
 }

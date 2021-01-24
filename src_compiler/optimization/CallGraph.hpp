@@ -21,7 +21,7 @@ using namespace StdXX;
 //Local
 #include "../IR/visitors/AllSymbols.hpp"
 #include "../IR/Procedure.hpp"
-#include "ValueEvaluator.hpp"
+#include "BackwardsEvaluator.hpp"
 
 namespace Optimization
 {
@@ -81,7 +81,7 @@ namespace Optimization
 		//Event handlers
 		void OnVisitingCallInstruction(IR::CallInstruction &callInstruction) override
 		{
-			ValueEvaluator valueEvaluator;
+			BackwardsEvaluator valueEvaluator;
 			IR::Procedure* called = dynamic_cast<IR::Procedure *>(valueEvaluator.Evaluate(callInstruction.function));
 
 			this->callLinks[this->currentProc].Insert(called);
@@ -108,6 +108,10 @@ namespace Optimization
 		}
 
 		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override
+		{
+		}
+
+		void OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction) override
 		{
 		}
 	};

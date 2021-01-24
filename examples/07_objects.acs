@@ -2,7 +2,8 @@ let new_vec := (x, y) -> {
     x: x,
     y: y,
 
-    lengthSquared: null -> this.x * this.x + this.y * this.y
+    //lengthSquared: { x, y } -> x * x + y * y
+    lengthSquared: this -> null
 
     //+: ( this, { x, y } ) -> new_vec( ( this.x + x, this.y + y ) )
 
@@ -16,11 +17,11 @@ let new_vec := (x, y) -> {
 
 let v1 := new_vec( (5, 5) );
 print(v1);
-print(v1.lengthSquared(null));
+print(v1.lengthSquared());
 
 let v2 := new_vec( (10, 12) );
 print(v2);
-print(v2.lengthSquared(null));
+print(v2.lengthSquared());
 
 //print(v1 + v2);
 

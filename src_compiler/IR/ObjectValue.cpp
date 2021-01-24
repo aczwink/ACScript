@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,26 +16,17 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-#pragma once
-#include "Value.hpp"
+//Class header
+#include "ObjectValue.hpp"
+//Local
+#include "../types/TypeCatalog.hpp"
+//Namespaces
+using namespace IR;
 
-namespace IR
+void ObjectValue::UpdateType(TypeCatalog& typeCatalog)
 {
-	class Symbol : public virtual Value
-	{
-	public:
-		//Members
-		String name;
-
-		//Methods
-		String ToReferenceString() const override
-		{
-			return this->name;
-		}
-
-		String ToString() const override
-		{
-			return this->name + u8": " + TypePointerToString(this->type);
-		}
-	};
+	Map<String, const ::Type*> types;
+	for(const auto& member : this->Members())
+		types.Insert(member.key, member.value->type);
+	this->type = typeCatalog.GetObjectType(Move(types));
 }

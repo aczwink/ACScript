@@ -18,55 +18,54 @@
 */
 #pragma once
 //Local
-#include "Instruction.hpp"
-#include "visitors/BasicBlockVisitor.hpp"
-#include "Scope.hpp"
+#include "ConstantString.hpp"
+
+//Forward declarations
+class TypeCatalog;
 
 namespace IR
 {
-	class BasicBlock
+	class ObjectValue : public virtual Value
 	{
 	public:
-		//Constructor
-		inline BasicBlock(const String& name) : name(name)
+		//Constructors
+		inline ObjectValue()
 		{
 		}
 
-		//Members
-		Scope scope;
+		inline ObjectValue(const Map<String, Value *>& members) : members(members)
+		{
+		}
 
 		//Properties
-		inline const LinkedList<Instruction*>& Instructions() const
+		inline const Map<String, Value *>& Members() const
 		{
-			return this->instructions;
-		}
-
-		inline const String& Name() const
-		{
-			return this->name;
+			return this->members;
 		}
 
 		//Methods
-		void Visit(BasicBlockVisitor& visitor)
-		{
-			for(Instruction*const& instruction : this->instructions)
-				instruction->Visit(visitor);
-		}
+		void UpdateType(TypeCatalog& typeCatalog);
 
 		//Inline
-		inline void Add(Instruction* instruction)
+		inline void AddMember(Value* key, Value* value)
 		{
-			this->instructions.InsertTail(instruction);
+			ConstantString* string = dynamic_cast<ConstantString *>(key);
+
+			this->members[string->Value()] = value;
 		}
 
-		inline void AddAtBeginning(Instruction* instruction)
+	protected:
+		//Inline
+		inline String MembersToString() const
 		{
-			this->instructions.InsertFront(instruction);
+			DynamicArray<String> strings;
+			for(const auto& kv : this->members)
+				strings.Push(kv.key + u8": " + kv.value->ToReferenceString());
+			return String::Join(strings, u8", ");
 		}
 
 	private:
 		//Members
-		String name;
-		LinkedList<Instruction*> instructions;
+		Map<String, Value *> members;
 	};
 }

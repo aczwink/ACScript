@@ -137,7 +137,7 @@ namespace IR
 			return this->InsertInstruction(new SelectInstruction(innerValue, selectValue));
 		}
 
-		inline Instruction* CreateStoreInstruction(IR::Value* objectValue, IR::Value* keyValue, IR::Value* value)
+		inline StoreInstruction* CreateStoreInstruction(IR::ObjectValue* objectValue, IR::Value* keyValue, IR::Value* value)
 		{
 			return this->InsertInstruction(new StoreInstruction(objectValue, keyValue, value));
 		}

@@ -37,9 +37,11 @@ namespace AST
 		}
 
 		//Properties
-		inline const Expression& Argument() const
+		inline const Expression* Argument() const
 		{
-			return *this->arg;
+			if(this->arg.IsNull())
+				return nullptr;
+			return this->arg.operator->();
 		}
 
 		inline const Expression& Called() const

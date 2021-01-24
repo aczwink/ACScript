@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2020-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -19,40 +19,27 @@
 #pragma once
 //Local
 #include "../Instruction.hpp"
+#include "../TupleValue.hpp"
 
 namespace IR
 {
-	class CreateNewTupleInstruction : public Instruction
+	class CreateNewTupleInstruction : public virtual TupleValue, public virtual Instruction
 	{
 	public:
 		//Constructor
-		inline CreateNewTupleInstruction(DynamicArray<Value *>&& values) : values(Move(values))
+		inline CreateNewTupleInstruction(DynamicArray<Value *>&& values) : TupleValue(Move(values))
 		{
-		}
-
-		//Properties
-		inline const DynamicArray<Value *>& Values() const
-		{
-			return this->values;
 		}
 
 		//Methods
 		String ToString() const override
 		{
-			DynamicArray<String> strings;
-			for(const Value*const& value : this->values)
-				strings.Push(value->ToReferenceString());
-
-			return Symbol::ToString() + u8" <-- new_tuple " + String::Join(strings, u8", ");
+			return Symbol::ToString() + u8" <-- new_tuple " + this->ValuesToString();
 		}
 
 		void Visit(BasicBlockVisitor &visitor) override
 		{
 			visitor.OnVisitingNewTupleInstruction(*this);
 		}
-
-	private:
-		//Members
-		DynamicArray<Value *> values;
 	};
 }

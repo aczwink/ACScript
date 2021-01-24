@@ -92,6 +92,7 @@ namespace ACSB
 		void OnVisitingNewTupleInstruction(IR::CreateNewTupleInstruction &createNewTupleInstruction) override;
 		void OnVisitingReturnInstruction(IR::ReturnInstruction &returnInstruction) override;
 		void OnVisitingSelectInstruction(IR::SelectInstruction &selectInstruction) override;
+		void OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction) override;
 
 		void OnVisitingConstantFloat(const IR::ConstantFloat &constantFloat) override;
 		void OnVisitingConstantString(const IR::ConstantString &constantString) override;

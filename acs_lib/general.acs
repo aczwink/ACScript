@@ -1,17 +1,28 @@
-//arithmetic operators
-extern +: (float64, float64) -> float64;
-extern -: (float64, float64) -> float64;
-extern *: (float64, float64) -> float64;
+extern type bool := {
+    extern and: (bool, bool) -> bool;
+    extern not: bool -> bool;
+    extern or: (bool, bool) -> bool;
+};
 
-//logical operators
-extern <: (float64, float64) -> bool;
-extern <=: (float64, float64) -> bool;
-extern =: (float64, float64) -> bool;
-extern and: (bool, bool) -> bool;
-extern not: bool -> bool;
-extern or: (bool, bool) -> bool;
+
+extern type float64 := {
+    //arithmetic operators
+    extern +: (float64, float64) -> float64;
+    extern -: (float64, float64) -> float64;
+    extern *: (float64, float64) -> float64;
+
+    //logical operators
+    extern <: (float64, float64) -> bool;
+    extern <=: (float64, float64) -> bool;
+    extern =: (float64, float64) -> bool;
+};
+
 
 //general purpose
-extern []: (float64, float64) -> float64; //TODO: make this a generic, make this work with ...
-extern __set: (any, string, any) -> any; //TODO: this is ugly
 extern print: any -> null;
+
+
+
+//TODO: make these two internal
+extern []: (float64, float64) -> float64; //TODO: make this a generic, make this work with ...
+extern __set: (any, string, any) -> any; //TODO: set value on object. this is ugly. remove this

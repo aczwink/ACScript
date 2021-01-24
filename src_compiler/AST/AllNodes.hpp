@@ -37,3 +37,4 @@
 #include "typeSpecifications/TupleTypeSpec.hpp"
 
 #include "statements/ExternalDeclarationStatement.hpp"
+#include "statements/TypeDeclarationStatement.hpp"

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -17,25 +17,26 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "Value.hpp"
+//Local
+#include "Statement.hpp"
 
-namespace IR
+namespace AST
 {
-	class Symbol : public virtual Value
+	class TypeDeclarationStatement : public Statement
 	{
 	public:
+		//Constructor
+		inline TypeDeclarationStatement(UniquePointer<StatementBlock>&& declarations) : declarations(Move(declarations))
+		{
+		}
+
+		void Visit(StatementVisitor &visitor) const override
+		{
+
+		}
+
+	private:
 		//Members
-		String name;
-
-		//Methods
-		String ToReferenceString() const override
-		{
-			return this->name;
-		}
-
-		String ToString() const override
-		{
-			return this->name + u8": " + TypePointerToString(this->type);
-		}
+		UniquePointer<StatementBlock> declarations;
 	};
 }

@@ -18,6 +18,7 @@ set(SOURCE_FILES_COMPILER
 	${CMAKE_CURRENT_SOURCE_DIR}/statements/ReturnStatement.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/statements/Statement.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/statements/StatementBlock.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/statements/TypeDeclarationStatement.hpp
 	${CMAKE_CURRENT_SOURCE_DIR}/statements/VariableDefinitionStatement.hpp
 
 	${CMAKE_CURRENT_SOURCE_DIR}/typeSpecifications/FunctionTypeSpec.hpp

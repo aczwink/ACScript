@@ -23,7 +23,7 @@
 
 namespace IR
 {
-	class Instruction : public Symbol
+	class Instruction : public virtual Symbol
 	{
 	public:
 		//Abstract

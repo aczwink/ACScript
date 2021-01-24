@@ -22,6 +22,7 @@
 #include "../types/TupleType.hpp"
 #include "BasicBlock.hpp"
 #include "Parameter.hpp"
+#include "Environment.hpp"
 
 namespace IR
 {
@@ -32,13 +33,11 @@ namespace IR
 		const ::Type* returnType;
 		const ::Type* argumentType;
 		Parameter* parameter;
-		bool isMethod;
 
 		//Constructor
 		inline Procedure(const ::Type* returnType, const ::Type* argumentType, Parameter* parameter)
 			: returnType(returnType), argumentType(argumentType), parameter(parameter)
 		{
-			this->isMethod = false;
 		}
 
 		//Properties
@@ -50,6 +49,13 @@ namespace IR
 		inline BasicBlock* EntryBlock()
 		{
 			return this->basicBlocks[0];
+		}
+
+		inline class Environment& Environment()
+		{
+			if(this->environment.IsNull())
+				this->environment = new IR::Environment(*this);
+			return *this->environment;
 		}
 
 		//Methods
@@ -68,8 +74,14 @@ namespace IR
 			this->basicBlocks.Push(basicBlock);
 		}
 
+		inline bool HasEnvironment() const
+		{
+			return !this->environment.IsNull();
+		}
+
 	private:
 		//Members
 		DynamicArray<BasicBlock*> basicBlocks;
+		UniquePointer<class Environment> environment;
 	};
 }

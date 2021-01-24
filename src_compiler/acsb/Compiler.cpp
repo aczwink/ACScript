@@ -21,7 +21,7 @@
 //Local
 #include "../IR/visitors/AllSymbols.hpp"
 #include "../types/ObjectType.hpp"
-#include "../optimization/ValueEvaluator.hpp"
+#include "../optimization/BackwardsEvaluator.hpp"
 //Namespaces
 using namespace ACSB;
 using namespace IR;
@@ -34,7 +34,7 @@ void Compiler::Compile(Module &module)
 	for(const auto& proc : module.Procedures())
 	{
 		Optimization::DependencyGraph dependencyGraph(*proc);
-		for(const auto& kv : dependencyGraph.Dependencies())
+		for(const auto& kv : dependencyGraph.InstructionDependencies())
 			this->instructionReferenceCounts[kv.key] = kv.value.GetNumberOfElements();
 
 		this->procedureOffsetMap[proc->name] = this->codeSegment.GetRemainingBytes();
@@ -212,6 +212,11 @@ void Compiler::OnVisitingSelectInstruction(SelectInstruction &selectInstruction)
 	this->valueStack.Pop();
 	this->valueStack.Pop();
 	this->valueStack.Push(&selectInstruction);
+}
+
+void Compiler::OnVisitingStoreInstruction(StoreInstruction &storeInstruction)
+{
+	NOT_IMPLEMENTED_ERROR;
 }
 
 void Compiler::OnVisitingConstantFloat(const ConstantFloat &constantFloat)

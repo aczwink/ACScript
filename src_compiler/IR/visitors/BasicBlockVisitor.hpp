@@ -30,6 +30,7 @@ namespace IR
 	class ExternalCallInstruction;
 	class ReturnInstruction;
 	class SelectInstruction;
+	class StoreInstruction;
 
 	class BasicBlockVisitor
 	{
@@ -42,5 +43,6 @@ namespace IR
 		virtual void OnVisitingNewTupleInstruction(CreateNewTupleInstruction& createNewTupleInstruction) = 0;
 		virtual void OnVisitingReturnInstruction(ReturnInstruction& returnInstruction) = 0;
 		virtual void OnVisitingSelectInstruction(SelectInstruction& selectInstruction) = 0;
+		virtual void OnVisitingStoreInstruction(StoreInstruction& storeInstruction) = 0;
 	};
 }

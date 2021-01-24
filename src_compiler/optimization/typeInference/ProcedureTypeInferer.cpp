@@ -21,7 +21,7 @@
 //Local
 #include "../../IR/visitors/AllSymbols.hpp"
 #include "ProcedureTypeReplacer.hpp"
-#include "../ValueEvaluator.hpp"
+#include "../BackwardsEvaluator.hpp"
 //Namespaces
 using namespace Optimization;
 
@@ -78,7 +78,7 @@ void ProcedureTypeInferer::OnVisitingCallInstruction(IR::CallInstruction &callIn
 {
 	if(callInstruction.type == nullptr)
 	{
-		ValueEvaluator valueEvaluator;
+		BackwardsEvaluator valueEvaluator;
 		const IR::Procedure* procedure = dynamic_cast<const IR::Procedure *>(valueEvaluator.Evaluate(callInstruction.function));
 		callInstruction.type = procedure->returnType;
 	}
@@ -147,4 +147,8 @@ void ProcedureTypeInferer::OnVisitingSelectInstruction(IR::SelectInstruction &se
 		const GenericType* genericType = dynamic_cast<const GenericType *>(selectInstruction.inner->type);
 		selectInstruction.type = genericType->GetMemberConstraint(constantString->Value());
 	}
+}
+
+void ProcedureTypeInferer::OnVisitingStoreInstruction(IR::StoreInstruction &storeInstruction)
+{
 }

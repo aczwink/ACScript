@@ -18,14 +18,11 @@
 */
 #pragma once
 //Local
-#include "../Instruction.hpp"
-
-//Forward declarations
-class TypeCatalog;
+#include "../ObjectValue.hpp"
 
 namespace IR
 {
-	class CreateNewObjectInstruction : public Instruction
+	class CreateNewObjectInstruction : public virtual ObjectValue, public virtual Instruction
 	{
 	public:
 		//Constructors
@@ -33,31 +30,15 @@ namespace IR
 		{
 		}
 
-		//Properties
-		inline const Map<String, Value *>& Members() const
-		{
-			return this->members;
-		}
-
 		//Methods
 		String ToString() const override
 		{
-			DynamicArray<String> strings;
-			for(const auto& kv : this->members)
-				strings.Push(kv.key + u8": " + kv.value->ToReferenceString());
-
-			return Symbol::ToString() + u8" <-- new_object " + String::Join(strings, u8", ");
+			return Symbol::ToString() + u8" <-- new_object " + this->MembersToString();
 		}
-
-		void UpdateType(TypeCatalog& typeCatalog);
 
 		void Visit(BasicBlockVisitor &visitor) override
 		{
 			visitor.OnVisitingNewObjectInstruction(*this);
 		}
-
-	private:
-		//Members
-		Map<String, Value *> members;
 	};
 }

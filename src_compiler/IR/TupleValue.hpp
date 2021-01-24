@@ -16,17 +16,48 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-//Class header
-#include "CreateNewObjectInstruction.hpp"
+#pragma once
 //Local
-#include "../../types/TypeCatalog.hpp"
-//Namespaces
-using namespace IR;
+#include "ConstantString.hpp"
 
-void CreateNewObjectInstruction::UpdateType(TypeCatalog& typeCatalog)
+namespace IR
 {
-	Map<String, const ::Type*> types;
-	for(const auto& member : this->Members())
-		types.Insert(member.key, member.value->type);
-	this->type = typeCatalog.GetObjectType(Move(types));
+	class TupleValue : public virtual Value
+	{
+	public:
+		//Constructors
+		inline TupleValue()
+		{
+		}
+
+		inline TupleValue(DynamicArray<Value *>&& values) : values(Move(values))
+		{
+		}
+
+		//Properties
+		inline const DynamicArray<Value *>& Values() const
+		{
+			return this->values;
+		}
+
+	protected:
+		//Inline
+		inline void Add(IR::Value* value)
+		{
+			this->values.Push(value);
+		}
+
+		inline String ValuesToString() const
+		{
+			DynamicArray<String> strings;
+			for(const Value*const& value : this->values)
+				strings.Push(value->ToReferenceString());
+
+			return String::Join(strings, u8", ");
+		}
+
+	private:
+		//Members
+		DynamicArray<Value *> values;
+	};
 }
