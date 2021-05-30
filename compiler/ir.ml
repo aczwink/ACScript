@@ -1,5 +1,6 @@
 type constant =
-	ConstantFloat of float
+	| ConstantNatural of string
+	| ConstantString of string
 
 
 
@@ -11,7 +12,8 @@ type instruction =
 
 let constant_to_string c = 
 	match c with
-	| ConstantFloat f -> string_of_float f
+	| ConstantNatural n -> n
+	| ConstantString x -> "\"" ^ x ^ "\""
 
 
 module InstructionMap = Map.Make(struct type t = instruction let compare = compare end)

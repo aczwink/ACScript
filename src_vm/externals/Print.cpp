@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -26,10 +26,12 @@ static String ToString(const RuntimeValue& value)
 	{
 		case RuntimeValueType::Bool:
 			return value.ValueBool() ? u8"true" : u8"false";
-		case RuntimeValueType::Float64:
-			return String::Number(value.ValueF64());
+		case RuntimeValueType::Natural:
+			return value.ValueNatural().ToString();
 		case RuntimeValueType::Null:
 			return u8"null";
+		case RuntimeValueType::String:
+			return value.ValueString();
 		case RuntimeValueType::Dictionary:
 		{
 			DynamicArray<String> strings;

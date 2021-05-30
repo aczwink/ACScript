@@ -1,4 +1,7 @@
 type token =
+	| Assignment
+	| Let
 	| Symbol of char
-	| Number of float
 	| Identifier of string
+	| NaturalLiteral of string
+	| StringLiteral of string

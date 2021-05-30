@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -47,13 +47,13 @@ RuntimeValue Select(RuntimeValue& arg, const Module&)
 		if(
 				(arg.ValuesArray().GetNumberOfElements() == 2)
 				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Tuple)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
-				&& (arg.ValuesArray()[0].ValuesArray().GetNumberOfElements() > arg.ValuesArray()[1].ValueF64())
+				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
+				&& (arg.ValuesArray()[0].ValuesArray().GetNumberOfElements() > arg.ValuesArray()[1].ValueNatural().RoundDown())
 				)
 		{
 			const DynamicArray<RuntimeValue>& array = arg.ValuesArray()[0].ValuesArray();
-			float64 index = arg.ValuesArray()[1].ValueF64();
-			return { array[index] };
+			const Math::Natural& index = arg.ValuesArray()[1].ValueNatural();
+			return { array[index.RoundDown()] };
 		}
 	}
 	NOT_IMPLEMENTED_ERROR;

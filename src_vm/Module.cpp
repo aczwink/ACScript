@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -22,37 +22,72 @@
 //Constructor
 Module::Module(SeekableInputStream &inputStream, ExternalsManager& externalsManager)
 {
+	DataReader fourccReader(false, inputStream);
 	DataReader dataReader(true, inputStream);
 	TextReader textReader(inputStream, TextCodecType::UTF8);
 
-	dataReader.Skip(4); //skip signature
-
-	uint16 nImports = dataReader.ReadUInt16();
-	this->moduleExternals.Resize(nImports);
-	for(uint16 i = 0; i < nImports; i++)
+	while(!inputStream.IsAtEnd())
 	{
-		this->moduleExternals[i] = externalsManager.GetExternal(textReader.ReadZeroTerminatedString());
-	}
+		uint32 chunkId = fourccReader.ReadUInt32();
+		uint32 chunkSize = dataReader.ReadUInt32();
 
-	uint16 nConstants = dataReader.ReadUInt16();
-	this->constants.Resize(nConstants);
-	this->constantStrings.EnsureCapacity(nConstants);
-	for(uint16 i = 0; i < nConstants; i++)
-	{
-		if(dataReader.ReadByte())
+		switch(chunkId)
 		{
-			uint32 index = this->constantStrings.Push(textReader.ReadZeroTerminatedString());
-			this->constants[i] = &this->constantStrings[index];
+			case FOURCC(u8"ACSB"):
+				ASSERT_EQUALS(0, chunkSize);
+				break;
+			case FOURCC(u8"code"):
+			{
+				//this->entryPoint = dataReader.ReadUInt16();
+				this->entryPoint = 0;
+
+				uint32 codeSize = chunkSize;
+				this->code = MemAlloc(codeSize);
+				inputStream.ReadBytes(this->code, codeSize);
+			}
+			break;
+			case FOURCC(u8"data"):
+			{
+				uint16 nConstants = dataReader.ReadUInt16();
+				this->constants.Resize(nConstants);
+
+				for(uint16 i = 0; i < nConstants; i++)
+				{
+					uint8 type = dataReader.ReadByte();
+					switch(type)
+					{
+						case u8'n':
+						{
+							uint32 index = this->constantNaturals.Push(Math::Natural(textReader.ReadZeroTerminatedString()));
+							this->constants[i] = &this->constantNaturals[index];
+						}
+						break;
+						case u8's':
+						{
+							uint32 index = this->constantStrings.Push(textReader.ReadZeroTerminatedString());
+							this->constants[i] = &this->constantStrings[index];
+						}
+						break;
+						default:
+							NOT_IMPLEMENTED_ERROR; //TODO: implement me
+					}
+				}
+			}
+			break;
+			case FOURCC(u8"impt"):
+			{
+				uint16 nImports = dataReader.ReadUInt16();
+				this->moduleExternals.Resize(nImports);
+				for(uint16 i = 0; i < nImports; i++)
+				{
+					this->moduleExternals[i] = externalsManager.GetExternal(textReader.ReadZeroTerminatedString());
+				}
+			}
+			break;
+			default:
+				NOT_IMPLEMENTED_ERROR; //TODO: implement me
 		}
-		else
-			this->constants[i] = dataReader.ReadFloat64();
 	}
-
-	this->entryPoint = dataReader.ReadUInt16();
-
-	uint64 codeSize = inputStream.QueryRemainingBytes();
-	this->code = MemAlloc(codeSize);
-	inputStream.ReadBytes(this->code, codeSize);
 }
 
 //Destructor

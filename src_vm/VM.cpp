@@ -37,7 +37,7 @@ void VM::Run()
 		{
 			case Opcode::Call:
 			{
-				uint16 offset = executionStack.Pop().ValueF64();
+				uint16 offset = executionStack.Pop().ValueNatural().RoundDown();
 
 				callStack.Push(pc);
 				pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
@@ -69,7 +69,7 @@ void VM::Run()
 			case Opcode::NewDictionary:
 			{
 				this->garbageCollector.CleanUp(executionStack);
-				Map<String, RuntimeValue>* values = this->garbageCollector.NewDictionary();
+				BinaryTreeMap<String, RuntimeValue>* values = this->garbageCollector.NewDictionary();
 
 				executionStack.Push(RuntimeValue::CreateDictionary(values));
 			}

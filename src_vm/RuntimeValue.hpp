@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -24,7 +24,7 @@ enum class RuntimeValueType
 {
 	Bool,
 	Dictionary,
-	Float64,
+	Natural,
 	Null,
 	String,
 	Tuple
@@ -42,7 +42,7 @@ public:
 	{
 	}
 
-	inline RuntimeValue(float64 f64) : type(RuntimeValueType::Float64), f64(f64)
+	inline RuntimeValue(Math::Natural* natural) : type(RuntimeValueType::Natural), natural(natural)
 	{
 	}
 
@@ -61,9 +61,9 @@ public:
 		return this->b;
 	}
 
-	inline float64 ValueF64() const
+	inline const Math::Natural& ValueNatural() const
 	{
-		return this->f64;
+		return *this->natural;
 	}
 
 	inline DynamicArray<RuntimeValue>& ValuesArray()
@@ -76,12 +76,12 @@ public:
 		return *this->array;
 	}
 
-	inline Map<String, RuntimeValue>& ValuesDictionary()
+	inline BinaryTreeMap<String, RuntimeValue>& ValuesDictionary()
 	{
 		return *this->dictionary;
 	}
 
-	inline const Map<String, RuntimeValue>& ValuesDictionary() const
+	inline const BinaryTreeMap<String, RuntimeValue>& ValuesDictionary() const
 	{
 		return *this->dictionary;
 	}
@@ -92,7 +92,7 @@ public:
 	}
 
 	//Functions
-	inline static RuntimeValue CreateDictionary(Map<String, RuntimeValue>* values)
+	inline static RuntimeValue CreateDictionary(BinaryTreeMap<String, RuntimeValue>* values)
 	{
 		RuntimeValue v;
 		v.type = RuntimeValueType::Dictionary;
@@ -114,9 +114,9 @@ private:
 	union
 	{
 		bool b;
-		float64 f64;
+		Math::Natural* natural;
 		DynamicArray<RuntimeValue>* array;
-		Map<String, RuntimeValue>* dictionary;
+		BinaryTreeMap<String, RuntimeValue>* dictionary;
 		String* string;
 	};
 };

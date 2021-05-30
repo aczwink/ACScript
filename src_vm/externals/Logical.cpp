@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -45,12 +45,12 @@ RuntimeValue Equals(RuntimeValue& arg, const Module&)
 	{
 		if(
 				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
+				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
 				)
 		{
-			float64 lhs = arg.ValuesArray()[0].ValueF64();
-			float64 rhs = arg.ValuesArray()[1].ValueF64();
+			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
 			return { lhs == rhs };
 		}
 	}
@@ -64,12 +64,12 @@ RuntimeValue LessThan(RuntimeValue& arg, const Module&)
 	{
 		if(
 				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
+				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
 				)
 		{
-			float64 lhs = arg.ValuesArray()[0].ValueF64();
-			float64 rhs = arg.ValuesArray()[1].ValueF64();
+			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
 			return { lhs < rhs };
 		}
 	}
@@ -83,12 +83,12 @@ RuntimeValue LessThanOrEqual(RuntimeValue& arg, const Module&)
 	{
 		if(
 				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Float64)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Float64)
+				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
 				)
 		{
-			float64 lhs = arg.ValuesArray()[0].ValueF64();
-			float64 rhs = arg.ValuesArray()[1].ValueF64();
+			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
 			return { lhs <= rhs };
 		}
 	}

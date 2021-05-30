@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -27,8 +27,8 @@ public:
 		for (DynamicArray<RuntimeValue>*const& toDeleteElement : toDelete)
 			this->Release(toDeleteElement);
 
-		BinaryTreeSet<Map<String, RuntimeValue>*> toDelete2 = this->allocatedDictionaries;
-		for(Map<String, RuntimeValue>*const& toDeleteElement : toDelete2)
+		BinaryTreeSet<BinaryTreeMap<String, RuntimeValue>*> toDelete2 = this->allocatedDictionaries;
+		for(BinaryTreeMap<String, RuntimeValue>*const& toDeleteElement : toDelete2)
 			this->Release(toDeleteElement);
 	}
 
@@ -57,9 +57,9 @@ public:
 		return ptr;
 	}
 
-	inline Map<String, RuntimeValue>* NewDictionary()
+	inline BinaryTreeMap<String, RuntimeValue>* NewDictionary()
 	{
-		Map<String, RuntimeValue>* ptr = new Map<String, RuntimeValue>;
+		BinaryTreeMap<String, RuntimeValue>* ptr = new BinaryTreeMap<String, RuntimeValue>;
 		this->allocatedDictionaries.Insert(ptr);
 		return ptr;
 	}
@@ -67,7 +67,7 @@ public:
 private:
 	//Members
 	BinaryTreeSet<DynamicArray<RuntimeValue>*> allocatedArrays;
-	BinaryTreeSet<Map<String, RuntimeValue>*> allocatedDictionaries;
+	BinaryTreeSet<BinaryTreeMap<String, RuntimeValue>*> allocatedDictionaries;
 
 	//Inline
 	inline void Release(DynamicArray<RuntimeValue>* ptr)
@@ -76,7 +76,7 @@ private:
 		delete ptr;
 	}
 
-	inline void Release(Map<String, RuntimeValue>* ptr)
+	inline void Release(BinaryTreeMap<String, RuntimeValue>* ptr)
 	{
 		this->allocatedDictionaries.Remove(ptr);
 		delete ptr;

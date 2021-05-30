@@ -55,6 +55,7 @@ private:
 	uint16 entryPoint;
 	void* code;
 	DynamicArray<RuntimeValue> constants;
+	DynamicArray<Math::Natural> constantNaturals;
 	DynamicArray<String> constantStrings;
 	DynamicArray<External> moduleExternals;
 };

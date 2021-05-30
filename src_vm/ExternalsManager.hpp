@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -46,7 +46,7 @@ public:
 
 private:
 	//Members
-	Map<String, External> externals;
+	BinaryTreeMap<String, External> externals;
 
 	//Methods
 	void RegisterAllExternals();
