@@ -18,17 +18,15 @@ let rec lex = parser
 		lex_text_literal buffer stream
       
 	(* identifier *)
-	| [< ' ('A' .. 'Z' | 'a' .. 'z' as c); stream >] ->
+	| [< ' ('A' .. 'Z' | 'a' .. 'z' | '*' as c); stream >] ->
 		let buffer = Buffer.create 1 in
 		Buffer.add_char buffer c;
 		lex_ident buffer stream
 		
 	(* special symbols *)
 	| [< ' (':'); stream >] -> lex_colon stream
-		
-	(* symbols *)		
-	| [< 'c; stream >] ->
-      [< 'Token.Symbol c; lex stream >]
+	
+	| [< ' ('(' | ')' as c); stream >] -> [< 'Token.Symbol c; lex stream >]
 		
 	(* end of stream *)
 	| [< >] -> [< >]

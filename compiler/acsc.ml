@@ -11,10 +11,10 @@ let parse_file filePath =
 let () =
 	let inputFilePath = Sys.argv.(1) in
 	let ast = parse_file inputFilePath in
-	let instr = IrTranslator.translate_ast ast in
 		print_endline ("AST:");
 		print_endline (Ast.to_string ast);
+	let instrs = IrTranslator.translate_ast ast in
 		print_endline ("");
 		print_endline ("IR Code:");
-		print_endline (Ir.instruction_to_string instr);
-		Codedump.dump_module instr inputFilePath
+		print_endline (Ir.instructions_to_string instrs);
+		Codedump.dump_module instrs inputFilePath

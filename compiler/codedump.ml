@@ -1,11 +1,12 @@
 let opcode_callext = 1;;
 let opcode_ldc = 3;;
+let opcode_ntp = 5;;
 let opcode_ret = 9;;
 
 module ConstantMap = Map.Make(struct type t = Ir.constant let compare = compare end)
 module ImportMap = Map.Make(String)
 
-let encode_code instr constants imports =
+let encode_code instrs constants imports =
 	let rec index_constants constants index =
 		match constants with
 		| [] -> ConstantMap.empty
@@ -20,12 +21,18 @@ let encode_code instr constants imports =
 	let constantMap = index_constants constants 0 in
 	let importMap = index_imports imports 0 in
 	
-	let rec encode_instr instr = 
+	let encode_instr instr = 
 		match instr with
-		| Ir.CallExternalInstruction (name, arg) -> encode_instr arg; Buffer.add_uint8 buffer opcode_callext; Buffer.add_uint16_be buffer (ImportMap.find name importMap)
+		| Ir.CallExternalInstruction (name, _) -> Buffer.add_uint8 buffer opcode_callext; Buffer.add_uint16_be buffer (ImportMap.find name importMap)
 		| Ir.LoadConstantInstruction constant -> Buffer.add_uint8 buffer opcode_ldc; Buffer.add_uint16_be buffer (ConstantMap.find constant constantMap)
+		| Ir.NewTupleInstruction args -> Buffer.add_uint8 buffer opcode_ntp; Buffer.add_uint16_be buffer (ConstantMap.find (ConstantNatural(string_of_int (List.length args))) constantMap)
 	in
-	encode_instr instr;
+	let rec encode_instrs instrs =
+		match instrs with
+		| [] -> ()
+		| instr::rest -> (encode_instr instr); encode_instrs rest
+	in
+	encode_instrs instrs;
 	Buffer.add_uint8 buffer opcode_ret; (* TODO: emergency bail out *)
 	buffer
 ;;
@@ -33,13 +40,14 @@ let encode_code instr constants imports =
 
 
 
-let collect_constants instr =
-	let rec collect_instr instr result =
-		match instr with
-		| Ir.CallExternalInstruction (_, arg) -> collect_instr arg result
-		| Ir.LoadConstantInstruction (constant) -> result @ [constant]
+let collect_constants instrs =
+	let rec collect_instrs instrs =
+		match instrs with
+		| [] -> []
+		| Ir.LoadConstantInstruction (constant)::rest -> constant :: (collect_instrs rest)
+		| _::rest -> (collect_instrs rest)
 	in
-	collect_instr instr []
+	collect_instrs instrs
 ;;
 
 let encode_constants constants =
@@ -73,13 +81,14 @@ let encode_constants constants =
 
 
 
-let collect_imports instr =
-	let collect_instr instr result =
-		match instr with
-		| Ir.CallExternalInstruction (name, _) -> result @ [name]
-		| _ -> result;
+let collect_imports instrs =
+	let rec collect_instrs instrs =
+		match instrs with
+		| [] -> []
+		| Ir.CallExternalInstruction (name, _) :: rest -> name::(collect_instrs rest)
+		| _::rest -> collect_instrs rest;
 	in
-	collect_instr instr []
+	collect_instrs instrs
 ;;
 
 let encode_imports imports =
