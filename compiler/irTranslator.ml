@@ -14,6 +14,7 @@ let translate_ast ast =
 		| Ast.StringLiteral x -> Ir.LoadConstantInstruction(Ir.ConstantString(x))
 		| Ast.Call (func, arg) -> translate_call func (translate_expr arg)
 		| Ast.Tuple args -> Ir.NewTupleInstruction(translate_exprs args)
+		| _ -> raise (Stream.Error "call not implemented") 
 	and translate_exprs exprs =
 		match exprs with
 		| [] -> []

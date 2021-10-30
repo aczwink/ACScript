@@ -25,8 +25,9 @@ let rec lex = parser
 		
 	(* special symbols *)
 	| [< ' (':'); stream >] -> lex_colon stream
+	| [< ' ('-'); ' ('>'); stream >] -> [< 'Token.Map; lex stream >]
 	
-	| [< ' ('(' | ')' as c); stream >] -> [< 'Token.Symbol c; lex stream >]
+	| [< ' ('(' | ')' | ';' as c); stream >] -> [< 'Token.Symbol c; lex stream >]
 		
 	(* end of stream *)
 	| [< >] -> [< >]

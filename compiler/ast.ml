@@ -4,6 +4,7 @@ type expression =
 	| StringLiteral of string
 	| Call of expression * expression
 	| Tuple of expression list
+	| Function of expression * expression
 	
 type statement = 
 	| ExpressionStatement of expression
@@ -26,5 +27,6 @@ and expr_to_string expr = match expr with
 	| StringLiteral x -> "\"" ^ x ^ "\""
 	| Call (func, arg) -> (expr_to_string func) ^ "(" ^ expr_to_string arg ^ ")"
 	| Tuple values -> "(" ^ (exprs_to_string values) ^ ")"
+	| Function(pattern, expr) -> expr_to_string pattern ^ " -> " ^ expr_to_string expr
 
 and exprs_to_string exprs = String.concat ", " (List.map (expr_to_string) exprs)

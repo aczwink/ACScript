@@ -7,20 +7,20 @@ let rec parse_primary_expression =
 		let ident = Ast.Identifier(id) in
 		let parse_identifier_inner =
 			parser
-			| [< 'Token.Symbol '('; arg=parse_expression; 'Token.Symbol ')' >] -> Ast.Call(ident, arg)
+			| [< 'Token.Symbol '('; arg=parse_expression; 'Token.Symbol ')' >] -> print_endline id; Ast.Call(ident, arg)
 			| [< >] -> ident
 		in
 		parse_identifier_inner stream
 
 and parse_binary_rhs lhs =
 	parser
+	| [< 'Token.Map; expr = parse_expression >] -> Ast.Function(lhs, expr)
 	| [< func = parse_primary_expression; rhs = parse_primary_expression >] -> Ast.Call(func, Ast.Tuple(lhs::rhs::[]))
 	| [< >] -> lhs
 
 and parse_expression =
 	parser
 	| [< lhs=parse_primary_expression; stream >] -> parse_binary_rhs lhs stream
-;;
 
 let parse_statement =
 	parser
@@ -30,6 +30,6 @@ let parse_statement =
 
 let rec parse_module =
 	parser
-	| [< stmt=parse_statement; stream=parse_module >] -> stmt::stream
+	| [< stmt=parse_statement; 'Token.Symbol ';'; stream >] -> stmt::(parse_module stream)
 	| [< >] -> []
 ;;
