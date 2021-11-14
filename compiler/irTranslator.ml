@@ -14,7 +14,7 @@ let translate_ast ast =
 		| Ast.StringLiteral x -> Ir.LoadConstantInstruction(Ir.ConstantString(x))
 		| Ast.Call (func, arg) -> translate_call func (translate_expr arg)
 		| Ast.Tuple args -> Ir.NewTupleInstruction(translate_exprs args)
-		| _ -> raise (Stream.Error "call not implemented") 
+		| _ -> raise (Stream.Error "call not implemented")
 	and translate_exprs exprs =
 		match exprs with
 		| [] -> []
@@ -29,6 +29,7 @@ let translate_ast ast =
 			in
 				Hashtbl.add namedValues name value;
 				value
+		| _ -> raise (Stream.Error "call not implemented")
 	in
 	
 	let rec translate_stmts ast =

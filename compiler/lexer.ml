@@ -3,8 +3,7 @@ let rec lex = parser
 	| [< ' (' ' | '\n' | '\r' | '\t'); stream >] -> lex stream
 	
 	(* line comments *)
-	| [< ' ('#'); stream >] ->
-		lex_line_comment stream
+	| [< ' ('-'); stream >] -> lex_minus stream
 		
 	(* number *)
 	| [< ' ('0' .. '9' as c); stream >] ->
@@ -25,9 +24,8 @@ let rec lex = parser
 		
 	(* special symbols *)
 	| [< ' (':'); stream >] -> lex_colon stream
-	| [< ' ('-'); ' ('>'); stream >] -> [< 'Token.Map; lex stream >]
 	
-	| [< ' ('(' | ')' | ';' as c); stream >] -> [< 'Token.Symbol c; lex stream >]
+	| [< ' ('(' | ')' | '{' | '}' | ';' | ',' as c); stream >] -> [< 'Token.Symbol c; lex stream >]
 		
 	(* end of stream *)
 	| [< >] -> [< >]
@@ -47,6 +45,7 @@ and lex_ident buffer = parser
 		let ident = Buffer.contents buffer in
 		match ident with
 		| "let" -> [< 'Token.Let; stream >]
+		| "type" -> [< 'Token.Type; stream >]
 		| _ -> [< 'Token.Identifier ident; stream >]
 		
 and lex_text_literal buffer = parser
@@ -61,5 +60,11 @@ and lex_line_comment = parser
   | [< >] -> [< >]
   
   
+and lex_minus = parser
+	| [< ' ('-'); stream>] -> lex_line_comment stream
+	| [< ' ('>'); stream >] -> [< 'Token.Map; lex stream >]
+  
+  
 and lex_colon = parser
 	| [< ' ('='); stream=lex >] -> [< 'Token.Assignment; stream >]
+	| [< stream = lex >] -> [< 'Token.Symbol ':'; stream >]

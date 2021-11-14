@@ -1,0 +1,9 @@
+type nat := {
+	--arithmetic operators
+	*: (nat, nat) -> nat;
+};
+
+type string := {
+};
+
+let print: any -> null := extern("print");

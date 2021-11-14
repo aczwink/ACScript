@@ -58,6 +58,7 @@ and translate_expr expr =
 	| Ast.Identifier identifier -> identifier
 	| Ast.NaturalLiteral literal -> literal ^ "n"
 	| Ast.StringLiteral x -> "\"" ^ x ^ "\""
+	| Ast.Select _ -> raise (Stream.Error "call not implemented")
 	| Ast.Tuple args -> "[" ^ (translate_exprs args) ^ "]"
 	| Ast.Function (pattern, expr) -> "function(arg)\n{\n\t" ^ (translate_pattern pattern) ^ ";\n\treturn " ^ (translate_expr expr) ^ ";\n}"
 and translate_exprs exprs = String.concat "," (List.map (translate_expr) exprs)
@@ -67,6 +68,7 @@ let translate_stmt stmt =
 	match stmt with
 	| Ast.ExpressionStatement expr -> (translate_expr expr) ^ ";"
 	| Ast.LetBindingStatement (name, expr) -> "const " ^ name ^ " = " ^ (translate_expr expr) ^ ";"
+	| _ -> raise (Stream.Error "unknown statement")
 ;;
 		
 let translate_stmts_string stmts =
@@ -74,7 +76,8 @@ let translate_stmts_string stmts =
 ;;
 
 let dump_module inputFilePath _moduleAst = 
-	let oc = open_out (inputFilePath ^ ".js") in		
+	let oc = open_out (inputFilePath ^ ".js") in
+		SemanticAnalysis.translate _moduleAst;
 		let code = translate_stmts_string _moduleAst in
 			output_string oc code;
 			close_out oc

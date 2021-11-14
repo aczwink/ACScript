@@ -1,10 +1,66 @@
 let () = Printexc.record_backtrace true;;
 
+
+let stream_concat streams =
+    let current_stream = ref None in
+    let rec next i =
+      try
+        let stream =
+          match !current_stream with
+          | Some stream -> stream
+          | None ->
+             let stream = Stream.next streams in
+             current_stream := Some stream;
+             stream in
+        try Some (Stream.next stream)
+        with Stream.Failure -> (current_stream := None; next i)
+      with Stream.Failure -> None in
+    Stream.from next;;
+    
+let read_next_symbol stream =
+	try Stream.next stream
+	with _ -> '\x00'
+;;
+    
+let rec read_line stream =
+		let next = read_next_symbol stream
+		in
+		match next with
+		| '\x00' -> ""
+		| '\n' -> "\n"
+		| c ->
+			let s1 = (String.make 1 c) in
+			let s2 = read_line stream in
+			s1 ^ s2
+;;
+
+let rec read_lines nLines stream =
+	match nLines with
+	| 0 -> ""
+	| _ ->
+		let next_line = (read_line stream) in
+		let other_lines = (read_lines (nLines-1) stream) in
+		next_line ^ other_lines
+;;
+    
+
+let parse_with_error_handling lexer stream =
+	try Parser.parse_module lexer
+	with e ->
+		Printf.eprintf "Parsing error just before:\n%s\n" (read_lines 4 stream);
+		raise e
+;;
+
 let parse_file filePath =
 	let ic = open_in filePath in
-	let stream = Lexer.lex (Stream.of_channel ic) in
-	let parsed_module = Parser.parse_module stream in
+	let iccore = open_in "../acs_lib/Core.acs" in
+	let stream1 = (Stream.of_channel iccore) in
+	let stream2 = (Stream.of_channel ic) in
+	let stream = stream_concat (Stream.of_list [stream1; stream2]) in
+	let lexer = Lexer.lex stream in
+	let parsed_module = parse_with_error_handling lexer stream in
 	close_in ic;
+	close_in iccore;
 	parsed_module
 ;;
 
