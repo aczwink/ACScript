@@ -67,7 +67,7 @@ and translate_exprs exprs = String.concat "," (List.map (translate_expr) exprs)
 let translate_stmt stmt = 
 	match stmt with
 	| Ast.ExpressionStatement expr -> (translate_expr expr) ^ ";"
-	| Ast.LetBindingStatement (name, expr) -> "const " ^ name ^ " = " ^ (translate_expr expr) ^ ";"
+	| Ast.LetBindingStatement (name, _, expr) -> "const " ^ name ^ " = " ^ (translate_expr expr) ^ ";"
 	| _ -> raise (Stream.Error "unknown statement")
 ;;
 		
@@ -77,7 +77,6 @@ let translate_stmts_string stmts =
 
 let dump_module inputFilePath _moduleAst = 
 	let oc = open_out (inputFilePath ^ ".js") in
-		SemanticAnalysis.translate _moduleAst;
 		let code = translate_stmts_string _moduleAst in
 			output_string oc code;
 			close_out oc

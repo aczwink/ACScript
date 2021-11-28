@@ -24,7 +24,7 @@ let translate_ast ast =
 	let translate_stmt stmt = 
 		match stmt with
 		| Ast.ExpressionStatement expr -> translate_expr expr
-		| Ast.LetBindingStatement (name, expr) ->
+		| Ast.LetBindingStatement (name, _, expr) ->
 			let value = translate_expr expr
 			in
 				Hashtbl.add namedValues name value;

@@ -53,15 +53,28 @@ let parse_with_error_handling lexer stream =
 
 let parse_file filePath =
 	let ic = open_in filePath in
-	let iccore = open_in "../acs_lib/Core.acs" in
-	let stream1 = (Stream.of_channel iccore) in
-	let stream2 = (Stream.of_channel ic) in
-	let stream = stream_concat (Stream.of_list [stream1; stream2]) in
+	let stream = (Stream.of_channel ic) in
+	(*let stream = stream_concat (Stream.of_list [stream1; stream2]) in*)
 	let lexer = Lexer.lex stream in
 	let parsed_module = parse_with_error_handling lexer stream in
 	close_in ic;
-	close_in iccore;
 	parsed_module
+;;
+
+let dump_ast ast =
+	let outputFilePath = "_AST.acs" in
+	print_endline ("Dumping AST to: " ^ outputFilePath);
+	let oc = open_out (outputFilePath) in
+		output_string oc (Ast.to_string ast);
+		close_out oc
+;;
+
+let dump_after_semantic_analysis _module =
+	let outputFilePath = "_semantic.txt" in
+	print_endline ("Dumping results of semantic analysis to: " ^ outputFilePath);
+	let oc = open_out (outputFilePath) in
+		output_string oc (SemanticAnalysis.to_string _module);
+		close_out oc
 ;;
 
 let output_ir inputFilePath ast = 
@@ -76,10 +89,24 @@ let output_js inputFilePath ast =
 	Jscodedump.dump_module inputFilePath ast
 ;;
 
+(*
 let () =
 	let inputFilePath = Sys.argv.( (Array.length Sys.argv) - 1) in
 	let ast = parse_file inputFilePath in
-		print_endline ("AST:");
-		print_endline (Ast.to_string ast);
-	let js = Sys.argv.(1) = "--js" in
-		if js then output_js inputFilePath ast else output_ir inputFilePath ast
+		dump_ast ast;
+		let sa = SemanticAnalysis.translate ast in
+			dump_after_semantic_analysis sa;
+			let js = Sys.argv.(1) = "--js" in
+				if js then output_js inputFilePath ast else output_ir inputFilePath ast
+*)
+
+let parse_module_and_dependencies moduleName _ =
+	print_endline moduleName
+;;
+
+let () =
+	let inputFilePath = Sys.argv.( (Array.length Sys.argv) - 1) in
+	let inputDir = Filename.dirname inputFilePath in
+	let includeDirectories = [inputDir] in
+	let mainModuleName = Filename.remove_extension(Filename.basename inputFilePath) in
+	parse_module_and_dependencies mainModuleName includeDirectories

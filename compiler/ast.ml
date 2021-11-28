@@ -20,7 +20,8 @@ and typedefinition =
 	
 type statement = 
 	| ExpressionStatement of expression
-	| LetBindingStatement of string * expression
+	| ImportStatement of string
+	| LetBindingStatement of string * typedefinition * expression
 	| TypeDefStatement of string * typedefinition
 
 
@@ -40,12 +41,13 @@ and typedef_to_string typedef =
 	| NamedType name -> name
 	| FunctionType (argType, returnType) -> (typedef_to_string argType) ^ " -> " ^ (typedef_to_string returnType)
 	| TupleType entries -> "(" ^ (String.concat ", " (List.map (typedef_to_string) entries)) ^ ")"
-	| ObjectType decls -> "{" ^ (String.concat ", " (List.map (declaration_to_string) decls)) ^ "}"
+	| ObjectType decls -> "\n{\n" ^ (String.concat ", " (List.map (declaration_to_string) decls)) ^ "\n}"
 	
 and stmt_to_string stmt =
 	match stmt with
 	| ExpressionStatement expr -> (expr_to_string expr) ^ ";"
-	| LetBindingStatement (id, expr) -> "let " ^ id ^ ": nat" ^ " := " ^ (expr_to_string expr) ^ ";"
+	| ImportStatement id -> "import \"" ^ id ^ "\";"
+	| LetBindingStatement (id, typedef, expr) -> "let " ^ id ^ ": " ^ (typedef_to_string typedef) ^ " := " ^ (expr_to_string expr) ^ ";"
 	| TypeDefStatement (id, typedef) -> "type " ^ id ^ " := " ^ (typedef_to_string typedef) ^ ";"
 	
 and expr_to_string expr = match expr with

@@ -34,7 +34,7 @@ and values_to_string values = String.concat ", " (List.map (value_to_string) val
 
 let stmt_to_string stmt =
 	match stmt with
-	| ValueStatement expr -> value_to_string expr
+	| ValueStatement expr -> (value_to_string expr) ^ ";"
 ;;
 
 let stmts_to_string stmts = String.concat "\n" (List.map (stmt_to_string) stmts);;
@@ -108,7 +108,8 @@ let translate _moduleAst =
 	let translate_stmt stmt scope =
 		match stmt with
 		| Ast.ExpressionStatement expr -> Some(ValueStatement(translate_expr expr scope)), scope
-		| Ast.LetBindingStatement (name, expr) ->
+		| Ast.ImportStatement _ -> raise (Stream.Error "call not implemented")
+		| Ast.LetBindingStatement (name, _, expr) ->
 			let translated_expr = translate_expr expr scope in
 			Some(ValueStatement(translated_expr)), Scope.add name translated_expr scope
 		| Ast.TypeDefStatement (name, typedef) -> Hashtbl.add namedTypes name typedef; None, scope
@@ -126,6 +127,6 @@ let translate _moduleAst =
 	
 	let stmts = translate_stmts _moduleAst Scope.empty in
 	Hashtbl.add functions (Hashtbl.length functions) stmts;
-	let _module = { functions = order_functions functions 0 } in
-	print_endline ("After semantical analysis:\n" ^ (to_string _module))
+	let orderedFunctions = order_functions functions 0 in
+	{ functions = orderedFunctions }
 ;;

@@ -6,4 +6,7 @@ type nat := {
 type string := {
 };
 
-let print: any -> null := extern("print");
+type unit := {
+};
+
+let print: any -> unit := extern("print");

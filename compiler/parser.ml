@@ -54,14 +54,15 @@ and parse_type =
 
 let parse_let_statement id =
 	parser
-	| [< 'Token.Symbol ':'; _ = parse_type; 'Token.Assignment; expr=parse_expression >] -> Ast.LetBindingStatement(id, expr)
-	| [< 'Token.Assignment; expr=parse_expression >] -> Ast.LetBindingStatement(id, expr)
+	| [< 'Token.Symbol ':'; typedef = parse_type; 'Token.Assignment; expr=parse_expression >] -> Ast.LetBindingStatement(id, typedef, expr)
+	| [< 'Token.Assignment; expr=parse_expression >] -> Ast.LetBindingStatement(id, Ast.NamedType "unknown", expr)
 ;;
 
 let parse_statement =
 	parser
-	| [< 'Token.Let; 'Token.Identifier id; stream >] -> parse_let_statement id stream
-	| [< 'Token.Type; 'Token.Identifier id; 'Token.Assignment; typedef = parse_type >] -> Ast.TypeDefStatement(id, typedef)
+	| [< 'Token.Keyword Token.Import; 'Token.StringLiteral id >] -> Ast.ImportStatement(id)
+	| [< 'Token.Keyword Token.Let; 'Token.Identifier id; stream >] -> parse_let_statement id stream
+	| [< 'Token.Keyword Token.Type; 'Token.Identifier id; 'Token.Assignment; typedef = parse_type >] -> Ast.TypeDefStatement(id, typedef)
 	| [< expr=parse_expression >] -> Ast.ExpressionStatement(expr)
 ;;
 
