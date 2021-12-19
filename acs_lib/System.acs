@@ -9,4 +9,4 @@ type string := {
 type unit := {
 };
 
-let print: any -> unit := extern("print");
+let print: any -> unit := extern "print";

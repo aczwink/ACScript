@@ -44,6 +44,7 @@ and lex_ident buffer = parser
 	| [< stream=lex >] ->
 		let ident = Buffer.contents buffer in
 		match ident with
+		| "extern" -> [< 'Token.Keyword Token.Extern; stream >]
 		| "import" -> [< 'Token.Keyword Token.Import; stream >]
 		| "let" -> [< 'Token.Keyword Token.Let; stream >]
 		| "type" -> [< 'Token.Keyword Token.Type; stream >]

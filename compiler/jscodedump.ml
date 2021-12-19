@@ -55,6 +55,7 @@ and translate_expr expr =
 	match expr with
 	| Ast.Call (func, arg) ->
 		if is_binop func arg then translate_binop func arg else (translate_call func) ^ "(" ^ (translate_expr arg) ^ ")"
+	| Ast.External _ -> raise (Stream.Error "call not implemented")
 	| Ast.Identifier identifier -> identifier
 	| Ast.NaturalLiteral literal -> literal ^ "n"
 	| Ast.StringLiteral x -> "\"" ^ x ^ "\""

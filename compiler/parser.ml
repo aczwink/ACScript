@@ -3,6 +3,8 @@ let rec parse_primary_expression =
 	| [< 'Token.NaturalLiteral n >] -> Ast.NaturalLiteral n
 	| [< 'Token.StringLiteral n >] -> Ast.StringLiteral n
 	
+	| [< 'Token.Keyword Token.Extern; 'Token.StringLiteral n >] -> Ast.External n
+	
 	| [< 'Token.Identifier id; stream >] ->
 		let ident = Ast.Identifier(id) in
 		let parse_identifier_inner =
@@ -60,21 +62,20 @@ let parse_let_statement id =
 
 let parse_statement =
 	parser
-	| [< 'Token.Keyword Token.Import; 'Token.StringLiteral id >] -> Ast.ImportStatement(id)
 	| [< 'Token.Keyword Token.Let; 'Token.Identifier id; stream >] -> parse_let_statement id stream
 	| [< 'Token.Keyword Token.Type; 'Token.Identifier id; 'Token.Assignment; typedef = parse_type >] -> Ast.TypeDefStatement(id, typedef)
 	| [< expr=parse_expression >] -> Ast.ExpressionStatement(expr)
 ;;
 
-(*let parse_toplevel_error stream =
-	match Stream.peek stream with
-		| None -> []
-		| Some c -> print_endline (Token.to_string c); raise (Stream.Error "Unexpected token")
-;;*)
+let parse_toplevel =
+	parser
+	| [< 'Token.Keyword Token.Import; 'Token.StringLiteral id >] -> Ast.ImportToplevel(id)
+	| [< stmt=parse_statement >] -> Ast.StatementToplevel(stmt)
+;;
 
 let rec parse_module =
 	parser
-	| [< stmt=parse_statement; 'Token.Symbol ';'; stream >] -> stmt::(parse_module stream)
+	| [< toplevel=parse_toplevel; 'Token.Symbol ';'; stream >] -> toplevel::(parse_module stream)
 	(*| [< stream >] -> parse_toplevel_error stream*)
 	| [< >] -> []
 ;;

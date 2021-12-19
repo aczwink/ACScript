@@ -1,53 +1,4 @@
-type value =
-	| Parameter
-	| ExternalCall of string
-	| Function of int
-	| NaturalValue of string
-	| StringValue of string
-	| Call of value * value
-	| Select of value * string
-	| Tuple of value list
-
-type statement = 
-	| ValueStatement of value
-	
-module Scope = Map.Make(String);;
-
-type program_module = {
-	functions: statement list list;
-}
-	
-	
-let rec value_to_string expr =
-	match expr with
-	| Call (func, arg) -> (value_to_string func) ^ "(" ^ value_to_string arg ^ ")"
-	| ExternalCall externalName -> "$e_" ^ externalName
-	| Function funcIdx -> "$f" ^ string_of_int(funcIdx)
-	| NaturalValue x -> x
-	| Parameter -> "$p"
-	| Select (value, member) -> (value_to_string value) ^ "." ^ member
-	| StringValue x -> "\"" ^ x ^ "\""
-	| Tuple entries -> "(" ^ (values_to_string entries) ^ ")"
-	
-and values_to_string values = String.concat ", " (List.map (value_to_string) values)
-;;
-
-let stmt_to_string stmt =
-	match stmt with
-	| ValueStatement expr -> (value_to_string expr) ^ ";"
-;;
-
-let stmts_to_string stmts = String.concat "\n" (List.map (stmt_to_string) stmts);;
-
-let to_string _module =
-	let rec funcs_to_string funcs num =
-		match funcs with
-		| [] -> ""
-		| first::rest -> "function $f" ^ (string_of_int num) ^ "($p)\n{\n" ^ (stmts_to_string first) ^ "\n}\n\n" ^ (funcs_to_string rest (num+1))
-	in
-	
-	funcs_to_string _module.functions 0
-;;
+module StringMap = Map.Make(String);;
 
 
 
@@ -59,74 +10,106 @@ let rec order_functions funcs currentNumber =
 ;;
 
 
+class translation_state (scope: ProgramModule.value StringMap.t) (orderedTypes: string list) (typesScope: Ast.typedefinition StringMap.t) =
+	object
+	
+	method add_named_value name value =
+		new translation_state (StringMap.add name value scope) orderedTypes typesScope
+		
+	method add_type name typedef =
+		new translation_state scope (orderedTypes @ [name]) (StringMap.add name typedef typesScope)
+		
+	method fold_types_ordered =
+		List.map (fun name -> (name, StringMap.find name typesScope)) orderedTypes
+		
+	method get_named_value name =
+		StringMap.find_opt name scope
+		
+	method get_scope =
+		scope
+end;;
 
-let translate _moduleAst =
+
+let translate moduleName _moduleAst modulesMap =
+	(*
 	let namedTypes: (string, Ast.typedefinition) Hashtbl.t = Hashtbl.create 10
 	in
-	let functions: (int, statement list) Hashtbl.t = Hashtbl.create 10
-	in
-	
-	let translate_identifier id scope =
-		let found = Scope.find_opt id scope in
-			match found with
-			| Some value -> value
-			| None -> raise (Stream.Error ("Unknown variable: " ^ id))
+	let functions: (int, ProgramModule.statement list) Hashtbl.t = Hashtbl.create 10
 	in
 	
 	let translate_pattern pattern scope =
 		match pattern with
-		| Ast.Identifier id -> Scope.add id Parameter scope
+		| Ast.Identifier id -> Scope.add id ProgramModule.Parameter scope
 		| _ -> raise (Stream.Error "call not implemented")
 	in
 	
 	let rec translate_expr expr scope =
 		match expr with
-		| Ast.Identifier id -> translate_identifier id scope
-		| Ast.NaturalLiteral x -> NaturalValue(x)
-		| Ast.StringLiteral x -> StringValue(x)
-		| Ast.Call (func, arg) -> translate_call func arg scope
-		| Ast.Select (expr, memberName) -> Select(translate_expr expr scope, memberName)
-		| Ast.Tuple exprs -> Tuple( List.map (fun expr -> translate_expr expr scope) exprs )
+		| Ast.NaturalLiteral x -> ProgramModule.NaturalValue(x)
+		| Ast.Select (expr, memberName) -> ProgramModule.Select(translate_expr expr scope, memberName)
+		| Ast.Tuple exprs -> ProgramModule.Tuple( List.map (fun expr -> translate_expr expr scope) exprs )
 		| Ast.Function (pattern, expr) ->
 			let funcScope = translate_pattern pattern scope in
-			let stmt = ValueStatement(translate_expr expr funcScope) in
+			let stmt = ProgramModule.ValueStatement(translate_expr expr funcScope) in
 			let funcIdx = Hashtbl.length functions in
 			Hashtbl.add functions funcIdx [stmt];
 			Function(funcIdx)
-		
-	and translate_call func arg scope =
-		match func with
-		| Ast.Identifier "extern" -> translate_external_call arg
-		| _ -> Call(translate_expr func scope, translate_expr arg scope)
-	
-	and translate_external_call arg =
-		match arg with
-		| Ast.StringLiteral x -> ExternalCall(x)
-		| _ -> raise (Stream.Error ("Externals can only be referenced with a constant string literal but got: " ^ (Ast.expr_to_string arg)))
 	in
+
 	
-	let translate_stmt stmt scope =
-		match stmt with
-		| Ast.ExpressionStatement expr -> Some(ValueStatement(translate_expr expr scope)), scope
-		| Ast.ImportStatement _ -> raise (Stream.Error "call not implemented")
-		| Ast.LetBindingStatement (name, _, expr) ->
-			let translated_expr = translate_expr expr scope in
-			Some(ValueStatement(translated_expr)), Scope.add name translated_expr scope
-		| Ast.TypeDefStatement (name, typedef) -> Hashtbl.add namedTypes name typedef; None, scope
-	in
-	
-	let rec translate_stmts stmts scope =
-		match stmts with
-		| [] -> []
-		| stmt::rest ->
-			let (result, newScope) = (translate_stmt stmt scope) in
-				match result with
-				| Some(translated_stmt) -> translated_stmt::(translate_stmts rest newScope)
-				| None -> translate_stmts rest newScope
-	in
-	
-	let stmts = translate_stmts _moduleAst Scope.empty in
 	Hashtbl.add functions (Hashtbl.length functions) stmts;
 	let orderedFunctions = order_functions functions 0 in
-	{ functions = orderedFunctions }
+	*)
+	
+	let translate_identifier id state =
+		match state#get_named_value id with
+		| Some value -> value
+		| None -> raise (Stream.Error ("Unknown variable: " ^ id))
+	in
+	
+	let rec translate_expr expr state =
+		match expr with
+		| Ast.Call (func, arg) -> ProgramModule.Call(translate_expr func state, translate_expr arg state)
+		| Ast.External externalName -> ProgramModule.ExternalValue(externalName)
+		| Ast.Identifier id -> translate_identifier id state
+		| Ast.StringLiteral x -> ProgramModule.StringValue(x)
+		| _ -> raise (Stream.Error "call not implemented")
+	in
+	
+	let translate_stmt stmt state =
+		match stmt with
+		| Ast.ExpressionStatement expr -> Some(ProgramModule.ValueStatement(translate_expr expr state)), state
+		| Ast.LetBindingStatement (name, typedef, expr) ->
+			let translated_expr = translate_expr expr state in
+			Some(ProgramModule.LetBindingStatement(name, typedef, translated_expr)), state#add_named_value name translated_expr
+		| Ast.TypeDefStatement (name, typedef) -> None, state#add_type name typedef
+	in
+	
+	let translate_toplevel toplevel state =
+		match toplevel with
+		| Ast.ImportToplevel moduleName ->
+			let _module = StringMap.find moduleName modulesMap in
+			let newState = StringMap.fold (fun exportName exportValue currentState -> currentState#add_named_value exportName exportValue) _module.ProgramModule.exports state in
+			None, newState
+		| Ast.StatementToplevel stmt -> translate_stmt stmt state
+	in
+	
+	let rec translate_toplevels toplevels state =
+		match toplevels with
+		| [] -> [], state
+		| toplevel::rest ->
+			let (result, newState) = (translate_toplevel toplevel state) in
+				match result with
+				| Some(translated_stmt) ->
+					let (nextResult, nextState) = translate_toplevels rest newState
+					in
+					translated_stmt::nextResult, nextState
+				| None -> translate_toplevels rest newState
+	in
+	
+	
+	let stmts, state = translate_toplevels _moduleAst (new translation_state StringMap.empty [] StringMap.empty) in
+	let result: ProgramModule.program_module = { moduleName = moduleName; functions = [stmts]; publicTypes = state#fold_types_ordered; exports = state#get_scope }
+	in
+	result
 ;;

@@ -1,4 +1,5 @@
 type expression =
+	| External of string
 	| Identifier of string
 	| NaturalLiteral of string
 	| StringLiteral of string
@@ -20,9 +21,12 @@ and typedefinition =
 	
 type statement = 
 	| ExpressionStatement of expression
-	| ImportStatement of string
 	| LetBindingStatement of string * typedefinition * expression
 	| TypeDefStatement of string * typedefinition
+	
+type toplevel =
+	| ImportToplevel of string
+	| StatementToplevel of statement
 
 
 let create_decl name typedef = { name = name; typedef = typedef }
@@ -31,7 +35,7 @@ let create_decl name typedef = { name = name; typedef = typedef }
 let rec to_string toplevels =
 	match toplevels with
 	| [] -> ""
-	| toplevel::rest -> (stmt_to_string toplevel) ^ "\n" ^ (to_string rest)
+	| toplevel::rest -> (toplevel_to_string toplevel) ^ "\n" ^ (to_string rest)
 	
 and declaration_to_string decl =
 	decl.name ^ ": " ^ (typedef_to_string decl.typedef) ^ ";"
@@ -46,11 +50,16 @@ and typedef_to_string typedef =
 and stmt_to_string stmt =
 	match stmt with
 	| ExpressionStatement expr -> (expr_to_string expr) ^ ";"
-	| ImportStatement id -> "import \"" ^ id ^ "\";"
 	| LetBindingStatement (id, typedef, expr) -> "let " ^ id ^ ": " ^ (typedef_to_string typedef) ^ " := " ^ (expr_to_string expr) ^ ";"
 	| TypeDefStatement (id, typedef) -> "type " ^ id ^ " := " ^ (typedef_to_string typedef) ^ ";"
 	
+and toplevel_to_string toplevel =
+	match toplevel with
+	| ImportToplevel id -> "import \"" ^ id ^ "\";"
+	| StatementToplevel stmt -> stmt_to_string stmt
+	
 and expr_to_string expr = match expr with
+	| External externalName -> "extern \"" ^ externalName ^ "\""
 	| Identifier id -> id
 	| NaturalLiteral x -> x
 	| StringLiteral x -> "\"" ^ x ^ "\""

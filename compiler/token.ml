@@ -1,4 +1,5 @@
 type keyword =
+	| Extern
 	| Let
 	| Import
 	| Type
@@ -14,6 +15,7 @@ type token =
 	
 let kw_to_string kw =
 	match kw with
+	| Extern -> "extern"
 	| Let -> "let"
 	| Import -> "import"
 	| Type -> "type"
