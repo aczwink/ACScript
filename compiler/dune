@@ -1,6 +1,0 @@
-(executable
- (name acsc)
- (preprocess
-    (per_module
-      ((action (run camlp4o %{input-file})) lexer parser)))
- (libraries camlp4))

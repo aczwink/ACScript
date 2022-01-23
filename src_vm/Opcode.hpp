@@ -16,29 +16,21 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-//Local
-#include "Module.hpp"
+#include <StdXX.hpp>
 
-class VM
+enum class Opcode : uint8
 {
-public:
-    //Constructor
-    inline VM(const Module& module) : module(module)
-    {
-    }
-
-    //Methods
-    void Run();
-
-private:
-    //Members
-    const Module& module;
-
-    //Inline
-    inline uint16 ExtractUInt16FromProgramCounter(const uint8*& pc)
-    {
-        uint16 v = *pc++ << 8_u16;
-        v |= *pc++;
-        return v;
-    }
+    Call,
+    JumpOnFalse,
+    LoadConstant,
+    LoadExternal,
+    NewDictionary,
+    NewTuple,
+    Pop,
+    PopAssign,
+    Push,
+    PushUInt16,
+    Return,
+    Select,
+    Set
 };

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -19,110 +19,130 @@
 //Class header
 #include "VM.hpp"
 //Local
-#include <acsb/Opcode.hpp>
+#include "Opcode.hpp"
 
 //Public methods
 void VM::Run()
 {
-	const uint8* pc = static_cast<const uint8 *>(this->module.EntryPoint());
-	DynamicArray<RuntimeValue> executionStack;
-	DynamicArray<const uint8*> callStack;
+    DynamicArray<const uint8*> callStack;
+    DynamicArray<RuntimeValue> executionStack;
 
-	executionStack.Push(RuntimeValue()); //arg for main function
+    executionStack.Push(RuntimeValue()); //arg for main function
 
-	while(true)
-	{
-		Opcode op = static_cast<Opcode>(*pc++);
-		switch (op)
-		{
-			case Opcode::Call:
-			{
-				uint16 offset = executionStack.Pop().ValueNatural().RoundDown();
+    const uint8* pc = static_cast<const uint8 *>(this->module.EntryPoint());
+    while(true)
+    {
+        Opcode op = static_cast<Opcode>(*pc++);
+        switch(op)
+        {
+            case Opcode::Call:
+            {
+                RuntimeValue arg = executionStack.Pop();
+                RuntimeValue func = executionStack.Pop();
 
-				callStack.Push(pc);
-				pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
-			}
-			break;
-			case Opcode::CallExtern:
-			{
-				uint16 externIndex = this->ExtractUInt16FromProgramCounter(pc);
-				RuntimeValue arg = executionStack.Pop();
-				const auto& external = this->module.GetExternal(externIndex);
-				auto result = external(arg, this->module);
-				executionStack.Push(result);
-			}
-			break;
-			case Opcode::JumpOnFalse:
-			{
-				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
+                if(func.Type() == RuntimeValueType::External)
+                {
+                    RuntimeValue result = func.ValueExternal()(arg, this->module);
+                    executionStack.Push(result);
+                }
+                else
+                {
+                    callStack.Push(pc);
+                    pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(func.ValueNatural().ClampTo64Bit()));
+                    executionStack.Push(arg);
+                }
+            }
+            break;
+            case Opcode::JumpOnFalse:
+            {
+                uint64 offset = executionStack.Pop().ValueUInt64();
 
-				if(!executionStack.Pop().ValueBool())
-					pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
-			}
-			break;
-			case Opcode::LoadConstant:
-			{
-				uint16 constantIndex = this->ExtractUInt16FromProgramCounter(pc);
-				executionStack.Push(this->module.GetConstant(constantIndex));
-			}
-			break;
-			case Opcode::NewDictionary:
-			{
-				this->garbageCollector.CleanUp(executionStack);
-				BinaryTreeMap<String, RuntimeValue>* values = this->garbageCollector.NewDictionary();
+                if(!executionStack.Pop().ValueBool())
+                    pc = static_cast<const uint8 *>(this->module.GetCodeAtOffset(offset));
+            }
+            break;
+            case Opcode::LoadConstant:
+            {
+                uint16 constantIndex = this->ExtractUInt16FromProgramCounter(pc);
+                executionStack.Push(this->module.GetConstant(constantIndex));
+            }
+            break;
+            case Opcode::LoadExternal:
+            {
+                RuntimeValue externalName = executionStack.Pop();
+                const auto& external = this->module.GetExternal(externalName.ValueString());
+                executionStack.Push(external);
+            }
+            break;
+            case Opcode::NewDictionary:
+            {
+                executionStack.Push(RuntimeValue::CreateDictionary());
+            }
+            break;
+            case Opcode::NewTuple:
+            {
+                uint16 nEntries = this->ExtractUInt16FromProgramCounter(pc);
 
-				executionStack.Push(RuntimeValue::CreateDictionary(values));
-			}
-			break;
-			case Opcode::NewTuple:
-			{
-				uint16 nEntries = this->ExtractUInt16FromProgramCounter(pc);
+                executionStack.Push(RuntimeValue::CreateTuple(nEntries));
+            }
+            break;
+            case Opcode::Pop:
+            {
+                executionStack.Pop();
+            }
+            break;
+            case Opcode::PopAssign:
+            {
+                RuntimeValue value = executionStack.Pop();
+                executionStack.Last() = value;
+            }
+            break;
+            case Opcode::Push:
+            {
+                uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
+                RuntimeValue value = executionStack[executionStack.GetNumberOfElements() - 1 - offset];
+                executionStack.Push(value);
+            }
+            break;
+            case Opcode::PushUInt16:
+            {
+                uint16 value = this->ExtractUInt16FromProgramCounter(pc);
+                executionStack.Push((uint64)value);
+            }
+            break;
+            case Opcode::Return:
+            {
+                if(callStack.IsEmpty())
+                    return;
+                else
+                    pc = callStack.Pop();
+            }
+            break;
+            case Opcode::Select:
+            {
+                RuntimeValue selector = executionStack.Pop();
+                RuntimeValue dict = executionStack.Pop();
 
-				this->garbageCollector.CleanUp(executionStack);
+                if(dict.Type() == RuntimeValueType::Dictionary)
+                    executionStack.Push(dict.ValuesDictionary()[selector.ValueString()]);
+                else
+                    executionStack.Push(this->module.GetExternal(selector.ValueString()));
+            }
+            break;
+            case Opcode::Set:
+            {
+                RuntimeValue value = executionStack.Pop();
+                RuntimeValue key = executionStack.Pop();
+                RuntimeValue target = executionStack.Pop();
 
-				DynamicArray<RuntimeValue>* values = this->garbageCollector.NewArray();
-				for(uint16 i = 0; i < nEntries; i++)
-					values->Push(executionStack.Pop());
-
-				executionStack.Push(RuntimeValue::CreateTuple(values));
-			}
-			break;
-			case Opcode::Pop:
-			{
-				executionStack.Pop();
-			}
-			break;
-			case Opcode::PopAssign:
-			{
-				RuntimeValue value = executionStack.Pop();
-				executionStack.Last() = value;
-			}
-			break;
-			case Opcode::Push:
-			{
-				uint16 offset = this->ExtractUInt16FromProgramCounter(pc);
-				RuntimeValue value = executionStack[executionStack.GetNumberOfElements() - 1 - offset];
-				executionStack.Push(value);
-			}
-			break;
-			case Opcode::Select:
-			{
-				RuntimeValue selector = executionStack.Pop();
-				RuntimeValue object = executionStack.Pop();
-
-				executionStack.Push(object.ValuesDictionary()[selector.ValueString()]);
-			}
-			break;
-			case Opcode::Return:
-			{
-				if(callStack.IsEmpty())
-					return;
-				else
-					pc = callStack.Pop();
-			}
-			break;
-			default:
-				NOT_IMPLEMENTED_ERROR; //TODO: implement me
-		}
-	}
+                if(target.Type() == RuntimeValueType::Tuple)
+                    target.ValuesArray()[key.ValueNatural().ClampTo64Bit()] = value;
+                else
+                    target.ValuesDictionary().Insert(key.ValueString(), value);
+            }
+            break;
+            default:
+                NOT_IMPLEMENTED_ERROR; //TODO: implement me
+        }
+    }
 }

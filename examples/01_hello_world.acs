@@ -1,3 +1,3 @@
-import "System";
+use "System";
 
 print("Hello World");

@@ -1,0 +1,8 @@
+(executable
+ (name acsc)
+)
+
+(ocamllex lexer)
+
+(menhir
+ (modules parser))

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -16,42 +16,77 @@
 * You should have received a copy of the GNU General Public License
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "VM.hpp"
+//Local
 #include "ExternalsManager.hpp"
 #include "Module.hpp"
+#include "VM.hpp"
 
-using namespace StdXX::FileSystem;
-
-static void RunModule(const Path& path)
+static void RunModule(const FileSystem::Path& path)
 {
-	ExternalsManager externalsManager;
+    ExternalsManager externalsManager;
 
-	FileInputStream inputFile(path);
-	Module module(inputFile, externalsManager);
+    FileInputStream inputFile(path);
+    BufferedInputStream bufferedInputStream(inputFile);
+    Module module(bufferedInputStream, externalsManager);
 
-	VM vm(module);
-	vm.Run();
+    VM vm(module);
+    vm.Run();
+}
+
+static void RunModuleInOwnAllocator(const FileSystem::Path& path)
+{
+    class MemoryAllocatorSaver
+    {
+    public:
+        //Constructor
+        inline MemoryAllocatorSaver(Memory::Allocator& newAllocator) : oldAllocator(Memory::MemoryManager::GlobalAllocator())
+        {
+            Memory::MemoryManager::GlobalAllocator(newAllocator);
+        }
+
+        //Destructor
+        inline ~MemoryAllocatorSaver()
+        {
+            Memory::MemoryManager::GlobalAllocator(this->oldAllocator);
+        }
+
+    private:
+        //Members
+        Memory::Allocator& oldAllocator;
+    };
+
+    Memory::StaticMemoryBlockAllocator vmHeap(128 * MiB);
+    MemoryAllocatorSaver memoryAllocatorSaver(vmHeap);
+
+    try
+    {
+        RunModule(path);
+    }
+    catch(const BaseException &e)
+    {
+        stdErr << u8"Error in execution: " << e.ToString() << endl;
+    }
 }
 
 int32 Main(const String& programName, const FixedArray<String>& args)
 {
-	CommandLine::Parser commandLineParser(programName);
+    CommandLine::Parser commandLineParser(programName);
 
-	commandLineParser.AddHelpOption();
+    commandLineParser.AddHelpOption();
 
-	CommandLine::PathArgument inputPathArgument(u8"inputPath", u8"The compiled script path");
-	commandLineParser.AddPositionalArgument(inputPathArgument);
+    CommandLine::PathArgument inputPathArgument(u8"inputPath", u8"The compiled script path");
+    commandLineParser.AddPositionalArgument(inputPathArgument);
 
-	if(!commandLineParser.Parse(args))
-	{
-		commandLineParser.PrintHelp();
-		return EXIT_FAILURE;
-	}
+    if(!commandLineParser.Parse(args))
+    {
+        commandLineParser.PrintHelp();
+        return EXIT_FAILURE;
+    }
 
-	const CommandLine::MatchResult& cmdParseResult = commandLineParser.ParseResult();
-	Path path = inputPathArgument.Value(cmdParseResult);
+    const CommandLine::MatchResult& cmdParseResult = commandLineParser.ParseResult();
+    FileSystem::Path path = inputPathArgument.Value(cmdParseResult);
 
-	RunModule(path);
+    RunModuleInOwnAllocator(path);
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

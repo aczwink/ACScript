@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -18,58 +18,65 @@
 */
 //Local
 #include "../RuntimeValue.hpp"
-#include "../Module.hpp"
 
-RuntimeValue Add(RuntimeValue& arg, const Module&)
+RuntimeValue External_Add(RuntimeValue& arg, const Module&)
 {
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
-				)
-		{
-			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
-			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-			return { new Math::Natural(lhs + rhs) };
-		}
-	}
-	return RuntimeValue();
+    if( (arg.Type() == RuntimeValueType::Tuple) and (arg.ValuesArray().GetNumberOfElements() == 2) )
+    {
+        if(
+                (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+                and (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
+        )
+        {
+            const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+            const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
+            return { lhs + rhs };
+        }
+        else if(
+                (arg.ValuesArray()[0].Type() == RuntimeValueType::String)
+                and (arg.ValuesArray()[1].Type() == RuntimeValueType::String)
+        )
+        {
+            const String& lhs = arg.ValuesArray()[0].ValueString();
+            const String& rhs = arg.ValuesArray()[1].ValueString();
+            return { lhs + rhs };
+        }
+    }
+    return RuntimeValue();
 }
 
-RuntimeValue Multiply(RuntimeValue& arg, const Module&)
+RuntimeValue External_Multiply(RuntimeValue& arg, const Module&)
 {
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-			(arg.ValuesArray().GetNumberOfElements() == 2)
-			&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-			&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
-		)
-		{
-			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
-			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-			return { new Math::Natural(lhs * rhs) };
-		}
-	}
-	return RuntimeValue();
+    if(arg.Type() == RuntimeValueType::Tuple)
+    {
+        if(
+                (arg.ValuesArray().GetNumberOfElements() == 2)
+                and (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+                and (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
+        )
+        {
+            const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+            const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
+            return { lhs * rhs };
+        }
+    }
+    return RuntimeValue();
 }
 
-RuntimeValue Subtract(RuntimeValue& arg, const Module&)
+RuntimeValue External_Subtract(RuntimeValue& arg, const Module&)
 {
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
-				)
-		{
-			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
-			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-			return { new Math::Natural(lhs - rhs) };
-		}
-	}
-	return RuntimeValue();
+    if(arg.Type() == RuntimeValueType::Tuple)
+    {
+        if(
+                (arg.ValuesArray().GetNumberOfElements() == 2)
+                && (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+                && (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
+                )
+        {
+            const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+            const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
+            return { lhs - rhs };
+        }
+    }
+    return RuntimeValue();
 }

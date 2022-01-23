@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -17,37 +17,34 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
+//Local
 #include "RuntimeValue.hpp"
-
-//Forward declarations
-class Module;
-typedef RuntimeValue(*External)(RuntimeValue&, const Module&);
 
 class ExternalsManager
 {
 public:
-	//Constructor
-	inline ExternalsManager()
-	{
-		this->RegisterAllExternals();
-	}
+    //Constructor
+    inline ExternalsManager()
+    {
+        this->RegisterAllExternals();
+    }
 
-	//Inline
-	inline External GetExternal(const String& name)
-	{
-		ASSERT(this->externals.Contains(name), u8"Missing external: " + name);
-		return this->externals.Get(name);
-	}
+    //Inline
+    inline External GetExternal(const String& name)
+    {
+        ASSERT(this->externals.Contains(name), u8"Missing external: " + name);
+        return this->externals.Get(name);
+    }
 
-	inline void RegisterExternal(const String& name, External external)
-	{
-		this->externals[name] = external;
-	}
+    inline void RegisterExternal(const String& name, External external)
+    {
+        this->externals[name] = external;
+    }
 
 private:
-	//Members
-	BinaryTreeMap<String, External> externals;
+    //Members
+    BinaryTreeMap<String, External> externals;
 
-	//Methods
-	void RegisterAllExternals();
+    //Methods
+    void RegisterAllExternals();
 };

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -18,109 +18,22 @@
 */
 //Local
 #include "../RuntimeValue.hpp"
-#include "../Module.hpp"
 
-RuntimeValue And(RuntimeValue& arg, const Module&)
+RuntimeValue External_Equals(RuntimeValue& arg, const Module&)
 {
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Bool)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Bool)
-				)
-		{
-			bool lhs = arg.ValuesArray()[0].ValueBool();
-			bool rhs = arg.ValuesArray()[1].ValueBool();
-			return { lhs && rhs };
-		}
-	}
-	NOT_IMPLEMENTED_ERROR;
-	return RuntimeValue();
-}
-
-RuntimeValue Equals(RuntimeValue& arg, const Module&)
-{
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
-				)
-		{
-			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
-			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-			return { lhs == rhs };
-		}
-	}
-	NOT_IMPLEMENTED_ERROR;
-	return RuntimeValue();
-}
-
-RuntimeValue LessThan(RuntimeValue& arg, const Module&)
-{
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
-				)
-		{
-			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
-			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-			return { lhs < rhs };
-		}
-	}
-	NOT_IMPLEMENTED_ERROR;
-	return RuntimeValue();
-}
-
-RuntimeValue LessThanOrEqual(RuntimeValue& arg, const Module&)
-{
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
-				)
-		{
-			const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
-			const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-			return { lhs <= rhs };
-		}
-	}
-	NOT_IMPLEMENTED_ERROR;
-	return RuntimeValue();
-}
-
-RuntimeValue Not(RuntimeValue& arg, const Module&)
-{
-	if(arg.Type() == RuntimeValueType::Bool)
-	{
-		return !arg.ValueBool();
-	}
-	NOT_IMPLEMENTED_ERROR;
-	return RuntimeValue();
-}
-
-RuntimeValue Or(RuntimeValue& arg, const Module&)
-{
-	if(arg.Type() == RuntimeValueType::Tuple)
-	{
-		if(
-				(arg.ValuesArray().GetNumberOfElements() == 2)
-				&& (arg.ValuesArray()[0].Type() == RuntimeValueType::Bool)
-				&& (arg.ValuesArray()[1].Type() == RuntimeValueType::Bool)
-				)
-		{
-			bool lhs = arg.ValuesArray()[0].ValueBool();
-			bool rhs = arg.ValuesArray()[1].ValueBool();
-			return { lhs || rhs };
-		}
-	}
-	NOT_IMPLEMENTED_ERROR;
-	return RuntimeValue();
+    if(arg.Type() == RuntimeValueType::Tuple)
+    {
+        if(
+                (arg.ValuesArray().GetNumberOfElements() == 2)
+                && (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+                && (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
+                )
+        {
+            const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
+            const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
+            return { lhs == rhs };
+        }
+    }
+    NOT_IMPLEMENTED_ERROR;
+    return RuntimeValue();
 }

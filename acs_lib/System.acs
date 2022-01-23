@@ -1,9 +1,12 @@
 type nat := {
-	--arithmetic operators
+	//arithmetic operators
+	+: (nat, nat) -> nat;
+	-: (nat, nat) -> nat;
 	*: (nat, nat) -> nat;
 };
 
 type string := {
+	+: (string, string) -> string;
 };
 
 type unit := {

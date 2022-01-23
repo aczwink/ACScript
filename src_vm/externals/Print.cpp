@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -18,40 +18,39 @@
 */
 //Local
 #include "../RuntimeValue.hpp"
-#include "../Module.hpp"
 
 static String ToString(const RuntimeValue& value)
 {
-	switch(value.Type())
-	{
-		case RuntimeValueType::Bool:
-			return value.ValueBool() ? u8"true" : u8"false";
-		case RuntimeValueType::Natural:
-			return value.ValueNatural().ToString();
-		case RuntimeValueType::Null:
-			return u8"null";
-		case RuntimeValueType::String:
-			return value.ValueString();
-		case RuntimeValueType::Dictionary:
-		{
-			DynamicArray<String> strings;
-			for(const auto& kv : value.ValuesDictionary())
-				strings.Push(kv.key + u8": " + ToString(kv.value));
-			return u8"{ " + String::Join(strings, u8", ") + u8" }";
-		}
-		case RuntimeValueType::Tuple:
-		{
-			DynamicArray<String> strings;
-			for(const RuntimeValue& subValue : value.ValuesArray())
-				strings.Push(ToString(subValue));
-			return u8"(" + String::Join(strings, u8", ") + u8")";
-		}
-	}
-	return String();
+    switch(value.Type())
+    {
+        case RuntimeValueType::Dictionary:
+        {
+            DynamicArray<String> strings;
+            for(const auto& kv : value.ValuesDictionary())
+                strings.Push(kv.key + u8": " + ToString(kv.value));
+            return u8"{ " + String::Join(strings, u8", ") + u8" }";
+        }
+        case RuntimeValueType::External:
+            return u8"__external__";
+        case RuntimeValueType::Natural:
+            return value.ValueNatural().ToString();
+        case RuntimeValueType::String:
+            return value.ValueString();
+        case RuntimeValueType::Tuple:
+        {
+            DynamicArray<String> strings;
+            for(const RuntimeValue& subValue : value.ValuesArray())
+                strings.Push(ToString(subValue));
+            return u8"(" + String::Join(strings, u8", ") + u8")";
+        }
+        case RuntimeValueType::Unit:
+            return u8"unit";
+    }
+    return String();
 }
 
-RuntimeValue Print(RuntimeValue& arg, const Module& module)
+RuntimeValue External_Print(RuntimeValue& arg, const Module& module)
 {
-	stdOut << ToString(arg) << endl;
-	return RuntimeValue();
+    stdOut << ToString(arg) << endl;
+    return RuntimeValue();
 }

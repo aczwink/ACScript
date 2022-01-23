@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -22,101 +22,136 @@ using namespace StdXX;
 
 enum class RuntimeValueType
 {
-	Bool,
-	Dictionary,
-	Natural,
-	Null,
-	String,
-	Tuple
+    Bool,
+    Dictionary,
+    External,
+    Natural,
+    String,
+    Tuple,
+    UInt64,
+    Unit
 };
+
+//Forward declarations
+class Module;
+class RuntimeValue;
+
+typedef RuntimeValue(*External)(RuntimeValue&, const Module&);
 
 class RuntimeValue
 {
 public:
-	//Constructors
-	inline RuntimeValue() : type(RuntimeValueType::Null)
-	{
-	}
+    //Constructors
+    inline RuntimeValue() : type(RuntimeValueType::Unit)
+    {
+    }
 
-	inline RuntimeValue(bool b) : type(RuntimeValueType::Bool), b(b)
-	{
-	}
+    inline RuntimeValue(bool b) : type(RuntimeValueType::Bool), b(b)
+    {
+    }
 
-	inline RuntimeValue(Math::Natural* natural) : type(RuntimeValueType::Natural), natural(natural)
-	{
-	}
+    inline RuntimeValue(External external) : type(RuntimeValueType::External), external(external)
+    {
+    }
 
-	inline RuntimeValue(String* string) : type(RuntimeValueType::String), string(string)
-	{
-	}
+    inline RuntimeValue(Math::Natural&& natural) : type(RuntimeValueType::Natural)
+    {
+        this->natural = new Math::Natural(Move(natural));
+    }
 
-	//Properties
-	inline RuntimeValueType Type() const
-	{
-		return this->type;
-	}
+    inline RuntimeValue(String&& string) : type(RuntimeValueType::String)
+    {
+        this->string = new String(Move(string));
+    }
 
-	inline bool ValueBool() const
-	{
-		return this->b;
-	}
+    inline RuntimeValue(uint64 v) : type(RuntimeValueType::UInt64), u64(v)
+    {
+    }
 
-	inline const Math::Natural& ValueNatural() const
-	{
-		return *this->natural;
-	}
+    //Properties
+    inline RuntimeValueType Type() const
+    {
+        return this->type;
+    }
 
-	inline DynamicArray<RuntimeValue>& ValuesArray()
-	{
-		return *this->array;
-	}
+    inline DynamicArray<RuntimeValue>& ValuesArray()
+    {
+        return *this->array;
+    }
 
-	inline const DynamicArray<RuntimeValue>& ValuesArray() const
-	{
-		return *this->array;
-	}
+    inline const DynamicArray<RuntimeValue>& ValuesArray() const
+    {
+        return *this->array;
+    }
 
-	inline BinaryTreeMap<String, RuntimeValue>& ValuesDictionary()
-	{
-		return *this->dictionary;
-	}
+    inline bool ValueBool() const
+    {
+        return this->b;
+    }
 
-	inline const BinaryTreeMap<String, RuntimeValue>& ValuesDictionary() const
-	{
-		return *this->dictionary;
-	}
+    inline External ValueExternal() const
+    {
+        ASSERT_EQUALS(RuntimeValueType::External, this->type);
+        return this->external;
+    }
 
-	inline const String& ValueString() const
-	{
-		return *this->string;
-	}
+    inline BinaryTreeMap<String, RuntimeValue>& ValuesDictionary()
+    {
+        return *this->dictionary;
+    }
 
-	//Functions
-	inline static RuntimeValue CreateDictionary(BinaryTreeMap<String, RuntimeValue>* values)
-	{
-		RuntimeValue v;
-		v.type = RuntimeValueType::Dictionary;
-		v.dictionary = values;
-		return v;
-	}
+    inline const BinaryTreeMap<String, RuntimeValue>& ValuesDictionary() const
+    {
+        return *this->dictionary;
+    }
 
-	inline static RuntimeValue CreateTuple(DynamicArray<RuntimeValue>* values)
-	{
-		RuntimeValue v;
-		v.type = RuntimeValueType::Tuple;
-		v.array = values;
-		return v;
-	}
+    inline const Math::Natural& ValueNatural() const
+    {
+        ASSERT_EQUALS(RuntimeValueType::Natural, this->type);
+        return *this->natural;
+    }
+
+    inline const String& ValueString() const
+    {
+        ASSERT_EQUALS(RuntimeValueType::String, this->type);
+        return *this->string;
+    }
+
+    inline uint64 ValueUInt64() const
+    {
+        ASSERT_EQUALS(RuntimeValueType::UInt64, this->type);
+        return this->u64;
+    }
+
+    //Functions
+    inline static RuntimeValue CreateDictionary()
+    {
+        RuntimeValue v;
+        v.type = RuntimeValueType::Dictionary;
+        v.dictionary = new BinaryTreeMap<String, RuntimeValue>;
+        return v;
+    }
+
+    inline static RuntimeValue CreateTuple(uint16 nEntries)
+    {
+        RuntimeValue v;
+        v.type = RuntimeValueType::Tuple;
+        v.array = new DynamicArray<RuntimeValue>;
+        v.array->Resize(nEntries);
+        return v;
+    }
 
 private:
-	//Members
-	RuntimeValueType type;
-	union
-	{
-		bool b;
-		Math::Natural* natural;
-		DynamicArray<RuntimeValue>* array;
-		BinaryTreeMap<String, RuntimeValue>* dictionary;
-		String* string;
-	};
+    //Members
+    RuntimeValueType type;
+    union
+    {
+        bool b;
+        DynamicArray<RuntimeValue>* array;
+        BinaryTreeMap<String, RuntimeValue>* dictionary;
+        External external;
+        Math::Natural* natural;
+        String* string;
+        uint64 u64;
+    };
 };

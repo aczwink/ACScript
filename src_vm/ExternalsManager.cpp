@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018-2020 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2018-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -22,42 +22,18 @@
 //Private methods
 void ExternalsManager::RegisterAllExternals()
 {
-	//arithmetical
-	extern RuntimeValue Add(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"+", Add);
+    extern RuntimeValue External_Add(RuntimeValue&, const Module&);
+    this->RegisterExternal(u8"+", External_Add);
 
-	extern RuntimeValue Multiply(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"*", Multiply);
+    extern RuntimeValue External_Subtract(RuntimeValue&, const Module&);
+    this->RegisterExternal(u8"-", External_Subtract);
 
-	extern RuntimeValue Subtract(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"-", Subtract);
+    extern RuntimeValue External_Equals(RuntimeValue&, const Module&);
+    this->RegisterExternal(u8"=", External_Equals);
 
-	//logical
-	extern RuntimeValue And(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"and", And);
+    extern RuntimeValue External_Multiply(RuntimeValue&, const Module&);
+	this->RegisterExternal(u8"*", External_Multiply);
 
-	extern RuntimeValue Equals(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"=", Equals);
-
-	extern RuntimeValue LessThan(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"<", LessThan);
-
-	extern RuntimeValue LessThanOrEqual(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"<=", LessThanOrEqual);
-
-	extern RuntimeValue Not(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"not", Not);
-
-	extern RuntimeValue Or(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"or", Or);
-
-	//other
-	extern RuntimeValue Select(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"[]", Select);
-
-	extern RuntimeValue ObjectSet(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"__set", ObjectSet);
-
-	extern RuntimeValue Print(RuntimeValue&, const Module&);
-	this->RegisterExternal(u8"print", Print);
+    extern RuntimeValue External_Print(RuntimeValue&, const Module&);
+    this->RegisterExternal(u8"print", External_Print);
 }

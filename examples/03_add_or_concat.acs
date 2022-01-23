@@ -1,0 +1,9 @@
+use "System";
+
+let add := x -> x + x;
+
+let ten := add(5);
+print(ten);
+
+let doubleFive := add("Five");
+print(doubleFive);

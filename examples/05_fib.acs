@@ -1,0 +1,8 @@
+use "System";
+
+let fib := {
+	n | n <= 1 -> n,
+	n -> self(n - 1) + self(n - 2)
+};
+	
+print(fib(30));

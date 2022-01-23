@@ -1,4 +1,4 @@
-import Core;
+use "System";
 
 let square := x -> x * x;
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2021 Amir Czwink (amir130@hotmail.de)
+* Copyright (c) 2019-2022 Amir Czwink (amir130@hotmail.de)
 *
 * This file is part of ACScript.
 *
@@ -20,78 +20,65 @@
 #include "Module.hpp"
 
 //Constructor
-Module::Module(SeekableInputStream &inputStream, ExternalsManager& externalsManager)
+Module::Module(InputStream &inputStream, ExternalsManager& externalsManager) : externalsManager(externalsManager)
 {
-	DataReader fourccReader(false, inputStream);
-	DataReader dataReader(true, inputStream);
-	TextReader textReader(inputStream, TextCodecType::UTF8);
+    DataReader fourccReader(false, inputStream);
+    DataReader dataReader(true, inputStream);
+    TextReader textReader(inputStream, TextCodecType::UTF8);
 
-	while(!inputStream.IsAtEnd())
-	{
-		uint32 chunkId = fourccReader.ReadUInt32();
-		uint32 chunkSize = dataReader.ReadUInt32();
+    while(!inputStream.IsAtEnd())
+    {
+        uint32 chunkId = fourccReader.ReadUInt32();
+        uint32 chunkSize = dataReader.ReadUInt32();
 
-		switch(chunkId)
-		{
-			case FOURCC(u8"ACSB"):
-				ASSERT_EQUALS(0, chunkSize);
-				break;
-			case FOURCC(u8"code"):
-			{
-				//this->entryPoint = dataReader.ReadUInt16();
-				this->entryPoint = 0;
+        switch(chunkId)
+        {
+            case FOURCC(u8"ACSB"):
+                ASSERT_EQUALS(0, chunkSize);
+                break;
+            case FOURCC(u8"code"):
+            {
+                this->entryPoint = dataReader.ReadUInt16();
 
-				uint32 codeSize = chunkSize;
-				this->code = MemAlloc(codeSize);
-				inputStream.ReadBytes(this->code, codeSize);
-			}
-			break;
-			case FOURCC(u8"data"):
-			{
-				uint16 nConstants = dataReader.ReadUInt16();
-				this->constants.Resize(nConstants);
+                uint32 codeSize = chunkSize - 2;
+                this->code = MemAlloc(codeSize);
+                inputStream.ReadBytes(this->code, codeSize);
+            }
+                break;
+            case FOURCC(u8"data"):
+            {
+                uint16 nConstants = dataReader.ReadUInt16();
+                this->constants.Resize(nConstants);
 
-				for(uint16 i = 0; i < nConstants; i++)
-				{
-					uint8 type = dataReader.ReadByte();
-					switch(type)
-					{
-						case u8'n':
-						{
-							uint32 index = this->constantNaturals.Push(Math::Natural(textReader.ReadZeroTerminatedString()));
-							this->constants[i] = &this->constantNaturals[index];
-						}
-						break;
-						case u8's':
-						{
-							uint32 index = this->constantStrings.Push(textReader.ReadZeroTerminatedString());
-							this->constants[i] = &this->constantStrings[index];
-						}
-						break;
-						default:
-							NOT_IMPLEMENTED_ERROR; //TODO: implement me
-					}
-				}
-			}
-			break;
-			case FOURCC(u8"impt"):
-			{
-				uint16 nImports = dataReader.ReadUInt16();
-				this->moduleExternals.Resize(nImports);
-				for(uint16 i = 0; i < nImports; i++)
-				{
-					this->moduleExternals[i] = externalsManager.GetExternal(textReader.ReadZeroTerminatedString());
-				}
-			}
-			break;
-			default:
-				NOT_IMPLEMENTED_ERROR; //TODO: implement me
-		}
-	}
+                for(uint16 i = 0; i < nConstants; i++)
+                {
+                    uint8 type = dataReader.ReadByte();
+                    switch(type)
+                    {
+                        case u8'n':
+                            {
+                                this->constants[i] = Math::Natural(textReader.ReadZeroTerminatedString());
+                            }
+                            break;
+                        case u8's':
+                            {
+                                this->constants[i] = textReader.ReadZeroTerminatedString();
+                            }
+                            break;
+                        default:
+                            NOT_IMPLEMENTED_ERROR; //TODO: implement me
+                    }
+                }
+            }
+                break;
+            default:
+                NOT_IMPLEMENTED_ERROR; //TODO: implement me
+        }
+    }
 }
 
 //Destructor
 Module::~Module()
 {
-	MemFree(this->code);
+    MemFree(this->code);
 }
