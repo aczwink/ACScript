@@ -1,8 +1,14 @@
+type bool := {
+};
+
 type nat := {
 	//arithmetic operators
 	+: (nat, nat) -> nat;
 	-: (nat, nat) -> nat;
 	*: (nat, nat) -> nat;
+	
+	//logical operators
+	<=: (nat, nat) -> bool;
 };
 
 type string := {

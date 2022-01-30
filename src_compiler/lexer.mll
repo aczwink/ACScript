@@ -14,9 +14,8 @@
 
 let digit = ['0'-'9']
 let alpha = ['a'-'z' 'A'-'Z']
-let id = (alpha) (alpha|digit|'_')*
-
-let operator = ['*' '+' '-']+
+let operator = ['*' '+' '-' '<' '=' '_']
+let id = (alpha|operator) (alpha|digit|operator)*
 
 let whitespace = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
@@ -29,6 +28,7 @@ rule read_token =
 	| "}" 			{ SYMBOL_RIGHT_BRACE }
 	| "(" 			{ SYMBOL_LEFT_PARENTHESIS }
 	| ")" 			{ SYMBOL_RIGHT_PARENTHESIS }
+	| "|" 			{ SYMBOL_PIPE }
 	| ";" 			{ SYMBOL_SEMICOLON }
 	| ":=" 			{ SYMBOL_ASSIGNMENT }
 	| "->" 			{ SYMBOL_MAP }
@@ -40,7 +40,6 @@ rule read_token =
 	| "//" 			{ read_single_line_comment lexbuf }
 	| digit+		{ NATURAL_LITERAL (Lexing.lexeme lexbuf) }
 	| id 			{ IDENTIFIER (Lexing.lexeme lexbuf) }
-	| operator 		{ OPERATOR (Lexing.lexeme lexbuf) }
 	| '"' 			{ read_string (Buffer.create 17) lexbuf }
 	| newline 		{ next_line lexbuf; read_token lexbuf }
 	| eof 			{ END_OF_STREAM }

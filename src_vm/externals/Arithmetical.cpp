@@ -18,8 +18,9 @@
 */
 //Local
 #include "../RuntimeValue.hpp"
+#include "../MarkAndSweepGC.hpp"
 
-RuntimeValue External_Add(RuntimeValue& arg, const Module&)
+RuntimeValue External_Add(RuntimeValue& arg, const Module&, MarkAndSweepGC& gc)
 {
     if( (arg.Type() == RuntimeValueType::Tuple) and (arg.ValuesArray().GetNumberOfElements() == 2) )
     {
@@ -30,7 +31,7 @@ RuntimeValue External_Add(RuntimeValue& arg, const Module&)
         {
             const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
             const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-            return { lhs + rhs };
+            return { RuntimeValueType::Natural, gc.CreateNatural(lhs + rhs) };
         }
         else if(
                 (arg.ValuesArray()[0].Type() == RuntimeValueType::String)
@@ -45,7 +46,7 @@ RuntimeValue External_Add(RuntimeValue& arg, const Module&)
     return RuntimeValue();
 }
 
-RuntimeValue External_Multiply(RuntimeValue& arg, const Module&)
+RuntimeValue External_Multiply(RuntimeValue& arg, const Module&, MarkAndSweepGC& gc)
 {
     if(arg.Type() == RuntimeValueType::Tuple)
     {
@@ -57,13 +58,13 @@ RuntimeValue External_Multiply(RuntimeValue& arg, const Module&)
         {
             const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
             const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-            return { lhs * rhs };
+            return { RuntimeValueType::Natural, gc.CreateNatural(lhs * rhs) };
         }
     }
     return RuntimeValue();
 }
 
-RuntimeValue External_Subtract(RuntimeValue& arg, const Module&)
+RuntimeValue External_Subtract(RuntimeValue& arg, const Module&, MarkAndSweepGC& gc)
 {
     if(arg.Type() == RuntimeValueType::Tuple)
     {
@@ -75,7 +76,7 @@ RuntimeValue External_Subtract(RuntimeValue& arg, const Module&)
         {
             const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
             const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
-            return { lhs - rhs };
+            return { RuntimeValueType::Natural, gc.CreateNatural(lhs - rhs) };
         }
     }
     return RuntimeValue();

@@ -29,3 +29,13 @@ class symbol_table =
 			Hashtbl.add prefixTable prefix 1;
 			prefix
 end;;
+
+class context (symbolTable: symbol_table) =
+	object
+	
+	method get_self_type =
+		Type_system.Function(Type_system.Unknown, Type_system.Unknown)
+	
+	method get_type global_name =
+		symbolTable#get_type global_name
+end;;

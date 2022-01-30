@@ -20,12 +20,14 @@
 #include "VM.hpp"
 //Local
 #include "Opcode.hpp"
+#include "MarkAndSweepGC.hpp"
 
 //Public methods
 void VM::Run()
 {
     DynamicArray<const uint8*> callStack;
     DynamicArray<RuntimeValue> executionStack;
+    MarkAndSweepGC gc(executionStack);
 
     executionStack.Push(RuntimeValue()); //arg for main function
 
@@ -42,7 +44,7 @@ void VM::Run()
 
                 if(func.Type() == RuntimeValueType::External)
                 {
-                    RuntimeValue result = func.ValueExternal()(arg, this->module);
+                    RuntimeValue result = func.ValueExternal()(arg, this->module, gc);
                     executionStack.Push(result);
                 }
                 else
@@ -83,7 +85,10 @@ void VM::Run()
             {
                 uint16 nEntries = this->ExtractUInt16FromProgramCounter(pc);
 
-                executionStack.Push(RuntimeValue::CreateTuple(nEntries));
+                GCObject* gcObject = gc.CreateArray();
+                gcObject->array->Resize(nEntries);
+
+                executionStack.Push(RuntimeValue(RuntimeValueType::Tuple, gcObject));
             }
             break;
             case Opcode::Pop:

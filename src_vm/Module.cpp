@@ -20,7 +20,7 @@
 #include "Module.hpp"
 
 //Constructor
-Module::Module(InputStream &inputStream, ExternalsManager& externalsManager) : externalsManager(externalsManager)
+Module::Module(InputStream &inputStream, ExternalsManager& externalsManager) : externalsManager(externalsManager), gc(constants)
 {
     DataReader fourccReader(false, inputStream);
     DataReader dataReader(true, inputStream);
@@ -57,7 +57,7 @@ Module::Module(InputStream &inputStream, ExternalsManager& externalsManager) : e
                     {
                         case u8'n':
                             {
-                                this->constants[i] = Math::Natural(textReader.ReadZeroTerminatedString());
+                                this->constants[i] = {RuntimeValueType::Natural, this->gc.CreateNatural(textReader.ReadZeroTerminatedString())};
                             }
                             break;
                         case u8's':

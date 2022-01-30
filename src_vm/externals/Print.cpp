@@ -49,7 +49,7 @@ static String ToString(const RuntimeValue& value)
     return String();
 }
 
-RuntimeValue External_Print(RuntimeValue& arg, const Module& module)
+RuntimeValue External_Print(RuntimeValue& arg, const Module&, MarkAndSweepGC&)
 {
     stdOut << ToString(arg) << endl;
     return RuntimeValue();

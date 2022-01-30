@@ -1,8 +1,0 @@
-let helper := {
-    (current_n, n, a, _) | current_n = n -> a,
-    (current_n, n, a, b) -> self( (current_n + 1, n, b, a + b) )
-};
-
-let fib := n -> helper( (0, n, 0, 1) );
-
-print(fib(30));

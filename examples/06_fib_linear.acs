@@ -1,0 +1,10 @@
+use "System";
+
+let helper := {
+    (n, n, a, _) -> a,
+    (i, n, a, b) -> self( (i + 1, n, b, a + b) )
+};
+
+let fib := n -> helper( (0, n, 0, 1) );
+
+print(fib(30));

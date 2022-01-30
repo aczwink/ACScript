@@ -20,11 +20,7 @@ let create_named_type moduleName name =
 	| name -> NamedRef(moduleName, name)
 ;;
 	
-let rec to_string typedef =
-	let declaration_to_string decl =
-		"\t" ^ decl.name ^ ": " ^ (to_string decl.typedef) ^ ";"
-	in
-	
+let rec to_string typedef =	
 	match typedef with
 	| Any -> "any"
 	| Unknown -> "unknown"
@@ -34,76 +30,39 @@ let rec to_string typedef =
 	| Object decls ->
 		if (List.length decls) = 0
 		then "{}"
-		else "{\n" ^ (String.concat ", " (List.map (declaration_to_string) decls)) ^ "\n}"
+		else "{\n" ^ (declarations_to_string decls) ^ "\n}"
 	| Tuple entries -> "(" ^ (String.concat ", " (List.map (to_string) entries)) ^ ")"
+	
+and declarations_to_string decls =
+	let declaration_to_string decl =
+		"\t" ^ decl.name ^ ": " ^ (to_string decl.typedef) ^ ";"
+	in
+	(String.concat "\n" (List.map (declaration_to_string) decls))
 ;;
 
-
-class generic_constraints =
-	object
-	
-	val constraints: (string, typedefinition) Hashtbl.t = Hashtbl.create 10
-	
-	method add name typedef =
-		Hashtbl.add constraints name typedef
-	
-	method as_list =
-		Hashtbl.fold (fun k v acc -> (k, v)::acc) constraints []
-		
-	method as_object =
-		let to_decl k v decls =
-			let decl = { name = k; typedef = v } in
-			decl::decls
-		in
-		let decls = Hashtbl.fold (to_decl) constraints [] in
-		Object(decls)
-		
-	method get name =
-		Hashtbl.find constraints name
-end;;
-
-
-type generic_parameter =
-	| Unspecified
-	| Typedef of typedefinition
-	| ConstraintedObject of generic_constraints
-	
-let generic_parameter_to_string gp =
-	match gp with
-	| Unspecified -> "?"
-	| Typedef typedef -> to_string typedef
-	| ConstraintedObject constraints -> to_string constraints#as_object
+let generic_to_string genericNumber genericConstraints =
+	to_string (Generic genericNumber) ^ ": {\n" ^ declarations_to_string genericConstraints ^ "\n}"
 ;;
+
 
 class type_system =
 	object(this)
 	
-	val genericTypes = Hashtbl.create 10
+	val genericTypes: (int, declaration list) Hashtbl.t = Hashtbl.create 10
 	val namedTypes = Hashtbl.create 10
 	
 	method add moduleName name (typedef: typedefinition) =
 		Hashtbl.add namedTypes (moduleName ^ "." ^ name) typedef
 	
-	method add_constraint genericTypeNumber member t =
-		let gp = Hashtbl.find genericTypes genericTypeNumber in
-		match gp with
-		| Unspecified ->
-			let constraints = new generic_constraints in
-			Hashtbl.replace genericTypes genericTypeNumber (ConstraintedObject constraints);
-			constraints#add member t
-		| Typedef td -> raise (Stream.Error ("Can't add constraint to typedef: " ^ to_string td))
-		| ConstraintedObject constraints -> 
-			constraints#add member t
-	
 	method add_generic_type =
 		let nextNum = (Hashtbl.length genericTypes) + 1 in
-		Hashtbl.add genericTypes nextNum Unspecified;
+		Hashtbl.add genericTypes nextNum [];
 		nextNum
 		
 	method generics_as_list =
 		Hashtbl.fold (fun k v acc -> (k, v)::acc) genericTypes []
 		
-	method get_generic genericTypeNumber =
+	method get_generic_constraints genericTypeNumber =
 		Hashtbl.find genericTypes genericTypeNumber
 	
 	method is_assignable (from: typedefinition) (_to: typedefinition) =
@@ -118,29 +77,30 @@ class type_system =
 	method resolve_named_type moduleName name =
 		Hashtbl.find namedTypes (moduleName ^ "." ^ name)
 		
-	method set_generic_type genericTypeNumber typedef =
-		let gp = Hashtbl.find genericTypes genericTypeNumber in
-		match gp with
-		| Unspecified ->
-			Hashtbl.replace genericTypes genericTypeNumber (Typedef typedef)
-		| ConstraintedObject constraints ->
-			if this#is_assignable typedef (constraints#as_object)
-			then Hashtbl.replace genericTypes genericTypeNumber (Typedef typedef)
-			else raise (Stream.Error ("Can't specialize generic with: " ^ to_string typedef))
-		| _ -> raise (Stream.Error ("Can't specialize generic with: " ^ to_string typedef))
+	method set_generic_constraints genericNumber (constraints: declaration list) =
+		Hashtbl.replace genericTypes genericNumber constraints
 		
 	method union (a: typedefinition) (b: typedefinition) =
 		if this#is_assignable a b then
-			b
-		else if this#is_assignable b a then
 			a
+		else if this#is_assignable b a then
+			b
 		else
 			raise (Stream.Error (to_string a ^ " - " ^ to_string b))
 		
 	(* Private methods *)
+	method private avoid_self_cycle genericTypeNumber typedef =
+		match typedef with
+		| Generic x ->
+			if x = genericTypeNumber then
+				raise (Stream.Error ("Can't specialize generic with itself")) 
+			else ()
+		| _ -> ()
+		
 	method private is_assignable_inner from _to typeMap =
 		match (from, _to) with
 		| (_, Any) -> true
+		| (_, Unknown) -> true
 		| (Function (argTypeFrom, retTypeFrom), Function (argTypeTo, retTypeTo)) -> (this#is_assignable_inner argTypeFrom argTypeTo typeMap) && (this#is_assignable_inner retTypeFrom retTypeTo typeMap)
 		| (Generic x, Generic y) ->
 			if x == y then true
@@ -167,23 +127,17 @@ class type_system =
 		| (_, Generic y) ->
 			this#is_assignable_to_generic_with_dict_check from y typeMap
 		| (Generic x, _) ->
-			this#is_assignable_from_generic (this#get_generic x) _to typeMap
+			this#is_assignable_from_generic (this#get_generic_constraints x) _to typeMap
 		| (_, NamedRef (moduleName, name)) ->
 			this#is_assignable_inner from (this#resolve_named_type moduleName name) typeMap
 		
 		| _ -> raise (Stream.Error ("is_assignable_inner - FROM:" ^ to_string from ^ " TO:" ^ to_string _to))
 		
-	method private is_assignable_from_generic gp _to typeMap =
-		match gp with
-		| Unspecified -> raise (Stream.Error ("NOT IMPLEMENTED"))
-		| Typedef _ -> raise (Stream.Error ("NOT IMPLEMENTED"))
-		| ConstraintedObject constraints -> this#is_assignable_inner constraints#as_object _to typeMap
+	method private is_assignable_from_generic _ _to _ =
+		raise (Stream.Error ("is_assignable_from_generic TO:" ^ to_string _to))
 		
-	method private is_assignable_to_generic from gp typeMap =
-		match gp with
-		| Unspecified -> true
-		| Typedef td -> this#is_assignable_inner from td typeMap
-		| ConstraintedObject constraints -> this#is_assignable_inner from constraints#as_object typeMap
+	method private is_assignable_to_generic from constraints typeMap =
+		this#is_assignable_inner from (Object constraints) typeMap
 		
 	method private is_assignable_to_generic_with_dict_check from y typeMap = 
 		(* Replace type parameter by assuming it is assignable *)
@@ -191,10 +145,12 @@ class type_system =
 		then true
 		else
 			let _ = Hashtbl.add typeMap y from in
-			this#is_assignable_to_generic from (this#get_generic y) typeMap
+			this#is_assignable_to_generic from (this#get_generic_constraints y) typeMap
 			
 	method private is_assignable_to_generic_with_preserving_name moduleName name y typeMap =
-		let res = this#is_assignable_inner (this#resolve_named_type moduleName name) (Generic y) typeMap in
+		let resolved = (this#resolve_named_type moduleName name) in
+		Hashtbl.add typeMap y resolved; (* assume *)
+		let res = this#is_assignable_inner resolved (Generic y) typeMap in
 		Hashtbl.replace typeMap y (NamedRef (moduleName, name));
 		res
 end;;

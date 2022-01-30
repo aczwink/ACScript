@@ -15,9 +15,11 @@ type expression =
 	| StringLiteral of string
 	| External of string
 	| Call of expression * expression
-	| Function of (expression * expression) list
+	| BinaryInfixCall of expression * string * expression
+	| Function of (expression * expression option * expression) list
 	| Select of expression * string
 	| Tuple of expression list
+
 
 type statement =
 	| ExpressionStatement of expression
@@ -32,14 +34,14 @@ type statement =
 let create_decl name typedef = { name = name; typedef = typedef }
 	
 let rec declaration_to_string decl =
-	decl.name ^ ": " ^ (typedef_to_string decl.typedef) ^ ";"
+	"\t" ^ decl.name ^ ": " ^ (typedef_to_string decl.typedef) ^ ";"
 	
 and typedef_to_string typedef =
 	match typedef with
 	| NamedType name -> name
 	| FunctionType (argType, returnType) -> (typedef_to_string argType) ^ " -> " ^ (typedef_to_string returnType)
 	| TupleType entries -> "(" ^ (String.concat ", " (List.map (typedef_to_string) entries)) ^ ")"
-	| ObjectType decls -> "\n{\n" ^ (String.concat ", " (List.map (declaration_to_string) decls)) ^ "\n}"
+	| ObjectType decls -> "\n{\n" ^ (String.concat "\n" (List.map (declaration_to_string) decls)) ^ "\n}"
 ;;
 
 let optional_typedef_to_string typedef_opt =
@@ -60,13 +62,20 @@ and expr_to_string expr =
 	| StringLiteral x -> "\"" ^ x ^ "\""
 	| External externalName -> "extern \"" ^ externalName ^ "\""
 	| Call (func, arg) -> (expr_to_string func) ^ "(" ^ expr_to_string arg ^ ")"
+	| BinaryInfixCall (lhs, op, rhs) -> (expr_to_string lhs) ^ " " ^ op ^ " " ^ (expr_to_string rhs)
 	| Function(rules) -> "{\n" ^ (String.concat ",\n" (List.map (rule_to_string) rules)) ^ "\n}"
 	| Select (expr, member) -> (expr_to_string expr) ^ "." ^ member
 	| Tuple values -> "(" ^ (exprs_to_string values) ^ ")"
 	
 and exprs_to_string exprs = String.concat ", " (List.map (expr_to_string) exprs)
 
-and rule_to_string (pattern, expr) = "\t" ^ expr_to_string pattern ^ " -> " ^ expr_to_string expr
+and rule_to_string (pattern, cond, expr) =
+	let cond_to_string =
+		match cond with
+		| None -> ""
+		| Some x -> " | " ^ expr_to_string x
+	in
+	"\t" ^ expr_to_string pattern ^ cond_to_string ^ " -> " ^ expr_to_string expr
 	
 and statement_to_string stmt =
 	match stmt with

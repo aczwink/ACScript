@@ -20,6 +20,7 @@
 //Local
 #include "ExternalsManager.hpp"
 #include "RuntimeValue.hpp"
+#include "MarkAndSweepGC.hpp"
 
 class Module
 {
@@ -57,5 +58,6 @@ private:
     uint16 entryPoint;
     void* code;
     DynamicArray<RuntimeValue> constants;
+    MarkAndSweepGC gc;
     ExternalsManager& externalsManager;
 };

@@ -33,7 +33,7 @@ static void RunModule(const FileSystem::Path& path)
     vm.Run();
 }
 
-static void RunModuleInOwnAllocator(const FileSystem::Path& path)
+static void RunModuleInOwnAllocator(const FileSystem::Path& path, uint64 vmHeapSize)
 {
     class MemoryAllocatorSaver
     {
@@ -55,7 +55,7 @@ static void RunModuleInOwnAllocator(const FileSystem::Path& path)
         Memory::Allocator& oldAllocator;
     };
 
-    Memory::StaticMemoryBlockAllocator vmHeap(128 * MiB);
+    Memory::StaticMemoryBlockAllocator vmHeap(vmHeapSize * MiB);
     MemoryAllocatorSaver memoryAllocatorSaver(vmHeap);
 
     try
@@ -77,6 +77,9 @@ int32 Main(const String& programName, const FixedArray<String>& args)
     CommandLine::PathArgument inputPathArgument(u8"inputPath", u8"The compiled script path");
     commandLineParser.AddPositionalArgument(inputPathArgument);
 
+    CommandLine::OptionWithArgument vmHeapSizeOption(u8's', u8"heap-size", u8"Size in MiB of the heap. Default is 128 MiB");
+    commandLineParser.AddOption(vmHeapSizeOption);
+
     if(!commandLineParser.Parse(args))
     {
         commandLineParser.PrintHelp();
@@ -86,7 +89,12 @@ int32 Main(const String& programName, const FixedArray<String>& args)
     const CommandLine::MatchResult& cmdParseResult = commandLineParser.ParseResult();
     FileSystem::Path path = inputPathArgument.Value(cmdParseResult);
 
-    RunModuleInOwnAllocator(path);
+    uint64 vmHeapSize = 128;
+    if(cmdParseResult.IsActivated(vmHeapSizeOption))
+    {
+        vmHeapSize = vmHeapSizeOption.Value(cmdParseResult).ToUInt32();
+    }
+    RunModuleInOwnAllocator(path, vmHeapSize);
 
     return EXIT_SUCCESS;
 }

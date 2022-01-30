@@ -1,38 +1,32 @@
 module IntSet = Set.Make(Int);;
 
-let rec collect_generics_from_type typedef typeSystem =
-	match typedef with
-	| Type_system.Any -> IntSet.empty
-	| Type_system.Generic x -> IntSet.add x IntSet.empty
-	| Type_system.NamedRef _ -> IntSet.empty
-	| Type_system.Function (argType, resultType) -> collect_generics_from_types (argType::[resultType]) typeSystem
-	| Type_system.Object decls -> collect_generics_from_types (List.map (fun (decl: Type_system.declaration) -> decl.typedef) decls) typeSystem
-	| Type_system.Tuple entries -> collect_generics_from_types entries typeSystem
-	| _ -> raise (Stream.Error (Type_system.to_string typedef))
-	
-and collect_generics_from_types types typeSystem =
-	List.fold_left (fun set entry -> IntSet.union set (collect_generics_from_type entry typeSystem)) IntSet.empty types
-	
-and collect_generics_from_generics generics typeSystem =
-	let collect_generics_from_generic genericNumber =
-		match typeSystem#get_generic genericNumber with
-		| Type_system.Unspecified -> IntSet.empty
-		| Type_system.Typedef typedef -> collect_generics_from_type typedef typeSystem
-		| Type_system.ConstraintedObject constraints -> collect_generics_from_type (constraints#as_object) typeSystem
+let collect_generics_from_type typedef typeSystem =
+	let rec collect_inner typedef set =
+		match typedef with
+		| Type_system.Any -> set
+		| Type_system.Unknown -> set
+		| Type_system.Generic x ->
+			if IntSet.mem x set then set
+			else
+				collect_inner_multiple_decls (typeSystem#get_generic_constraints x) (IntSet.add x set)
+		| Type_system.NamedRef _ -> set
+		| Type_system.Function (argType, resultType) -> collect_inner_multiple (argType::[resultType]) set
+		| Type_system.Object decls -> collect_inner_multiple_decls decls set
+		| Type_system.Tuple entries -> collect_inner_multiple entries set
+		
+	and collect_inner_multiple types set =
+		List.fold_left (fun set entry -> collect_inner entry set) set types
+		
+	and collect_inner_multiple_decls decls set =
+		collect_inner_multiple (List.map (fun (decl: Type_system.declaration) -> decl.typedef) decls) set
 	in
-	let collect_generics_from_generic_and_merge genericNumber set =
-		IntSet.union set (collect_generics_from_generic genericNumber)
-	in
-	let merged = IntSet.fold (collect_generics_from_generic_and_merge) generics generics in
-	let newGenerics = IntSet.diff merged generics in
-	if IntSet.is_empty newGenerics then merged else collect_generics_from_generics (IntSet.union merged newGenerics) typeSystem
-	
-and collect_generics_from_type_transitive typedef typeSystem =
-	collect_generics_from_generics (collect_generics_from_type typedef typeSystem) typeSystem
+	collect_inner typedef IntSet.empty
 ;;
 
-let collect_expr_generics expr symbolTable typeSystem =	
+
+let rec collect_expr_generics expr symbolTable typeSystem =	
 	match expr with
+	| Semantic_ast.Self -> IntSet.empty
 	| Semantic_ast.Identifier global_name -> collect_generics_from_type (symbolTable#get_type global_name) typeSystem
 	| Semantic_ast.NaturalLiteral _ -> IntSet.empty
 	| Semantic_ast.StringLiteral _ -> IntSet.empty 
@@ -42,11 +36,7 @@ let collect_expr_generics expr symbolTable typeSystem =
 	| Semantic_ast.Function _ -> IntSet.empty
 	| Semantic_ast.Object _ -> IntSet.empty
 	| Semantic_ast.Select _ -> IntSet.empty
-	| Semantic_ast.Tuple _ -> IntSet.empty
-;;
-
-let collect_expr_generics_transitive expr symbolTable typeSystem =
-	collect_generics_from_generics (collect_expr_generics expr symbolTable typeSystem) typeSystem
+	| Semantic_ast.Tuple entries -> List.fold_left (fun set entry -> IntSet.union set (collect_expr_generics entry symbolTable typeSystem)) IntSet.empty entries
 ;;
 
 let collect_stmt_generics stmt symbolTable typeSystem =
@@ -58,6 +48,6 @@ let collect_stmt_generics stmt symbolTable typeSystem =
 ;;
 
 
-let collect_module_generics (_module: Semantic_ast.program_module) symbolTable typeSystem =
+let collect_module_generics (_module: Semantic_ast.program_module) symbolTable (typeSystem: Type_system.type_system) =
 	List.fold_left (fun set stmt -> IntSet.union set (collect_stmt_generics stmt symbolTable typeSystem)) IntSet.empty _module.statements
 ;;

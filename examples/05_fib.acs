@@ -5,4 +5,4 @@ let fib := {
 	n -> self(n - 1) + self(n - 2)
 };
 	
-print(fib(30));
+print(fib(13));

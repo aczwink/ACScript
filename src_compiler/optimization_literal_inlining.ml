@@ -1,10 +1,12 @@
 let inline_objects_that_are_used_once (_module: Semantic_ast.program_module) =
 	let rec try_simplify_expr expr =
 		match expr with
+		| Semantic_ast.Self -> expr
 		| Semantic_ast.Identifier _ -> expr
 		| Semantic_ast.NaturalLiteral _ -> expr
+		| Semantic_ast.StringLiteral _ -> expr
 		| Semantic_ast.External _ -> expr
-		| Semantic_ast.Function rules -> Semantic_ast.Function (List.map (map_rule) rules)
+		| Semantic_ast.Function (globalName, rules) -> Semantic_ast.Function (globalName, List.map (map_rule) rules)
 		| Semantic_ast.Call (func, arg) -> Semantic_ast.Call (try_simplify_expr func, try_simplify_expr arg)
 		| Semantic_ast.Object entries -> Semantic_ast.Object (List.map (map_object_entry) entries)
 		| Semantic_ast.Select (expr, member) ->
@@ -20,13 +22,19 @@ let inline_objects_that_are_used_once (_module: Semantic_ast.program_module) =
 		mapped_entry
 		
 	and map_rule rule =
-		let mapped_rule: Semantic_ast.function_rule = { pattern = rule.pattern; body = try_simplify_expr rule.body } in
+		let try_simplify_cond cond =
+			match cond with
+			| None -> None
+			| Some x -> Some (try_simplify_expr x)
+		in
+		let mapped_rule: Semantic_ast.function_rule = { pattern = rule.pattern; condition = try_simplify_cond rule.condition; body = try_simplify_expr rule.body } in
 		mapped_rule
 	in
 	
 	let inline_stmt stmt =
 		match stmt with
 		| Semantic_ast.ExpressionStatement expr -> Semantic_ast.ExpressionStatement (try_simplify_expr expr)
+		| Semantic_ast.LetBindingStatement (name, typedef, expr) -> Semantic_ast.LetBindingStatement (name, typedef, try_simplify_expr expr)
 		| _ -> raise (Stream.Error ("not implemented: " ^ Semantic_ast_print.stmt_to_string stmt))
 	in
 	

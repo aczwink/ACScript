@@ -18,22 +18,26 @@
 */
 //Class header
 #include "ExternalsManager.hpp"
+#include "MarkAndSweepGC.hpp"
 
 //Private methods
 void ExternalsManager::RegisterAllExternals()
 {
-    extern RuntimeValue External_Add(RuntimeValue&, const Module&);
+    extern RuntimeValue External_Add(RuntimeValue&, const Module&, MarkAndSweepGC&);
     this->RegisterExternal(u8"+", External_Add);
 
-    extern RuntimeValue External_Subtract(RuntimeValue&, const Module&);
+    extern RuntimeValue External_Subtract(RuntimeValue&, const Module&, MarkAndSweepGC&);
     this->RegisterExternal(u8"-", External_Subtract);
 
-    extern RuntimeValue External_Equals(RuntimeValue&, const Module&);
+    extern RuntimeValue External_Equals(RuntimeValue&, const Module&, MarkAndSweepGC&);
     this->RegisterExternal(u8"=", External_Equals);
 
-    extern RuntimeValue External_Multiply(RuntimeValue&, const Module&);
+    extern RuntimeValue External_LessThanOrEqual(RuntimeValue&, const Module&, MarkAndSweepGC&);
+    this->RegisterExternal(u8"<=", External_LessThanOrEqual);
+
+    extern RuntimeValue External_Multiply(RuntimeValue&, const Module&, MarkAndSweepGC&);
 	this->RegisterExternal(u8"*", External_Multiply);
 
-    extern RuntimeValue External_Print(RuntimeValue&, const Module&);
+    extern RuntimeValue External_Print(RuntimeValue&, const Module&, MarkAndSweepGC&);
     this->RegisterExternal(u8"print", External_Print);
 }

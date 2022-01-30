@@ -62,7 +62,7 @@ class program_builder =
 		let fb = new function_builder ("$f" ^ (string_of_int (List.length funcs))) in
 		Stack.push fb funcStack;
 		let _ = this#add_block in
-		fb
+		()
 	
 	method add_instruction (instr: Ir.instruction) =
 		let name = this#next_instruction_name in
@@ -114,6 +114,7 @@ let translate _module =
 
 	let rec translate_expr expr =
 		match expr with
+		| Semantic_ast.Self -> builder#active_func#get_symbol_name
 		| Semantic_ast.Identifier id -> Hashtbl.find namedValues id
 		| Semantic_ast.NaturalLiteral x -> load_nat x
 		| Semantic_ast.StringLiteral x -> load_string x
@@ -121,9 +122,8 @@ let translate _module =
 		| Semantic_ast.Import _ -> raise (Stream.Error ("Import is not implemented"))
 		| Semantic_ast.Call (func, arg) ->
 			builder#add_instruction(Ir.CallInstruction(translate_expr func, translate_expr arg))
-		| Semantic_ast.Function rules ->
-			let fb = builder#add_func in
-			Hashtbl.add namedValues "self" fb#get_symbol_name;
+		| Semantic_ast.Function (_, rules) ->
+			builder#add_func;
 			List.iter (translate_rule) rules;
 			builder#finish_func
 		| Semantic_ast.Object entries -> 
@@ -146,8 +146,15 @@ let translate _module =
 			List.iteri (set_entry) exprs;
 			tupleName
 			
+	and add_condition condSym condExpr =
+		match (condSym, condExpr) with
+		| (None, None) -> None
+		| (None, Some expr) -> Some (translate_expr expr)
+		| (Some sym, None) -> Some sym
+		| (Some _, Some _) -> raise (Stream.Error ("both is not implemented"))
+			
 	and translate_rule rule =
-		let condition = translate_pattern rule.pattern in
+		let condition = add_condition (translate_pattern rule.pattern) rule.condition in
 		match condition with
 			| None ->
 				let resultSym = translate_expr rule.body in

@@ -17,8 +17,7 @@
 * along with ACScript.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <StdXX.hpp>
-using namespace StdXX;
+#include "GCObject.hpp"
 
 enum class RuntimeValueType
 {
@@ -33,13 +32,15 @@ enum class RuntimeValueType
 };
 
 //Forward declarations
+class MarkAndSweepGC;
 class Module;
 class RuntimeValue;
 
-typedef RuntimeValue(*External)(RuntimeValue&, const Module&);
+typedef RuntimeValue(*External)(RuntimeValue&, const Module&, MarkAndSweepGC&);
 
 class RuntimeValue
 {
+    friend class MarkAndSweepGC;
 public:
     //Constructors
     inline RuntimeValue() : type(RuntimeValueType::Unit)
@@ -54,11 +55,6 @@ public:
     {
     }
 
-    inline RuntimeValue(Math::Natural&& natural) : type(RuntimeValueType::Natural)
-    {
-        this->natural = new Math::Natural(Move(natural));
-    }
-
     inline RuntimeValue(String&& string) : type(RuntimeValueType::String)
     {
         this->string = new String(Move(string));
@@ -66,6 +62,11 @@ public:
 
     inline RuntimeValue(uint64 v) : type(RuntimeValueType::UInt64), u64(v)
     {
+    }
+
+    inline RuntimeValue(RuntimeValueType type, GCObject* gcObject) : type(type)
+    {
+        this->gcObject = gcObject;
     }
 
     //Properties
@@ -76,12 +77,12 @@ public:
 
     inline DynamicArray<RuntimeValue>& ValuesArray()
     {
-        return *this->array;
+        return *this->gcObject->array;
     }
 
     inline const DynamicArray<RuntimeValue>& ValuesArray() const
     {
-        return *this->array;
+        return *this->gcObject->array;
     }
 
     inline bool ValueBool() const
@@ -108,7 +109,7 @@ public:
     inline const Math::Natural& ValueNatural() const
     {
         ASSERT_EQUALS(RuntimeValueType::Natural, this->type);
-        return *this->natural;
+        return *this->gcObject->natural;
     }
 
     inline const String& ValueString() const
@@ -132,26 +133,16 @@ public:
         return v;
     }
 
-    inline static RuntimeValue CreateTuple(uint16 nEntries)
-    {
-        RuntimeValue v;
-        v.type = RuntimeValueType::Tuple;
-        v.array = new DynamicArray<RuntimeValue>;
-        v.array->Resize(nEntries);
-        return v;
-    }
-
 private:
     //Members
     RuntimeValueType type;
     union
     {
         bool b;
-        DynamicArray<RuntimeValue>* array;
         BinaryTreeMap<String, RuntimeValue>* dictionary;
         External external;
-        Math::Natural* natural;
         String* string;
         uint64 u64;
+        GCObject* gcObject;
     };
 };

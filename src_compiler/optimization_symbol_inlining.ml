@@ -4,11 +4,13 @@ let inline_symbols_that_are_only_used_once _module =
 	
 	let rec map_expr expr =
 		match expr with
+		| Semantic_ast.Self -> expr
 		| Semantic_ast.Identifier id -> map_id id
 		| Semantic_ast.NaturalLiteral _ -> expr
+		| Semantic_ast.StringLiteral _ -> expr
 		| Semantic_ast.External _ -> expr
 		| Semantic_ast.Call (func, arg) -> Semantic_ast.Call (map_expr func, map_expr arg)
-		| Semantic_ast.Function rules -> Semantic_ast.Function (List.map (map_rule) rules)
+		| Semantic_ast.Function (globalName, rules) -> Semantic_ast.Function (globalName, List.map (map_rule) rules)
 		| Semantic_ast.Object entries -> Semantic_ast.Object (List.map (map_object_entry) entries)
 		| Semantic_ast.Select (expr, member) -> Semantic_ast.Select (map_expr expr, member)
 		| Semantic_ast.Tuple entries -> Semantic_ast.Tuple (List.map (map_expr) entries)
@@ -24,7 +26,12 @@ let inline_symbols_that_are_only_used_once _module =
 		mapped_entry
 		
 	and map_rule rule =
-		let mapped_rule: Semantic_ast.function_rule = { pattern = map_expr rule.pattern; body = map_expr rule.body } in
+		let map_cond cond =
+			match cond with
+			| None -> None
+			| Some x -> Some (map_expr x)
+		in
+		let mapped_rule: Semantic_ast.function_rule = { pattern = map_expr rule.pattern; condition = map_cond rule.condition; body = map_expr rule.body } in
 		mapped_rule
 	in
 	

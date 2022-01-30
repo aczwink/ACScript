@@ -6,9 +6,8 @@ class translation_state (scope: Semantic_ast.expression StringMap.t) (globalName
 	method add_named_value name global_name value =
 		new translation_state (StringMap.add name value scope) (StringMap.add name global_name globalNameMap) symbolTable
 		
-	method ensure_has_named_value name =
-		let _ = this#get_named_value name in
-		()
+	method map_to_global_name name =
+		StringMap.find name globalNameMap
 		
 	method get_named_value name =
 		match StringMap.find_opt name scope with
@@ -16,8 +15,7 @@ class translation_state (scope: Semantic_ast.expression StringMap.t) (globalName
 		| None -> raise (Stream.Error ("Unknown variable: " ^ name))
 		
 	method get_named_value_type name =
-		this#ensure_has_named_value name;
-		symbolTable#get_type (StringMap.find name globalNameMap)
+		symbolTable#get_type (this#map_to_global_name name)
 		
 	method get_scope =
 		scope
@@ -65,38 +63,62 @@ let translate moduleName _moduleAst modulesCollection =
 				raise (Stream.Error "type error")
 	in
 	
-	let translate_pattern pattern state =
+	let rec translate_pattern pattern state patternVars =
 		match pattern with
-		| Ast.Identifier id ->
-			let t = Type_system.Generic( typeSystem#add_generic_type ) in
+		| Ast.Identifier id -> match_identifier id state patternVars
+		| Ast.NaturalLiteral literal -> (Semantic_ast.NaturalLiteral literal, state)
+		| Ast.Tuple entries ->
+			let map_entry entry (currentState, result) =
+				let (translated_value, newState) = translate_pattern entry currentState patternVars in
+				(newState, translated_value::result)
+			in
+			let (newState, mappedEntries) = List.fold_right (map_entry) entries (state, []) in
+			(Semantic_ast.Tuple mappedEntries, newState)
+		| _ -> raise (Stream.Error "call not implemented")
+		
+	and match_identifier id state patternVars =
+		match Hashtbl.find_opt patternVars id with
+		| None ->
+			let t = Type_system.Unknown in
 			let global_name = symbolTable#create id t in
 			let translated_value = Semantic_ast.Identifier global_name in
 			let newState = state#add_named_value id global_name translated_value in
+			Hashtbl.add patternVars id global_name;
 			(translated_value, newState)
-		| Ast.NaturalLiteral literal -> (Semantic_ast.NaturalLiteral literal, state)
-		| _ -> raise (Stream.Error "call not implemented")
+		| Some global_name ->
+			let translated_value = Semantic_ast.Identifier global_name in
+			(translated_value, state)
 	in
 
 	let rec translate_expr expr state =
 		match expr with
 		| Ast.NaturalLiteral x -> Semantic_ast.NaturalLiteral(x)
 		| Ast.StringLiteral x -> Semantic_ast.StringLiteral(x)
-		| Ast.Identifier id -> state#ensure_has_named_value id; Semantic_ast.Identifier id
+		| Ast.Identifier id -> if id = "self" then Semantic_ast.Self else Semantic_ast.Identifier (state#map_to_global_name id)
 		| Ast.External externalName -> Semantic_ast.External(externalName)
 		| Ast.Call (func, arg) -> Semantic_ast.Call(translate_expr func state, translate_expr arg state)
-		| Ast.Function rules -> Semantic_ast.Function (List.map (fun rule -> translate_rule rule state) rules)
+		| Ast.BinaryInfixCall (lhs, op, rhs) -> translate_expr (Ast.Call( Ast.Select(lhs, op), Ast.Tuple(lhs::rhs::[]) )) state
+		| Ast.Function rules ->
+			let mappedRules = List.map (fun rule -> translate_rule rule state) rules in
+			let t = Type_inference.infer_function_type mappedRules (new SymbolTable.context symbolTable) typeSystem in
+			let global_name = symbolTable#create "__func__" t in
+			Semantic_ast.Function(global_name, mappedRules)
 		| Ast.Tuple exprs -> Semantic_ast.Tuple( List.map (fun expr -> translate_expr expr state) exprs )
 		| Ast.Select (expr, member) -> Semantic_ast.Select(translate_expr expr state, member)
 		
-	and translate_rule (pattern, expr) state =
-		let (pattern, funcState) = translate_pattern pattern state in
+	and translate_rule (pattern, cond, expr) state =
+		let translate_cond funcState =
+			match cond with
+			| None -> None
+			| Some x -> Some (translate_expr x funcState)
+		in
+		let (pattern, funcState) = translate_pattern pattern state (Hashtbl.create 10) in
 		
-		let t = Type_system.Function(Type_system.Generic( typeSystem#add_generic_type ), Type_system.Generic( typeSystem#add_generic_type )) in
-		let global_name = symbolTable#create "self" t in
-		let funcStateWithSelf = funcState#add_named_value "self" global_name (Semantic_ast.Identifier "self") in
+		let funcStateWithSelf = funcState in
 		
+		let translated_cond = translate_cond funcState in
 		let translated_expr = translate_expr expr funcStateWithSelf in
-		let rule: Semantic_ast.function_rule = { pattern = pattern; body = translated_expr } in
+		let rule: Semantic_ast.function_rule = { pattern = pattern; condition = translated_cond; body = translated_expr } in
 		rule
 	in
 	
@@ -104,11 +126,11 @@ let translate moduleName _moduleAst modulesCollection =
 		match toplevel with
 		| Ast.ExpressionStatement expr ->
 			let translated_expr = translate_expr expr state in
-			let _ = Type_inference.eval_expr_type translated_expr symbolTable typeSystem in
+			let _ = Type_evaluation.eval_expr_type translated_expr (new SymbolTable.context symbolTable) typeSystem in
 			Semantic_ast.ExpressionStatement(translated_expr), state
 		| Ast.LetBindingStatement (name, typedef, expr) ->
 			let translated_value = translate_expr expr state in
-			let expr_type = Type_inference.eval_expr_type translated_value symbolTable typeSystem in
+			let expr_type = Type_evaluation.eval_expr_type translated_value (new SymbolTable.context symbolTable) typeSystem in
 			let t = check_variable_type typedef expr_type in
 			let global_name = symbolTable#create name t in
 			Semantic_ast.LetBindingStatement(global_name, t, translated_value), state#add_named_value name global_name translated_value
@@ -118,8 +140,9 @@ let translate moduleName _moduleAst modulesCollection =
 			Semantic_ast.TypeDefStatement(name, t), state
 		| Ast.UseStatement moduleName ->
 			let _module = modulesCollection#get_module moduleName in
+			(*(symbolTable#create exportName exportValue.Semantic_ast.typedef)*)
 			let newState = StringMap.fold (fun exportName exportValue currentState ->
-			currentState#add_named_value exportName (symbolTable#create exportName exportValue.Semantic_ast.typedef) exportValue.Semantic_ast.value) _module.Semantic_ast.exports state in
+			currentState#add_named_value exportName exportName exportValue.Semantic_ast.value) _module.Semantic_ast.exports state in
 			Semantic_ast.UseStatement(moduleName), newState
 	in
 	
