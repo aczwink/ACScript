@@ -13,6 +13,7 @@ type expression =
 	| Identifier of string
 	| NaturalLiteral of string
 	| StringLiteral of string
+	| UnsignedLiteral of string
 	| External of string
 	| Call of expression * expression
 	| BinaryInfixCall of expression * string * expression
@@ -60,6 +61,7 @@ and expr_to_string expr =
 	| Identifier id -> id
 	| NaturalLiteral x -> x
 	| StringLiteral x -> "\"" ^ x ^ "\""
+	| UnsignedLiteral x -> x ^ "u"
 	| External externalName -> "extern \"" ^ externalName ^ "\""
 	| Call (func, arg) -> (expr_to_string func) ^ "(" ^ expr_to_string arg ^ ")"
 	| BinaryInfixCall (lhs, op, rhs) -> (expr_to_string lhs) ^ " " ^ op ^ " " ^ (expr_to_string rhs)

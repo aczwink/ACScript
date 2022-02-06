@@ -29,7 +29,8 @@ let rec collect_expr_generics expr symbolTable typeSystem =
 	| Semantic_ast.Self -> IntSet.empty
 	| Semantic_ast.Identifier global_name -> collect_generics_from_type (symbolTable#get_type global_name) typeSystem
 	| Semantic_ast.NaturalLiteral _ -> IntSet.empty
-	| Semantic_ast.StringLiteral _ -> IntSet.empty 
+	| Semantic_ast.StringLiteral _ -> IntSet.empty
+	| Semantic_ast.UnsignedLiteral _ -> IntSet.empty
 	| Semantic_ast.External _ -> IntSet.empty
 	| Semantic_ast.Import _ -> IntSet.empty
 	| Semantic_ast.Call _ -> IntSet.empty

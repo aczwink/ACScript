@@ -5,6 +5,7 @@ let inline_objects_that_are_used_once (_module: Semantic_ast.program_module) =
 		| Semantic_ast.Identifier _ -> expr
 		| Semantic_ast.NaturalLiteral _ -> expr
 		| Semantic_ast.StringLiteral _ -> expr
+		| Semantic_ast.UnsignedLiteral _ -> expr
 		| Semantic_ast.External _ -> expr
 		| Semantic_ast.Function (globalName, rules) -> Semantic_ast.Function (globalName, List.map (map_rule) rules)
 		| Semantic_ast.Call (func, arg) -> Semantic_ast.Call (try_simplify_expr func, try_simplify_expr arg)

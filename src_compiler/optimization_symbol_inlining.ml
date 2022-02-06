@@ -8,6 +8,7 @@ let inline_symbols_that_are_only_used_once _module =
 		| Semantic_ast.Identifier id -> map_id id
 		| Semantic_ast.NaturalLiteral _ -> expr
 		| Semantic_ast.StringLiteral _ -> expr
+		| Semantic_ast.UnsignedLiteral _ -> expr
 		| Semantic_ast.External _ -> expr
 		| Semantic_ast.Call (func, arg) -> Semantic_ast.Call (map_expr func, map_expr arg)
 		| Semantic_ast.Function (globalName, rules) -> Semantic_ast.Function (globalName, List.map (map_rule) rules)

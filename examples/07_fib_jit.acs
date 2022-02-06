@@ -1,8 +1,8 @@
 use "System";
 
 let fib := {
-	n | n <= 1u64 -> n,
-	n -> self(n - 1u64) + self(n - 2u64)
+	n | n <= 1u -> n,
+	n -> self(n - 1u) + self(n - 2u)
 };
 	
-print(fib(30u64));
+print(fib(20u));

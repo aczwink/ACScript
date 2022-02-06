@@ -38,11 +38,13 @@ let encode_constants constants =
 		match constant with
 		| Ir.ConstantNatural value -> value
 		| Ir.ConstantString value -> value
+		| Ir.ConstantUnsigned value -> value
 	in
 	let get_constant_type constant =
 		match constant with
 		| Ir.ConstantNatural _ -> 'n'
 		| Ir.ConstantString _ -> 's'
+		| Ir.ConstantUnsigned _ -> 'u'
 	in
 	let rec add_constants_to_buffer buffer constants = 
 		match constants with
@@ -69,6 +71,7 @@ type acsb_program = {
 	constants: Ir.constant list;
 	instructions: acsb_instruction list;
 	funcOffsets: int list;
+	entryPoint: int;
 };;
 
 let get_byte_size instr = 1 + (List.length instr.args)*2;;
@@ -88,7 +91,7 @@ class program_assembler funcs =
 	val instrs = Queue.create ()
 	val instructionDependencies = (Ir_dependency_graph.build funcs)#counts
 	val mutable currentProgramOffset = 0
-	val mutable funcOffsets = []
+	val mutable funcOffsets = StringMap.empty
 	val mutable blockOffsets = StringMap.empty
 	val mutable constantMap = ConstantMap.empty
 	val mutable constants = []
@@ -108,7 +111,7 @@ class program_assembler funcs =
 		if resultSym = "" then this#insert_pop_if_possible else this#insert_popa_if_possible;
 		
 	method assemble_func func =
-		this#begin_func;
+		this#begin_func func.Ir.symbolName;
 		this#assemble_block func (List.hd func.Ir.blocks)
 		
 	method get_program =
@@ -120,7 +123,8 @@ class program_assembler funcs =
 		let instrs = List.rev (Queue.fold (fun accu instr -> instr::accu) [] instrs) in
 		let instrs_with_offsets = compute_offsets instrs in
 		let mapped_instrs = List.map (map_instr) instrs_with_offsets in
-		{ constants = this#order_constants; instructions = mapped_instrs; funcOffsets = funcOffsets }
+		let funcOffsets = (StringMap.fold (fun _ v acc -> v::acc) funcOffsets []) in
+		{ constants = this#order_constants; instructions = mapped_instrs; funcOffsets = funcOffsets; entryPoint = (List.hd (List.rev funcOffsets)) }
 		
 	method map_constant_to_index constant =
 		match ConstantMap.find_opt constant constantMap with
@@ -138,7 +142,13 @@ class program_assembler funcs =
 	method private assemble_instr func (instr: Ir.full_instruction) = 
 		match instr.instruction with
 		| Ir.BranchInstruction (condSym, thenBlockSym, elseBlockSym) ->
-			this#add_opcode opcode_jmpf [condSym; elseBlockSym] "";
+			this#push_symbol condSym;
+			this#push_symbol elseBlockSym;
+			let instr = { opcode = opcode_jmpf; args = [] } in
+			this#insert_instruction instr;
+			this#reduce_one;
+			this#reduce_one;
+			
 			let currentStack = Stack.copy valueStack in
 			this#assemble_block func (this#find_block func thenBlockSym);
 			valueStack <- currentStack;
@@ -157,10 +167,10 @@ class program_assembler funcs =
 		| Ir.SetInstruction (dictSym, keySym, valSym) ->
 			this#add_opcode opcode_set (dictSym::keySym::[valSym]) ""
 	
-	method private begin_func =
+	method private begin_func funcSymName =
 		Stack.clear valueStack;
 		Stack.push "$p" valueStack;
-		funcOffsets <- funcOffsets @ [currentProgramOffset]
+		funcOffsets <- StringMap.add funcSymName currentProgramOffset funcOffsets
 		
 	method private clean_stack_for_return =
 		if Stack.length valueStack > 1
@@ -236,9 +246,7 @@ class program_assembler funcs =
 		List.map (fun (k, _) -> k) ordered
 		
 	method private push_function_symbol sym =
-		let numStr = String.sub sym 2 ((String.length sym)-2) in
-		let num = int_of_string numStr in
-		let offset = List.nth funcOffsets num in
+		let offset = StringMap.find sym funcOffsets in
 		
 		let constant = Ir.ConstantNatural(string_of_int offset) in
 		this#insert_instruction({ opcode = opcode_ldc; args = [this#map_constant_to_index constant] });
@@ -264,6 +272,15 @@ class program_assembler funcs =
 	method private reduce_one =
 		let _ = Stack.pop valueStack in
 		()
+		
+	method private stack_to_string =
+		let rec iterate seq =
+			match seq () with
+			| Seq.Nil -> []
+			| Seq.Cons(x, xs) -> x::(iterate xs)
+		in
+		let l = iterate (Stack.to_seq valueStack) in
+		String.concat "\n" l
 end;;
 
 let assemble_program funcs =
@@ -344,7 +361,7 @@ let dump_acsb moduleName funcs =
 		(* header *)
 		write_chunk oc "ACSB" (Buffer.create 0);
 		write_chunk oc "data" (encode_constants prog.constants);
-		write_chunk oc "code" (encode_code prog.instructions (List.hd (List.rev prog.funcOffsets)));
+		write_chunk oc "code" (encode_code prog.instructions prog.entryPoint);
 		close_out oc
 ;;
 

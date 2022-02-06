@@ -26,6 +26,7 @@ let rec expr_to_string expression =
 	| Semantic_ast.Identifier id -> id
 	| Semantic_ast.NaturalLiteral number -> number
 	| Semantic_ast.StringLiteral x -> "\"" ^ x ^ "\""
+	| Semantic_ast.UnsignedLiteral number -> number ^ "u"
 	| Semantic_ast.External externalName -> "extern \"" ^ externalName ^ "\""
 	| Semantic_ast.Import moduleName -> "import \"" ^ moduleName ^ "\""
 	| Semantic_ast.Call (func, arg) -> (expr_to_string func) ^ "(" ^ expr_to_string arg ^ ")"
@@ -39,7 +40,13 @@ and exprs_to_string exprs = String.concat ", " (List.map (expr_to_string) exprs)
 and entry_to_string (entry: Semantic_ast.object_entry) = "\t" ^ entry.name ^ ": " ^ expr_to_string entry.expr
 and entries_to_string entries = String.concat ",\n" (List.map (entry_to_string) entries)
 
-and rule_to_string rule = "\t" ^ expr_to_string rule.pattern ^ " -> " ^ expr_to_string rule.body
+and rule_to_string rule =
+	let cond_to_string =
+		match rule.condition with
+		| None -> ""
+		| Some x -> " | " ^ expr_to_string x
+	in
+	"\t" ^ expr_to_string rule.pattern ^ cond_to_string ^ " -> " ^ expr_to_string rule.body
 
 let stmt_to_string stmt =
 	match stmt with

@@ -18,4 +18,13 @@ type string := {
 type unit := {
 };
 
+type unsigned := {
+	//arithmetic operators
+	+: (unsigned, unsigned) -> unsigned;
+	-: (unsigned, unsigned) -> unsigned;
+	
+	//logical operators
+	<=: (unsigned, unsigned) -> bool;
+};
+
 let print: any -> unit := extern "print";

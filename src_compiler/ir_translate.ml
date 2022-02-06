@@ -45,10 +45,11 @@ end;;
 class program_builder =
 	object(this)
 	
+	val mutable funcCounter = 0	
 	val funcStack = Stack.create ()
 	val mutable funcs = []
 	val mutable blockCounter = 0
-	val mutable counter = 0
+	val mutable instrCounter = 0
 	
 	method active_func =
 		Stack.top funcStack
@@ -59,7 +60,8 @@ class program_builder =
 		this#active_func#add_block symbolName
 	
 	method add_func =
-		let fb = new function_builder ("$f" ^ (string_of_int (List.length funcs))) in
+		let fb = new function_builder ("$f" ^ (string_of_int (funcCounter))) in
+		funcCounter <- funcCounter + 1;
 		Stack.push fb funcStack;
 		let _ = this#add_block in
 		()
@@ -84,8 +86,8 @@ class program_builder =
 		funcs
 		
 	method next_instruction_name = 
-		let name = "$t" ^ (string_of_int counter) in
-		counter <- counter +1;
+		let name = "$t" ^ (string_of_int instrCounter) in
+		instrCounter <- instrCounter +1;
 		name
 end;;
 
@@ -97,18 +99,50 @@ let translate _module =
 	
 	let load_nat x = builder#add_instruction (Ir.LoadConstantInstruction(Ir.ConstantNatural(x))) in
 	let load_string x = builder#add_instruction (Ir.LoadConstantInstruction(Ir.ConstantString(x))) in
+	let load_uint x = builder#add_instruction (Ir.LoadConstantInstruction(Ir.ConstantUnsigned(x))) in
+	let build_compare sym1 sym2 =
+		let paramSym = builder#add_instruction(Ir.NewTupleInstruction(2)) in
+		builder#add_instruction_without_result(Ir.SetInstruction(paramSym, load_nat "0", sym1));
+		builder#add_instruction_without_result(Ir.SetInstruction(paramSym, load_nat "1", sym2));
+		let eqSym = builder#add_instruction(Ir.SelectInstruction(sym1, load_string "=")) in
+		builder#add_instruction(Ir.CallInstruction(eqSym, paramSym))
+	in
 	
-	let translate_pattern pattern =
-		match pattern with
-		| Semantic_ast.Identifier id -> Hashtbl.add namedValues id "$p"; None
-		| Semantic_ast.NaturalLiteral x ->
-			let paramSym = builder#add_instruction(Ir.NewTupleInstruction(2)) in
-			builder#add_instruction_without_result(Ir.SetInstruction(paramSym, load_nat "0", "$p"));
-			let argSym = load_nat x in
-			builder#add_instruction_without_result(Ir.SetInstruction(paramSym, load_nat "1", argSym));
-			let eqSym = builder#add_instruction(Ir.SelectInstruction("$p", load_string "=")) in
-			let resSym = builder#add_instruction(Ir.CallInstruction(eqSym, paramSym)) in
+	let translate_id_pattern id parameterSymbol =
+		match Hashtbl.find_opt namedValues id with
+		| None -> Hashtbl.add namedValues id parameterSymbol; None
+		| Some sym ->
+			let resSym = build_compare parameterSymbol sym in
 			Some ( resSym )
+	in
+	
+	let rec translate_pattern pattern parameterSymbol =
+		match pattern with
+		| Semantic_ast.Identifier id -> translate_id_pattern id parameterSymbol
+		| Semantic_ast.NaturalLiteral x ->
+			let argSym = load_nat x in
+			let resSym = build_compare parameterSymbol argSym in
+			Some ( resSym )
+		| Semantic_ast.Tuple entries ->
+			let map_entry (idx: int) entry =
+				let idxNat = string_of_int idx in
+				let paramSym = builder#add_instruction(Ir.SelectInstruction(parameterSymbol, load_nat idxNat)) in
+				translate_pattern entry paramSym
+			in
+			let and_results acc sym =
+				let paramSym = builder#add_instruction(Ir.NewTupleInstruction(2)) in
+				builder#add_instruction_without_result(Ir.SetInstruction(paramSym, load_nat "0", acc));
+				builder#add_instruction_without_result(Ir.SetInstruction(paramSym, load_nat "1", sym));
+				let andSym = builder#add_instruction(Ir.SelectInstruction(parameterSymbol, load_string "and")) in
+				let resSym = builder#add_instruction(Ir.CallInstruction(andSym, paramSym)) in
+				resSym
+			in
+			let mapped = List.mapi (map_entry) entries in
+			let l = List.filter_map (fun x -> x) mapped in
+			if List.length l = 0 then
+				None
+			else
+				Some (List.fold_left (and_results) (List.hd l) (List.tl l))
 		| _ -> raise (Stream.Error ("not implemented: " ^ Semantic_ast_print.expr_to_string pattern))
 	in
 
@@ -118,6 +152,7 @@ let translate _module =
 		| Semantic_ast.Identifier id -> Hashtbl.find namedValues id
 		| Semantic_ast.NaturalLiteral x -> load_nat x
 		| Semantic_ast.StringLiteral x -> load_string x
+		| Semantic_ast.UnsignedLiteral x -> load_uint x
 		| Semantic_ast.External externalName -> builder#add_instruction (Ir.LoadExternalInstruction(load_string externalName))
 		| Semantic_ast.Import _ -> raise (Stream.Error ("Import is not implemented"))
 		| Semantic_ast.Call (func, arg) ->
@@ -154,7 +189,7 @@ let translate _module =
 		| (Some _, Some _) -> raise (Stream.Error ("both is not implemented"))
 			
 	and translate_rule rule =
-		let condition = add_condition (translate_pattern rule.pattern) rule.condition in
+		let condition = add_condition (translate_pattern rule.pattern "$p") rule.condition in
 		match condition with
 			| None ->
 				let resultSym = translate_expr rule.body in

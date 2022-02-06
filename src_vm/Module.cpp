@@ -65,6 +65,11 @@ Module::Module(InputStream &inputStream, ExternalsManager& externalsManager) : e
                                 this->constants[i] = textReader.ReadZeroTerminatedString();
                             }
                             break;
+                        case u8'u':
+                            {
+                                this->constants[i] = textReader.ReadZeroTerminatedString().ToUInt();
+                            }
+                            break;
                         default:
                             NOT_IMPLEMENTED_ERROR; //TODO: implement me
                     }

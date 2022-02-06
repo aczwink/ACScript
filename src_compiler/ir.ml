@@ -1,6 +1,7 @@
 type constant =
 	| ConstantNatural of string
 	| ConstantString of string
+	| ConstantUnsigned of string
 
 
 
@@ -39,6 +40,7 @@ let constant_to_string c =
 	match c with
 	| ConstantNatural n -> n
 	| ConstantString x -> "\"" ^ x ^ "\""
+	| ConstantUnsigned n -> n
 
 let instruction_to_mnemonic i=
 	match i with

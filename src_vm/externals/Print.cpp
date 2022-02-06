@@ -23,6 +23,8 @@ static String ToString(const RuntimeValue& value)
 {
     switch(value.Type())
     {
+        case RuntimeValueType::Bool:
+            return value.ValueBool() ? u8"true" : u8"false";
         case RuntimeValueType::Dictionary:
         {
             DynamicArray<String> strings;
@@ -43,6 +45,8 @@ static String ToString(const RuntimeValue& value)
                 strings.Push(ToString(subValue));
             return u8"(" + String::Join(strings, u8", ") + u8")";
         }
+        case RuntimeValueType::UInt64:
+            return String::Number(value.ValueUInt64());
         case RuntimeValueType::Unit:
             return u8"unit";
     }

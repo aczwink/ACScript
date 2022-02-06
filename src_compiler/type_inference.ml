@@ -186,6 +186,7 @@ class generic_system_builder =
 		let l = List.length constraints in
 		
 		List.iter (this#add_transitive_constraints_over_structure) constraints;
+		this#add_transitive_stdtype_constraints;
 		this#add_transitive_constraints_over_operator;
 		(*this#add_transitive_constraints_over_members;*)
 		
@@ -255,6 +256,22 @@ class generic_system_builder =
 		| (Func (a1, r1), Func(a2, r2)) -> this#add_constraint a1 a2 ct; this#add_constraint r1 r2 ct
 		| (Tuple a, Tuple b) -> List.iter (fun (t1, t2) -> this#add_constraint t1 t2 ct) (List.combine a b)
 		| _ -> ()
+		
+	method private add_transitive_stdtype_constraints =
+		let rec add_transitive_stdtype_constraint (t, _, typedef) =
+			match (Hashtbl.find_opt typeStructure t, typedef) with
+			| (None, Type_system.Generic _) -> this#must_be_standard_type t typedef
+			| (None, Type_system.NamedRef _) -> this#must_be_standard_type t typedef
+			| (Some (Func (a, r)), Type_system.Function (argType, resultType)) ->
+				add_transitive_stdtype_constraint (a, Equal, argType);
+				add_transitive_stdtype_constraint (r, Equal, resultType);
+				this#must_be_standard_type t typedef
+			| (Some (Tuple ts), Type_system.Tuple types) ->
+				List.iter (fun (t, typedef) -> add_transitive_stdtype_constraint (t, Equal, typedef)) (List.combine ts types);
+				this#must_be_standard_type t typedef
+			| _ -> raise (Stream.Error ((Type_system.to_string typedef)))
+		in
+		List.iter (add_transitive_stdtype_constraint) stdtype_constraints
 		
 	method private set_structure currentStructure newStructure =
 		match (currentStructure, newStructure) with
@@ -426,23 +443,60 @@ type generic_type = {
 	stdtype_constraints: (constraint_type * Type_system.typedefinition) list;
 	structure: inferable_type_structure option;
 };;
-class generic_system_modifier gs =
+class generic_system_modifier (gs: generic_system) =
 	object(this)
-		
+	
+	val mutable counter = 0	
+	val mutable types = []
 	val equalityRelations = Hashtbl.create 10
 	val modifiedTypes: (int, generic_type) Hashtbl.t = Hashtbl.create 10
 	val mutable superTypeRelations = []
 	
 	method add_equality_constraint t1 t2 =
 		Hashtbl.add equalityRelations (min t1 t2) (max t1 t2)
+		
+	method add_generic_type =
+		let nextNum = counter in
+		counter <- counter + 1;
+		types <- nextNum::types;
+		nextNum
+		
+	method add_member t member_name member_type =
+		let gt = this#get_type t in
+		let mappedGt = { member_constraints = StringMap.add member_name member_type gt.member_constraints; stdtype_constraints = gt.stdtype_constraints; structure = gt.structure } in
+		Hashtbl.replace modifiedTypes t mappedGt
+		
+	method add_stdtype_constraint t ct typedef =
+		let gt = this#get_type t in
+		let mappedGt = { member_constraints = gt.member_constraints; stdtype_constraints = (ct, typedef)::gt.stdtype_constraints; structure = gt.structure } in
+		Hashtbl.replace modifiedTypes t mappedGt
+		
+	method add_structure t structure =
+		let gt = this#get_type t in
+		let mappedGt = { member_constraints = gt.member_constraints; stdtype_constraints = gt.stdtype_constraints; structure = Some structure } in
+		Hashtbl.replace modifiedTypes t mappedGt;
 	
 	method build =
+		let fold_mc t =
+			let gt = this#get_type t in
+			StringMap.fold (fun k v acc -> (t, k, v)::acc) gt.member_constraints []
+		in
+		let fold_std_c t =
+			let gt = this#get_type t in
+			List.map (fun (ct, typedef) -> (t, ct, typedef)) gt.stdtype_constraints
+		in
+		let fold_struct map t =
+			let gt = this#get_type t in
+			match gt.structure with
+			| None -> map
+			| Some x -> IntMap.add t x map
+		in
 		{
-			types = gs.types;
+			types = types;
 			constraints = (List.map (fun (t1, t2) -> (t1, t2, Supertype)) superTypeRelations);
-			member_constraints = gs.member_constraints;
-			stdtype_constraints = gs.stdtype_constraints;
-			typeStructure = gs.typeStructure;
+			member_constraints = List.flatten(List.map (fold_mc) types);
+			stdtype_constraints = List.flatten(List.map (fold_std_c) types);
+			typeStructure = List.fold_left (fold_struct) IntMap.empty types;
 		}
 		
 	method filter_map_superType_relations f =
@@ -461,6 +515,9 @@ class generic_system_modifier gs =
 		| Some x -> x
 		
 	method init =
+		types <- gs.types;
+		counter <- (List.fold_left (max) 0 gs.types) + 1;
+		
 		List.iter (fun (t1, t2, _) -> this#add_equality_constraint t1 t2) (List.filter (fun (_, _, ct) -> ct = Equal) gs.constraints);
 		superTypeRelations <- List.map (fun (t1, t2, _) -> (t1, t2)) (List.filter (fun (_, _, ct) -> ct = Supertype) gs.constraints)
 end;;
@@ -469,24 +526,64 @@ let resolve_super_types gs =
 	let gsm = new generic_system_modifier gs in
 	gsm#init;
 	
-	let rec verify_structure_is_super_type_or_make_it_super_type superTypeStructure subTypeStructure =
+	let recursionTieBreaker = Hashtbl.create 10 in
+	
+	let rec verify_constraint_is_super_type_or_make_it_super_type superTypeNumber superType constraintName constraintTypeNumber =
+		match StringMap.find_opt constraintName superType.member_constraints with
+		| None ->
+			let x = gsm#add_generic_type in
+			gsm#add_member superTypeNumber constraintName x;
+			verify_is_super_type_or_make_it_super_type x constraintTypeNumber
+		| Some x -> verify_is_super_type_or_make_it_super_type x constraintTypeNumber
+			
+	and verify_constraints_are_super_types_or_make_them_super_types superTypeNumber superType subType =
+		StringMap.iter (verify_constraint_is_super_type_or_make_it_super_type superTypeNumber superType) subType.member_constraints;
+		
+	and verify_stdtype_constraints_are_super_types_or_make_them_super_types superTypeNumber stdtype_constraints =
+		(* TODO check for existing ones *)
+		List.iter (fun (ct, typedef) -> gsm#add_stdtype_constraint superTypeNumber ct typedef) stdtype_constraints
+		
+	and add_structure superTypeNumber subTypeStructure =
+		match subTypeStructure with
+		| Func (a, r) ->
+			let mapped_arg = gsm#add_generic_type in
+			let mapped_ret = gsm#add_generic_type in
+			gsm#add_structure superTypeNumber (Func (mapped_arg, mapped_ret));
+			verify_is_super_type_or_make_it_super_type mapped_arg a; (*covariant*)
+			verify_is_super_type_or_make_it_super_type r mapped_ret (*contravariant *)
+		| Tuple ts ->
+			let mapped_ts = List.map (fun _ -> gsm#add_generic_type) ts in
+			gsm#add_structure superTypeNumber (Tuple mapped_ts);
+			List.iter (fun (t, mapped) -> verify_is_super_type_or_make_it_super_type mapped t) (List.combine ts mapped_ts)
+		
+	and verify_structure_is_super_type_or_make_it_super_type superTypeStructure subTypeStructure =
 		match (superTypeStructure, subTypeStructure) with
-		| (Func _, Func _) -> raise (Stream.Error ("TODO"))
+		| (Func (a1, r1), Func (a2, r2)) ->
+			verify_is_super_type_or_make_it_super_type a1 a2; (* covariant *)
+			verify_is_super_type_or_make_it_super_type r2 r1 (* contravariant *)
 		| (Tuple t1s, Tuple t2s) -> List.iter (fun (t1, t2) -> verify_is_super_type_or_make_it_super_type t1 t2) (List.combine t1s t2s)
 		| _ -> raise (Stream.Error ("TODO"))
 		
-	and verify_structure_opt_is_super_type_or_make_it_super_type superTypeStructure_opt subTypeStructure_opt =
+	and verify_structure_opt_is_super_type_or_make_it_super_type superTypeNumber superTypeStructure_opt subTypeStructure_opt =
 		match (superTypeStructure_opt, subTypeStructure_opt) with
 		| (None, None) -> ()
 		| (Some _, None) -> raise (Stream.Error ("TODO"))
-		| (None, Some _) -> raise (Stream.Error ("TODO"))
+		| (None, Some y) -> add_structure superTypeNumber y
 		| (Some x, Some y) -> verify_structure_is_super_type_or_make_it_super_type x y
 		
-	and verify_is_super_type_or_make_it_super_type superTypeNumber subTypeNumber =
+	and verify_is_super_type_or_make_it_super_type_without_recursion_check superTypeNumber subTypeNumber =
 		let superType = gsm#get_type superTypeNumber in
 		let subType = gsm#get_type subTypeNumber in
 		
-		verify_structure_opt_is_super_type_or_make_it_super_type superType.structure subType.structure
+		verify_constraints_are_super_types_or_make_them_super_types superTypeNumber superType subType;
+		verify_stdtype_constraints_are_super_types_or_make_them_super_types superTypeNumber subType.stdtype_constraints;
+		verify_structure_opt_is_super_type_or_make_it_super_type superTypeNumber superType.structure subType.structure
+		
+	and verify_is_super_type_or_make_it_super_type superTypeNumber subTypeNumber =
+		let entries = Hashtbl.find_all recursionTieBreaker superTypeNumber in
+		match List.find_opt (fun entry -> entry = subTypeNumber) entries with
+		| None -> Hashtbl.add recursionTieBreaker superTypeNumber subTypeNumber; verify_is_super_type_or_make_it_super_type_without_recursion_check superTypeNumber subTypeNumber
+		| Some _ -> ()
 	in
 	
 	gsm#filter_map_superType_relations (fun (t1, t2) -> verify_is_super_type_or_make_it_super_type t1 t2; None);
@@ -528,6 +625,12 @@ class generic_system_realizer (gs: generic_system) (typeSystem: Type_system.type
 			typeSystem#set_generic_constraints x mappedConstraints;
 			Type_system.Generic x
 		| ([], (_, _, typedef)::[], None) -> typedef
+		| (constraints, (_, _, typedef)::[], None) ->
+			let mappedConstraints = (List.map (this#build_member_constraint) constraints) in
+			if typeSystem#is_assignable typedef (Type_system.Object mappedConstraints) then
+				typedef
+			else
+				raise (Stream.Error (("TODO: " ^ string_of_int t)))
 		| ([], [], Some x) -> this#build_type_from_structure x
 		| _ -> raise (Stream.Error (("TODO: " ^ string_of_int t)))
 end;;
@@ -536,16 +639,22 @@ end;;
 
 let find_common_type types gsb = List.fold_left (fun acc t -> gsb#must_be_equal_to t acc; acc) (List.hd types) (List.tl types);;
 
-let build_final_type gsb fi (typeSystem: Type_system.type_system) =
+let build_final_type gsb fi (typeSystem: Type_system.type_system) =	
+	(*print_endline ("---------------------------------------------------------------------------------------");*)
 	let combined = combine_equal_types gsb#build in
+	(*print_endline ( to_string combined );
+	print_endline ("---------------------------------------------------------------------------------------");*)
 	let superTypesResolved = resolve_super_types combined in
-
-	let gsr = new generic_system_realizer superTypesResolved typeSystem (*(fi#collect_all_types fi#get_self) fi typeSystem*) in
-	print_endline ("---------------------------------------------------------------------------------------");
-	print_endline ( to_string superTypesResolved );
-	print_endline ("---------------------------------------------------------------------------------------");
+	(*print_endline ( to_string superTypesResolved );
+	print_endline ("---------------------------------------------------------------------------------------");*)
 	
-	gsr#build_type fi#get_self
+	let gsr = new generic_system_realizer superTypesResolved typeSystem in	
+	let finalType = gsr#build_type fi#get_self in
+	
+	(*print_endline ( typeSystem#to_string);
+	print_endline ("---------------------------------------------------------------------------------------");*)
+	
+	finalType
 ;;
 
 
@@ -560,6 +669,7 @@ let infer_function_type (rules: Semantic_ast.function_rule list) (context: Symbo
 		| Semantic_ast.Self -> fi#get_self
 		| Semantic_ast.Identifier id -> fi#get_name id
 		| Semantic_ast.NaturalLiteral _ -> gsb#gen_type_from_std_type (Type_system.NamedRef("System", "nat"))
+		| Semantic_ast.UnsignedLiteral _ -> gsb#gen_type_from_std_type (Type_system.NamedRef("System", "unsigned"))
 		| Semantic_ast.Call (func, arg) ->
 			let funcType = process_expr func in
 			let argType = process_expr arg in

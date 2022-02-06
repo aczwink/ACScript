@@ -21,6 +21,7 @@ let compute (_module: Semantic_ast.program_module) =
 		| Semantic_ast.Identifier id -> add_ref id
 		| Semantic_ast.NaturalLiteral _ -> ()
 		| Semantic_ast.StringLiteral _ -> ()
+		| Semantic_ast.UnsignedLiteral _ -> ()
 		| Semantic_ast.External _ -> ()
 		| Semantic_ast.Call (func, arg) -> process_expr func; process_expr arg
 		| Semantic_ast.Function (_, rules) -> List.iter (process_rule) rules

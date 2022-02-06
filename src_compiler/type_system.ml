@@ -80,6 +80,10 @@ class type_system =
 	method set_generic_constraints genericNumber (constraints: declaration list) =
 		Hashtbl.replace genericTypes genericNumber constraints
 		
+	method to_string =
+		let entries = List.map (fun (k, v) -> generic_to_string k v) this#generics_as_list in
+		String.concat "\n" entries
+		
 	method union (a: typedefinition) (b: typedefinition) =
 		if this#is_assignable a b then
 			a
@@ -131,7 +135,8 @@ class type_system =
 		| (_, NamedRef (moduleName, name)) ->
 			this#is_assignable_inner from (this#resolve_named_type moduleName name) typeMap
 		
-		| _ -> raise (Stream.Error ("is_assignable_inner - FROM:" ^ to_string from ^ " TO:" ^ to_string _to))
+		(*| _ -> raise (Stream.Error ("is_assignable_inner - FROM:" ^ to_string from ^ " TO:" ^ to_string _to))*)
+		| _ -> false
 		
 	method private is_assignable_from_generic _ _to _ =
 		raise (Stream.Error ("is_assignable_from_generic TO:" ^ to_string _to))

@@ -38,6 +38,7 @@ rule read_token =
 	| "use"			{ KEYWORD_USE }
 	| whitespace 	{ read_token lexbuf }
 	| "//" 			{ read_single_line_comment lexbuf }
+	| digit+"u"		{ UNSIGNED_LITERAL (Lexing.lexeme lexbuf) }
 	| digit+		{ NATURAL_LITERAL (Lexing.lexeme lexbuf) }
 	| id 			{ IDENTIFIER (Lexing.lexeme lexbuf) }
 	| '"' 			{ read_string (Buffer.create 17) lexbuf }

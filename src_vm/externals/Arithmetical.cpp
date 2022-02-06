@@ -42,6 +42,15 @@ RuntimeValue External_Add(RuntimeValue& arg, const Module&, MarkAndSweepGC& gc)
             const String& rhs = arg.ValuesArray()[1].ValueString();
             return { lhs + rhs };
         }
+        else if(
+                (arg.ValuesArray()[0].Type() == RuntimeValueType::UInt64)
+                and (arg.ValuesArray()[1].Type() == RuntimeValueType::UInt64)
+                )
+        {
+            uint64 lhs = arg.ValuesArray()[0].ValueUInt64();
+            uint64 rhs = arg.ValuesArray()[1].ValueUInt64();
+            return { lhs + rhs };
+        }
     }
     return RuntimeValue();
 }
@@ -66,17 +75,25 @@ RuntimeValue External_Multiply(RuntimeValue& arg, const Module&, MarkAndSweepGC&
 
 RuntimeValue External_Subtract(RuntimeValue& arg, const Module&, MarkAndSweepGC& gc)
 {
-    if(arg.Type() == RuntimeValueType::Tuple)
+    if((arg.Type() == RuntimeValueType::Tuple) and (arg.ValuesArray().GetNumberOfElements() == 2))
     {
         if(
-                (arg.ValuesArray().GetNumberOfElements() == 2)
-                && (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
-                && (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
+                (arg.ValuesArray()[0].Type() == RuntimeValueType::Natural)
+                and (arg.ValuesArray()[1].Type() == RuntimeValueType::Natural)
                 )
         {
             const Math::Natural& lhs = arg.ValuesArray()[0].ValueNatural();
             const Math::Natural& rhs = arg.ValuesArray()[1].ValueNatural();
             return { RuntimeValueType::Natural, gc.CreateNatural(lhs - rhs) };
+        }
+        else if(
+                (arg.ValuesArray()[0].Type() == RuntimeValueType::UInt64)
+                and (arg.ValuesArray()[1].Type() == RuntimeValueType::UInt64)
+                )
+        {
+            uint64 lhs = arg.ValuesArray()[0].ValueUInt64();
+            uint64 rhs = arg.ValuesArray()[1].ValueUInt64();
+            return { lhs - rhs };
         }
     }
     return RuntimeValue();

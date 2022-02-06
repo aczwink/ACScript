@@ -126,10 +126,12 @@ void VM::Run()
             case Opcode::Select:
             {
                 RuntimeValue selector = executionStack.Pop();
-                RuntimeValue dict = executionStack.Pop();
+                RuntimeValue source = executionStack.Pop();
 
-                if(dict.Type() == RuntimeValueType::Dictionary)
-                    executionStack.Push(dict.ValuesDictionary()[selector.ValueString()]);
+                if(source.Type() == RuntimeValueType::Dictionary)
+                    executionStack.Push(source.ValuesDictionary()[selector.ValueString()]);
+                else if(source.Type() == RuntimeValueType::Tuple)
+                    executionStack.Push(source.ValuesArray()[selector.ValueNatural().ClampTo64Bit()]);
                 else
                     executionStack.Push(this->module.GetExternal(selector.ValueString()));
             }
@@ -149,5 +151,22 @@ void VM::Run()
             default:
                 NOT_IMPLEMENTED_ERROR; //TODO: implement me
         }
+    }
+}
+
+//Private methods
+void VM::DumpStack(const DynamicArray<RuntimeValue> &stack) const
+{
+    DynamicArray<RuntimeValue> executionStack;
+    MarkAndSweepGC gc(executionStack);
+
+    External external = this->module.GetExternal(u8"print");
+
+    stdOut << u8"Stack:" << endl;
+
+    auto it = stack.end();
+    for(--it; it != stack.begin(); --it)
+    {
+        external((RuntimeValue&)*it, this->module, gc);
     }
 }

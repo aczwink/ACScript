@@ -35,7 +35,7 @@ let eval_func_call_result_type resultType paramType argType typeSystem =
 	if result then
 		replace_generics resultType typeMap
 	else
-	raise (Stream.Error ("Can't assign from: " ^ (Type_system.to_string paramType) ^ " to: " ^ (Type_system.to_string argType)))
+	raise (Exceptions.TypeException (paramType, argType, typeMap, typeSystem))
 ;;
 
 
@@ -51,6 +51,7 @@ let rec eval_expr_type expr (context: SymbolTable.context) (typeSystem: Type_sys
 	| Semantic_ast.Identifier global_name -> context#get_type global_name
 	| Semantic_ast.NaturalLiteral _ -> typeSystem#resolve_named_type "System" "nat"
 	| Semantic_ast.StringLiteral _ -> typeSystem#resolve_named_type "System" "string"
+	| Semantic_ast.UnsignedLiteral _ -> typeSystem#resolve_named_type "System" "unsigned"
 	| Semantic_ast.External _ -> Type_system.Function(Type_system.Unknown, Type_system.Unknown)
 	| Semantic_ast.Call (func, arg) ->
 		let evaled_func = eval_expr_type func context typeSystem in

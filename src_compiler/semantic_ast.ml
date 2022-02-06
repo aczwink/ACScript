@@ -5,6 +5,7 @@ type expression =
 	| Identifier of string
 	| NaturalLiteral of string
 	| StringLiteral of string
+	| UnsignedLiteral of string
 	| External of string
 	| Import of string
 	| Call of expression * expression

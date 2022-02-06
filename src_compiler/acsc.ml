@@ -66,8 +66,13 @@ let dump_code target =
 	| _ -> raise (Stream.Error ("Unknown target: " ^ target))
 ;;
 
-let () =
-	let cmd = parse_command_line_args in
+let process cmd =
 	let modules = Parsing.parse_module_and_dependencies cmd.mainModuleName cmd.includeDirectories in
 	let analyzedModules = process_modules modules in
 	(dump_code cmd.target) cmd.mainModuleName analyzedModules
+;;
+
+let () =
+	let cmd = parse_command_line_args in
+	try process cmd
+	with e -> print_endline (Exceptions.format_exception e)

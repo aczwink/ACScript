@@ -94,6 +94,7 @@ let translate moduleName _moduleAst modulesCollection =
 		match expr with
 		| Ast.NaturalLiteral x -> Semantic_ast.NaturalLiteral(x)
 		| Ast.StringLiteral x -> Semantic_ast.StringLiteral(x)
+		| Ast.UnsignedLiteral x -> Semantic_ast.UnsignedLiteral (String.sub x 0 ((String.length x) - 1))
 		| Ast.Identifier id -> if id = "self" then Semantic_ast.Self else Semantic_ast.Identifier (state#map_to_global_name id)
 		| Ast.External externalName -> Semantic_ast.External(externalName)
 		| Ast.Call (func, arg) -> Semantic_ast.Call(translate_expr func state, translate_expr arg state)

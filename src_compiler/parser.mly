@@ -17,6 +17,7 @@
 %token <string> IDENTIFIER
 %token <string> NATURAL_LITERAL
 %token <string> STRING_LITERAL
+%token <string> UNSIGNED_LITERAL
 
 %type <Ast.statement list> program_module
 %type <Ast.typedefinition> typedef
@@ -44,6 +45,7 @@ expression:
 	| SYMBOL_LEFT_BRACE rules=separated_list(SYMBOL_COMMA, function_rule) SYMBOL_RIGHT_BRACE			{ Ast.Function( rules ) }
 	| id=IDENTIFIER																						{ Ast.Identifier(id) }
 	| literal=NATURAL_LITERAL																			{ Ast.NaturalLiteral literal }
+	| literal=UNSIGNED_LITERAL																			{ Ast.UnsignedLiteral literal }
 	| literal=STRING_LITERAL																			{ Ast.StringLiteral literal }
 	| KEYWORD_EXTERN name=STRING_LITERAL																{ Ast.External name }
 	| func=expression SYMBOL_LEFT_PARENTHESIS arg=expression SYMBOL_RIGHT_PARENTHESIS					{ Ast.Call(func, arg) }

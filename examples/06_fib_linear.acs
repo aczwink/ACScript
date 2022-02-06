@@ -7,4 +7,4 @@ let helper := {
 
 let fib := n -> helper( (0, n, 0, 1) );
 
-print(fib(30));
+print(fib(50));

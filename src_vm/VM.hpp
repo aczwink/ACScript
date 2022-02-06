@@ -34,6 +34,9 @@ private:
     //Members
     const Module& module;
 
+    //Methods
+    void DumpStack(const DynamicArray<RuntimeValue>& stack) const;
+
     //Inline
     inline uint16 ExtractUInt16FromProgramCounter(const uint8*& pc)
     {
