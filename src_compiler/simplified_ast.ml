@@ -27,7 +27,7 @@ let simplify_stmt modulesCollection stmt =
 let simplify _module modulesCollection =
 	let stmts = List.flatten (List.map (simplify_stmt modulesCollection) _module.Semantic_ast.statements)
 	in	
-	let result: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = stmts; exports = _module.exports }
+	let result: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = stmts; exports = _module.exports; exportedTypeNames = _module.exportedTypeNames; }
 	in
 	result
 ;;

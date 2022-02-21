@@ -9,7 +9,7 @@ let inline_objects_that_are_used_once (_module: Semantic_ast.program_module) =
 		| Semantic_ast.External _ -> expr
 		| Semantic_ast.Function (globalName, rules) -> Semantic_ast.Function (globalName, List.map (map_rule) rules)
 		| Semantic_ast.Call (func, arg) -> Semantic_ast.Call (try_simplify_expr func, try_simplify_expr arg)
-		| Semantic_ast.Object entries -> Semantic_ast.Object (List.map (map_object_entry) entries)
+		| Semantic_ast.Dictionary entries -> Semantic_ast.Dictionary (List.map (map_object_entry) entries)
 		| Semantic_ast.Select (expr, member) ->
 			let newExpr = try_simplify_expr expr in
 			if Symbol_evaluator.is_object newExpr
@@ -19,7 +19,7 @@ let inline_objects_that_are_used_once (_module: Semantic_ast.program_module) =
 		| _ -> raise (Stream.Error ("not implemented: " ^ Semantic_ast_print.expr_to_string expr))
 		
 	and map_object_entry entry =
-		let mapped_entry: Semantic_ast.object_entry = { name = entry.name; expr = try_simplify_expr entry.expr } in
+		let mapped_entry: Semantic_ast.dict_entry = { name = entry.name; expr = try_simplify_expr entry.expr } in
 		mapped_entry
 		
 	and map_rule rule =
@@ -40,6 +40,6 @@ let inline_objects_that_are_used_once (_module: Semantic_ast.program_module) =
 	in
 	
 	let mapped_statements = List.map (inline_stmt) _module.statements in
-	let mapped_module: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = mapped_statements; exports = _module.exports} in
+	let mapped_module: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = mapped_statements; exports = _module.exports; exportedTypeNames = _module.exportedTypeNames; } in
 	mapped_module
 ;;

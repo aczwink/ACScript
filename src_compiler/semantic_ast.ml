@@ -9,8 +9,8 @@ type expression =
 	| External of string
 	| Import of string
 	| Call of expression * expression
+	| Dictionary of dict_entry list
 	| Function of string * function_rule list
-	| Object of object_entry list
 	| Select of expression * string
 	| Tuple of expression list
 	
@@ -20,7 +20,7 @@ and function_rule = {
 	body: expression;
 }
 	
-and object_entry = {
+and dict_entry = {
 	name: string;
 	expr: expression
 }
@@ -41,4 +41,5 @@ type program_module = {
 	moduleName: string;
 	statements: statement list;
 	exports: export StringMap.t;
+	exportedTypeNames: string list;
 }

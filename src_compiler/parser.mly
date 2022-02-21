@@ -6,6 +6,7 @@
 %token SYMBOL_ASSIGNMENT
 %token SYMBOL_COLON
 %token SYMBOL_COMMA
+%token SYMBOL_DOT
 %token SYMBOL_LEFT_BRACE
 %token SYMBOL_LEFT_PARENTHESIS
 %token SYMBOL_MAP
@@ -19,6 +20,7 @@
 %token <string> STRING_LITERAL
 %token <string> UNSIGNED_LITERAL
 
+%type <string * Ast.expression> dict_entry
 %type <Ast.statement list> program_module
 %type <Ast.typedefinition> typedef
 
@@ -42,18 +44,37 @@ toplevels:
 	
 expression:
 	| pt=pattern SYMBOL_MAP expr=expression																{ Ast.Function( [(pt, None, expr)] ) }
-	| SYMBOL_LEFT_BRACE rules=separated_list(SYMBOL_COMMA, function_rule) SYMBOL_RIGHT_BRACE			{ Ast.Function( rules ) }
-	| id=IDENTIFIER																						{ Ast.Identifier(id) }
+	| pt=pattern																						{ Ast.pattern_to_expr pt }
+	| expr=value_expression																				{ expr }
+	| SYMBOL_LEFT_PARENTHESIS expr=expression SYMBOL_RIGHT_PARENTHESIS									{ expr }
+	| KEYWORD_EXTERN name=STRING_LITERAL																{ Ast.External name }
+	| SYMBOL_LEFT_BRACE res=dict_or_func SYMBOL_RIGHT_BRACE												{ res }
+	| func=expression SYMBOL_LEFT_PARENTHESIS arg=expression SYMBOL_RIGHT_PARENTHESIS					{ Ast.Call(func, arg) }
+	| lhs=expression id=IDENTIFIER rhs=expression														{ Ast.BinaryInfixCall( lhs, id, rhs ) }
+	| expr=expression SYMBOL_DOT id=IDENTIFIER															{ Ast.Select(expr, id) }
+	
+value_expression:
 	| literal=NATURAL_LITERAL																			{ Ast.NaturalLiteral literal }
 	| literal=UNSIGNED_LITERAL																			{ Ast.UnsignedLiteral literal }
 	| literal=STRING_LITERAL																			{ Ast.StringLiteral literal }
-	| KEYWORD_EXTERN name=STRING_LITERAL																{ Ast.External name }
-	| func=expression SYMBOL_LEFT_PARENTHESIS arg=expression SYMBOL_RIGHT_PARENTHESIS					{ Ast.Call(func, arg) }
-	| lhs=expression id=IDENTIFIER rhs=expression														{ Ast.BinaryInfixCall( lhs, id, rhs ) }
-	| SYMBOL_LEFT_PARENTHESIS entries=separated_list(SYMBOL_COMMA, expression) SYMBOL_RIGHT_PARENTHESIS	{ Ast.Tuple entries }
 	
 pattern:
-	| expr=expression																					{ expr }
+	| id=IDENTIFIER																															{ Ast.IdentifierPattern (id, None) }
+	| SYMBOL_LEFT_PARENTHESIS firstEntry=pattern_tuple_entry SYMBOL_COMMA entries=separated_list(SYMBOL_COMMA, pattern_tuple_entry) SYMBOL_RIGHT_PARENTHESIS	{ Ast.TuplePattern (firstEntry::entries) }
+	
+pattern_tuple_entry:
+	| id=IDENTIFIER																															{ Ast.IdentifierPattern (id, None) }
+	| id=IDENTIFIER SYMBOL_COLON td=typedef																									{ Ast.IdentifierPattern (id, Some td) }
+	| expr=value_expression																													{ Ast.ExprPattern expr }
+	
+	
+dict_or_func:
+	| firstEntry=dict_entry SYMBOL_COMMA dictEntries=separated_list(SYMBOL_COMMA, dict_entry)			{ Ast.Dictionary (firstEntry::dictEntries) }
+	| rules=separated_list(SYMBOL_COMMA, function_rule)													{ Ast.Function( rules ) }
+	
+	
+dict_entry:
+	| id=IDENTIFIER SYMBOL_COLON expr=expression														{ (id, expr) }
 
 
 function_rule:

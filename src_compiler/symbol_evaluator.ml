@@ -15,13 +15,13 @@ let compute (_module: Semantic_ast.program_module) =
 let rec eval_select expr member sym_values =
 	match expr with
 	| Semantic_ast.Identifier id -> eval_select (Hashtbl.find sym_values id) member sym_values
-	| Semantic_ast.Object entries ->
-		let entry = List.find (fun (entry: Semantic_ast.object_entry) -> entry.name = member) entries in
+	| Semantic_ast.Dictionary entries ->
+		let entry = List.find (fun (entry: Semantic_ast.dict_entry) -> entry.name = member) entries in
 		entry.expr
 	| _ -> raise (Stream.Error ("not implemented: " ^ Semantic_ast_print.expr_to_string expr))
 ;;
 
 let is_object expr =
 	match expr with
-	| Semantic_ast.Object _ -> true
+	| Semantic_ast.Dictionary _ -> true
 	| _ -> false

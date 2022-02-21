@@ -1,0 +1,35 @@
+use "System";
+
+let person := {
+	name: "John",
+	surname: "Doe",
+	
+	toString: p -> p.name + " " + p.surname
+};
+
+print(person);
+print(person.toString(person));
+
+
+
+let new_vec := (x: nat, y: nat) -> {
+	x: x,
+	y: y,
+	
+	+: ( this, other ) -> {
+		x: this.x + other.x,
+		y: this.y + other.y
+	}, //TODO: use pattern
+	
+	lengthSquared: this -> (this.x * this.x) + (this.y * this.y) //TODO: use pattern //{ x, y } -> (x * x) + (y * y)
+};
+
+let v1 := new_vec ( (5, 5) );
+print(v1);
+print(v1.lengthSquared(v1)); //TODO: method call
+
+let v2 := new_vec( (10, 12) );
+print(v2);
+print(v2.lengthSquared(v2)); //TODO: method call
+
+print(v1 + v2);

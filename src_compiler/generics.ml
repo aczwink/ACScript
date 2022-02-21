@@ -35,7 +35,7 @@ let rec collect_expr_generics expr symbolTable typeSystem =
 	| Semantic_ast.Import _ -> IntSet.empty
 	| Semantic_ast.Call _ -> IntSet.empty
 	| Semantic_ast.Function _ -> IntSet.empty
-	| Semantic_ast.Object _ -> IntSet.empty
+	| Semantic_ast.Dictionary _ -> IntSet.empty
 	| Semantic_ast.Select _ -> IntSet.empty
 	| Semantic_ast.Tuple entries -> List.fold_left (fun set entry -> IntSet.union set (collect_expr_generics entry symbolTable typeSystem)) IntSet.empty entries
 ;;

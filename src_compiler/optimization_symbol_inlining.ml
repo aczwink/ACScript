@@ -12,7 +12,7 @@ let inline_symbols_that_are_only_used_once _module =
 		| Semantic_ast.External _ -> expr
 		| Semantic_ast.Call (func, arg) -> Semantic_ast.Call (map_expr func, map_expr arg)
 		| Semantic_ast.Function (globalName, rules) -> Semantic_ast.Function (globalName, List.map (map_rule) rules)
-		| Semantic_ast.Object entries -> Semantic_ast.Object (List.map (map_object_entry) entries)
+		| Semantic_ast.Dictionary entries -> Semantic_ast.Dictionary (List.map (map_object_entry) entries)
 		| Semantic_ast.Select (expr, member) -> Semantic_ast.Select (map_expr expr, member)
 		| Semantic_ast.Tuple entries -> Semantic_ast.Tuple (List.map (map_expr) entries)
 		| _ -> raise (Stream.Error ("not implemented: " ^ Semantic_ast_print.expr_to_string expr))
@@ -20,10 +20,12 @@ let inline_symbols_that_are_only_used_once _module =
 	and map_id id =
 		match Hashtbl.find_opt sym_values id with
 		| None -> Semantic_ast.Identifier id
-		| Some expr -> map_expr expr
+		| Some expr ->
+			if (Hashtbl.find sym_dependencies id) = 1 then map_expr expr
+			else Semantic_ast.Identifier id
 		
 	and map_object_entry entry =
-		let mapped_entry: Semantic_ast.object_entry = { name = entry.name; expr = map_expr entry.expr } in
+		let mapped_entry: Semantic_ast.dict_entry = { name = entry.name; expr = map_expr entry.expr } in
 		mapped_entry
 		
 	and map_rule rule =
@@ -46,6 +48,6 @@ let inline_symbols_that_are_only_used_once _module =
 	in
 	
 	let mapped_statements = List.filter_map (inline_stmt) _module.statements in
-	let mapped_module: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = mapped_statements; exports = _module.exports} in
+	let mapped_module: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = mapped_statements; exports = _module.exports; exportedTypeNames = _module.exportedTypeNames; } in
 	mapped_module
 ;;

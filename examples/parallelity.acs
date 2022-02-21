@@ -1,4 +1,0 @@
-printAndBye := func x => Print(x);
-
-for x in 0..1000:
-	printAndBye(x);

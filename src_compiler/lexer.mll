@@ -24,6 +24,7 @@ rule read_token =
 	parse
 	| ":" 			{ SYMBOL_COLON }
 	| "," 			{ SYMBOL_COMMA }
+	| "."			{ SYMBOL_DOT }
 	| "{" 			{ SYMBOL_LEFT_BRACE }
 	| "}" 			{ SYMBOL_RIGHT_BRACE }
 	| "(" 			{ SYMBOL_LEFT_PARENTHESIS }
@@ -38,6 +39,7 @@ rule read_token =
 	| "use"			{ KEYWORD_USE }
 	| whitespace 	{ read_token lexbuf }
 	| "//" 			{ read_single_line_comment lexbuf }
+	| "/*"			{ read_multi_line_comment lexbuf }
 	| digit+"u"		{ UNSIGNED_LITERAL (Lexing.lexeme lexbuf) }
 	| digit+		{ NATURAL_LITERAL (Lexing.lexeme lexbuf) }
 	| id 			{ IDENTIFIER (Lexing.lexeme lexbuf) }
@@ -46,7 +48,12 @@ rule read_token =
 	| eof 			{ END_OF_STREAM }
 	| _ 			{raise (SyntaxError ("Illegal character: '" ^ Lexing.lexeme lexbuf ^ "'")) }
 	
-	
+and read_multi_line_comment = parse
+  | "*/" { read_token lexbuf } 
+  | newline { next_line lexbuf; read_multi_line_comment lexbuf } 
+  | eof { raise (SyntaxError ("Unexpected end of file. Expected multi line comment to be terminated.")) }
+  | _ { read_multi_line_comment lexbuf } 
+  
 and read_single_line_comment = parse
 	| newline { next_line lexbuf; read_token lexbuf } 
 	| eof { END_OF_STREAM }

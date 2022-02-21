@@ -1,3 +1,5 @@
+exception UnknownTypeException of string
+
 type declaration = {
 	name: string;
 	typedef: typedefinition
@@ -75,13 +77,17 @@ class type_system =
 		(result, typeMap)
 		
 	method resolve_named_type moduleName name =
-		Hashtbl.find namedTypes (moduleName ^ "." ^ name)
+		let fullName = (moduleName ^ "." ^ name) in
+		match Hashtbl.find_opt namedTypes fullName with
+		| Some x -> x
+		| None -> raise (UnknownTypeException fullName)
 		
 	method set_generic_constraints genericNumber (constraints: declaration list) =
 		Hashtbl.replace genericTypes genericNumber constraints
 		
 	method to_string =
-		let entries = List.map (fun (k, v) -> generic_to_string k v) this#generics_as_list in
+		let generics = List.sort (fun (k1, _) (k2, _) -> compare k1 k2) this#generics_as_list in
+		let entries = List.map (fun (k, v) -> generic_to_string k v) generics in
 		String.concat "\n" entries
 		
 	method union (a: typedefinition) (b: typedefinition) =
@@ -112,14 +118,7 @@ class type_system =
 		| (NamedRef (moduleName1, name1), NamedRef (moduleName2, name2)) ->
 			if ((moduleName1 = moduleName2) && (name1 = name2)) then true
 			else this#is_assignable_inner (this#resolve_named_type moduleName1 name1) (this#resolve_named_type moduleName2 name2) typeMap
-		| (Object fromDecls, Object toDecls) ->
-			let fulfills_decl toDecl =
-				let fromDecl_opt = List.find_opt (fun decl -> decl.name = toDecl.name) fromDecls in
-				match fromDecl_opt with
-				| None -> false
-				| Some fromDecl -> this#is_assignable_inner fromDecl.typedef toDecl.typedef typeMap
-			in
-			List.for_all (fulfills_decl) toDecls
+		| (Object fromDecls, Object toDecls) -> this#is_assignable_object_to_object fromDecls toDecls typeMap
 		| (Tuple fromEntries, Tuple toEntries) -> List.for_all (fun (a, b) -> this#is_assignable_inner a b typeMap) (List.combine fromEntries toEntries)
 		
 		| (Unknown, NamedRef _) -> true (* Unknown can be assigned to any type explicitly. TODO: check this. it stinks *)
@@ -138,8 +137,19 @@ class type_system =
 		(*| _ -> raise (Stream.Error ("is_assignable_inner - FROM:" ^ to_string from ^ " TO:" ^ to_string _to))*)
 		| _ -> false
 		
-	method private is_assignable_from_generic _ _to _ =
-		raise (Stream.Error ("is_assignable_from_generic TO:" ^ to_string _to))
+	method private is_assignable_from_generic constraints _to typeMap =
+		match _to with
+		| Object toDecls -> this#is_assignable_object_to_object constraints toDecls typeMap
+		| _ -> raise (Stream.Error ("is_assignable_from_generic TO:" ^ to_string _to))
+		
+	method private is_assignable_object_to_object fromDecls toDecls typeMap =
+		let fulfills_decl toDecl =
+			let fromDecl_opt = List.find_opt (fun decl -> decl.name = toDecl.name) fromDecls in
+			match fromDecl_opt with
+			| None -> false
+			| Some fromDecl -> this#is_assignable_inner fromDecl.typedef toDecl.typedef typeMap
+		in
+		List.for_all (fulfills_decl) toDecls
 		
 	method private is_assignable_to_generic from constraints typeMap =
 		this#is_assignable_inner from (Object constraints) typeMap

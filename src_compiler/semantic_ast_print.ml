@@ -31,13 +31,13 @@ let rec expr_to_string expression =
 	| Semantic_ast.Import moduleName -> "import \"" ^ moduleName ^ "\""
 	| Semantic_ast.Call (func, arg) -> (expr_to_string func) ^ "(" ^ expr_to_string arg ^ ")"
 	| Semantic_ast.Function(_, rules) -> "{\n" ^ (String.concat ",\n" (List.map (rule_to_string) rules)) ^ "\n}"
-	| Semantic_ast.Object entries -> "{\n" ^ entries_to_string entries ^ "\n}"
+	| Semantic_ast.Dictionary entries -> "{\n" ^ entries_to_string entries ^ "\n}"
 	| Semantic_ast.Select (expr, member) -> (expr_to_string expr) ^ "." ^ member
 	| Semantic_ast.Tuple values -> "(" ^ (exprs_to_string values) ^ ")"
 	
 and exprs_to_string exprs = String.concat ", " (List.map (expr_to_string) exprs)
 
-and entry_to_string (entry: Semantic_ast.object_entry) = "\t" ^ entry.name ^ ": " ^ expr_to_string entry.expr
+and entry_to_string (entry: Semantic_ast.dict_entry) = "\t" ^ entry.name ^ ": " ^ expr_to_string entry.expr
 and entries_to_string entries = String.concat ",\n" (List.map (entry_to_string) entries)
 
 and rule_to_string rule =

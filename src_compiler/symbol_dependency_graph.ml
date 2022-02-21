@@ -25,7 +25,7 @@ let compute (_module: Semantic_ast.program_module) =
 		| Semantic_ast.External _ -> ()
 		| Semantic_ast.Call (func, arg) -> process_expr func; process_expr arg
 		| Semantic_ast.Function (_, rules) -> List.iter (process_rule) rules
-		| Semantic_ast.Object decls -> List.iter (process_decl) decls
+		| Semantic_ast.Dictionary decls -> List.iter (process_decl) decls
 		| Semantic_ast.Select (expr, _) -> process_expr expr
 		| Semantic_ast.Tuple exprs -> List.iter (process_expr) exprs
 		| _ -> raise (Stream.Error ("not implemented: " ^ Semantic_ast_print.expr_to_string expr))

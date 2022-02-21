@@ -7,6 +7,7 @@ let typeMap_to_string typeMap typeSystem =
 
 let format_exception e =
 	match e with
-	| TypeException (from, _to, typeMap, typeSystem) -> "Can't assign from: " ^ (Type_system.to_string from) ^ " to: " ^ (Type_system.to_string _to) ^ " with: " ^ (typeMap_to_string typeMap typeSystem)
+	| TypeException (from, _to, typeMap, typeSystem) -> "Can't assign from: " ^ (Type_system.to_string from) ^ " to " ^ (Type_system.to_string _to) ^ " with: " ^ (typeMap_to_string typeMap typeSystem)
+	| Type_system.UnknownTypeException fullName -> "Unknown type: " ^ fullName
 	| _ -> Printexc.to_string e ^ "\n" ^ Printexc.get_backtrace ()
 ;;

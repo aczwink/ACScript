@@ -27,6 +27,6 @@ let remove_unused_code _module =
 	in
 	
 	let mapped_statements = List.filter_map (remove_dead_stmt) _module.statements in
-	let mapped_module: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = mapped_statements; exports = _module.exports} in
+	let mapped_module: Semantic_ast.program_module = { moduleName = _module.moduleName; statements = mapped_statements; exports = _module.exports; exportedTypeNames = _module.exportedTypeNames; } in
 	mapped_module
 ;;

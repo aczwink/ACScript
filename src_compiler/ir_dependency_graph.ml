@@ -25,6 +25,9 @@ class graph =
 		Hashtbl.iter (fun k v -> Hashtbl.add res k (StringSet.cardinal v)) dependencies;
 		res
 		
+	method init =
+		this#ensure_dict_entry_exists "$p"
+		
 	(* Private methods *)
 	method private add_dependencies (from: string) (_to: string list) =
 		List.iter (this#add_dependency from) _to
@@ -44,6 +47,7 @@ end;;
 
 let build funcs =
 	let g = new graph in
+	g#init;
 	let process_block block =
 		List.iter (g#add) block.Ir.instructions
 	in

@@ -161,7 +161,7 @@ let translate _module =
 			builder#add_func;
 			List.iter (translate_rule) rules;
 			builder#finish_func
-		| Semantic_ast.Object entries -> 
+		| Semantic_ast.Dictionary entries -> 
 			let map_entry dictName entry =
 				let _ = builder#add_instruction(Ir.SetInstruction(dictName, load_string entry.Semantic_ast.name, translate_expr entry.expr)) in
 				()

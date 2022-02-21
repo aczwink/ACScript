@@ -12,7 +12,7 @@ let bundle modulesCollection =
 	let importMap: (string, string) Hashtbl.t = Hashtbl.create 10 in
 	
 	let map_export_to_object_entry name _ entries =
-		let entry: Semantic_ast.object_entry = { name = name; expr = Semantic_ast.Identifier (Hashtbl.find renameMap name) } in
+		let entry: Semantic_ast.dict_entry = { name = name; expr = Semantic_ast.Identifier (Hashtbl.find renameMap name) } in
 		entry::entries
 	in
 	
@@ -39,7 +39,7 @@ let bundle modulesCollection =
 		let name = symbolTable#create "_module" t in
 		Hashtbl.add importMap _module.Semantic_ast.moduleName name;
 		let entries = StringMap.fold (map_export_to_object_entry) _module.Semantic_ast.exports [] in
-		Semantic_ast.LetBindingStatement(name, t, Semantic_ast.Object(entries))
+		Semantic_ast.LetBindingStatement(name, t, Semantic_ast.Dictionary(entries))
 	in
 
 	
@@ -51,6 +51,6 @@ let bundle modulesCollection =
 	in
 	
 	let stmts = translate_modules (modulesCollection#modules_in_order) in
-	let _bundledModule: Semantic_ast.program_module = { moduleName = "bundle"; statements = stmts; exports = StringMap.empty } in
+	let _bundledModule: Semantic_ast.program_module = { moduleName = "bundle"; statements = stmts; exports = StringMap.empty; exportedTypeNames = []; } in
 	_bundledModule
 ;;

@@ -262,6 +262,7 @@ class generic_system_builder =
 			match (Hashtbl.find_opt typeStructure t, typedef) with
 			| (None, Type_system.Generic _) -> this#must_be_standard_type t typedef
 			| (None, Type_system.NamedRef _) -> this#must_be_standard_type t typedef
+			| (None, Type_system.Function _) -> ()
 			| (Some (Func (a, r)), Type_system.Function (argType, resultType)) ->
 				add_transitive_stdtype_constraint (a, Equal, argType);
 				add_transitive_stdtype_constraint (r, Equal, resultType);
@@ -295,6 +296,9 @@ class func_inferer (context: SymbolTable.context) (gsb: generic_system_builder) 
 		match Hashtbl.find_opt args name with
 		| None -> Hashtbl.add args name (gsb#add_generic_type)
 		| Some _ -> ()
+		
+	method add_arg_with_type name t =
+		Hashtbl.add args name t
 	
 	method get_name globalName =
 		match Hashtbl.find_opt args globalName with
@@ -669,6 +673,7 @@ let infer_function_type (rules: Semantic_ast.function_rule list) (context: Symbo
 		| Semantic_ast.Self -> fi#get_self
 		| Semantic_ast.Identifier id -> fi#get_name id
 		| Semantic_ast.NaturalLiteral _ -> gsb#gen_type_from_std_type (Type_system.NamedRef("System", "nat"))
+		| Semantic_ast.StringLiteral _ -> gsb#gen_type_from_std_type (Type_system.NamedRef("System", "string"))
 		| Semantic_ast.UnsignedLiteral _ -> gsb#gen_type_from_std_type (Type_system.NamedRef("System", "unsigned"))
 		| Semantic_ast.Call (func, arg) ->
 			let funcType = process_expr func in
@@ -677,6 +682,17 @@ let infer_function_type (rules: Semantic_ast.function_rule list) (context: Symbo
 			let (paramType, resultType) = gsb#must_have_function_structure funcType in
 			gsb#must_be_assignable_to argType paramType;
 			resultType
+		| Semantic_ast.Dictionary entries ->
+			let t = gsb#add_generic_type in
+			
+			let process_entry (entry: Semantic_ast.dict_entry) =
+				let member_type = gsb#must_have_member t entry.name in
+				gsb#must_be_equal_to member_type (process_expr entry.expr)
+			in
+			
+			List.iter (process_entry) entries;
+			t
+		| Semantic_ast.Function (globalName, _) -> gsb#gen_type_from_std_type (context#get_type globalName)
 		| Semantic_ast.Select (select, member) ->
 			let t = process_expr select in
 			gsb#must_have_member t member
@@ -690,9 +706,16 @@ let infer_function_type (rules: Semantic_ast.function_rule list) (context: Symbo
 		| Some expr -> Some (process_expr expr)
 	in
 	
+	let add_name_from_pattern global_name =
+		let t = context#get_type global_name in
+		match t with
+		| Type_system.Unknown -> fi#add_arg global_name
+		| _ -> fi#add_arg_with_type global_name (gsb#gen_type_from_std_type t)
+	in
+	
 	let rec add_generics_from_pattern pattern =
 		match pattern with
-		| Semantic_ast.Identifier global_name -> fi#add_arg global_name
+		| Semantic_ast.Identifier global_name -> add_name_from_pattern global_name
 		| Semantic_ast.NaturalLiteral _ -> ()
 		| Semantic_ast.Tuple entries -> List.iter (add_generics_from_pattern) entries
 		| _ -> raise (Stream.Error ((Semantic_ast_print.expr_to_string pattern)))
